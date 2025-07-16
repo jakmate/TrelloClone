@@ -1,101 +1,139 @@
 @page "/boards"
 @using TrelloClone.Client.Models
 @using TrelloClone.Client.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @inject IBoardService BoardService
+@inject IAuthService AuthService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@attribute [Authorize]
 
 <PageTitle>Boards</PageTitle>
 
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <h1>My Boards</h1>
-        </div>
-        <div class="col-md-4 text-end">
-            <button class="btn btn-primary" @onclick="ShowCreateModal">
-                <i class="fas fa-plus"></i> Create Board
-            </button>
-        </div>
-    </div>
-
-    @if (isLoading)
-    {
-        <div class="text-center mt-4">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
+<AuthorizeView>
+    <Authorized Context="authContext">
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-8">
+                    <h1>My Boards</h1>
+                    @if (currentUser != null)
+                    {
+                        <p class="text-muted">Welcome back, @currentUser.UserName!</p>
+                    }
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-primary" @onclick="ShowCreateModal">
+                        <i class="fas fa-plus"></i> Create Board
+                    </button>
+                </div>
             </div>
-        </div>
-    }
-    else if (boards.Any())
-    {
-        <div class="row mt-4">
-            @foreach (var board in boards)
+
+            @if (isLoading)
             {
-                <div class="col-md-3 mb-3">
-                    <BoardCard Board="board" />
+                <div class="text-center mt-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (boards.Any())
+            {
+                <div class="row mt-4">
+                    @foreach (var board in boards)
+                    {
+                        <div class="col-md-3 mb-3">
+                            <BoardCard Board="board" />
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center mt-5">
+                    <h3>No boards found</h3>
+                    <p class="text-muted">Create your first board to get started!</p>
                 </div>
             }
         </div>
-    }
-    else
-    {
-        <div class="text-center mt-5">
-            <h3>No boards found</h3>
-            <p class="text-muted">Create your first board to get started!</p>
-        </div>
-    }
-</div>
 
-<!-- Create Board Modal -->
-<div class="modal fade @(showCreateModal ? "show" : "")" style="display: @(showCreateModal ? "block" : "none")" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Create New Board</h5>
-                <button type="button" class="btn-close" @onclick="HideCreateModal"></button>
-            </div>
-            <div class="modal-body">
-                <EditForm Model="newBoard" OnValidSubmit="CreateBoard">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary class="text-danger" />
-                    
-                    <div class="mb-3">
-                        <label for="boardName" class="form-label">Board Name</label>
-                        <InputText id="boardName" class="form-control" @bind-Value="newBoard.Name" placeholder="Enter board name" />
-                        <ValidationMessage For="@(() => newBoard.Name)" />
+        <!-- Create Board Modal -->
+        <div class="modal fade @(showCreateModal ? "show" : "")" style="display: @(showCreateModal ? "block" : "none")" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create New Board</h5>
+                        <button type="button" class="btn-close" @onclick="HideCreateModal"></button>
                     </div>
-                    
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="HideCreateModal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" disabled="@isCreating">
-                            @if (isCreating)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                            }
-                            Create Board
-                        </button>
+                    <div class="modal-body">
+                        <EditForm Model="newBoard" OnValidSubmit="CreateBoard">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger" />
+                            
+                            <div class="mb-3">
+                                <label for="boardName" class="form-label">Board Name</label>
+                                <InputText id="boardName" class="form-control" @bind-Value="newBoard.Name" placeholder="Enter board name" />
+                                <ValidationMessage For="@(() => newBoard.Name)" />
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @onclick="HideCreateModal">Cancel</button>
+                                <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                                    @if (isCreating)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                    }
+                                    Create Board
+                                </button>
+                            </div>
+                        </EditForm>
                     </div>
-                </EditForm>
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
-@if (showCreateModal)
-{
-    <div class="modal-backdrop fade show"></div>
-}
+        @if (showCreateModal)
+        {
+            <div class="modal-backdrop fade show"></div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <div class="container mt-5">
+            <div class="text-center">
+                <h3>Access Denied</h3>
+                <p>You need to be logged in to view boards.</p>
+                <a href="/login" class="btn btn-primary">Login</a>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     private List<BoardDto> boards = new();
     private CreateBoardRequest newBoard = new();
+    private UserDto? currentUser;
     private bool isLoading = true;
     private bool showCreateModal = false;
     private bool isCreating = false;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadBoards();
+        try
+        {
+            currentUser = await AuthService.GetCurrentUserAsync();
+            if (currentUser != null)
+            {
+                await LoadBoards();
+            }
+            else
+            {
+                Navigation.NavigateTo("/login");
+            }
+        }
+        catch
+        {
+            Navigation.NavigateTo("/login");
+        }
     }
 
     private async Task LoadBoards()
@@ -107,7 +145,6 @@
         }
         catch (Exception ex)
         {
-            // Handle error
             await JSRuntime.InvokeVoidAsync("alert", $"Error loading boards: {ex.Message}");
         }
         finally
@@ -118,8 +155,11 @@
 
     private void ShowCreateModal()
     {
-        newBoard = new CreateBoardRequest { OwnerId = Guid.NewGuid() }; // For now, use random GUID
-        showCreateModal = true;
+        if (currentUser != null)
+        {
+            newBoard = new CreateBoardRequest { OwnerId = currentUser.Id };
+            showCreateModal = true;
+        }
     }
 
     private void HideCreateModal()
@@ -130,7 +170,7 @@
 
     private async Task CreateBoard()
     {
-        if (string.IsNullOrWhiteSpace(newBoard.Name))
+        if (string.IsNullOrWhiteSpace(newBoard.Name) || currentUser == null)
             return;
 
         isCreating = true;
