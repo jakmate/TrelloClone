@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace TrelloClone.Client.Models;
+namespace TrelloClone.Shared.DTOs;
 
 public class LoginRequest
 {
@@ -27,16 +27,4 @@ public class AuthResponse
 {
     public string Token { get; set; } = string.Empty;
     public UserDto User { get; set; } = new();
-}
-
-public class CurrentUserResponse
-{
-    public UserDto User { get; set; } = new();
-}
-
-public class UserDto
-{
-    public Guid Id { get; set; }
-    public string UserName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
 }

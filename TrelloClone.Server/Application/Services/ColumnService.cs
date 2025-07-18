@@ -1,3 +1,5 @@
+using TrelloClone.Shared.DTOs;
+
 public class ColumnService
 {
     private readonly IColumnRepository _columns;
@@ -17,7 +19,7 @@ public class ColumnService
     public async Task<ColumnDto> CreateColumnAsync(CreateColumnRequest req)
     {
         // 1) Business rule: board must exist
-        var board = await _boards.GetByIdWithColumnsAsync(req.BoardId)
+        var board = await _boards.GetByIdAsync(req.BoardId)
                     ?? throw new KeyNotFoundException("Board not found.");
 
         // 2) Business rule: unique title per board

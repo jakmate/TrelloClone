@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public class CreateTaskRequest
 {
 	public string Name { get; set; } = null!;

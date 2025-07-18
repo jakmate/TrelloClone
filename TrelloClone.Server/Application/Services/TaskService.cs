@@ -1,3 +1,5 @@
+using TrelloClone.Shared.DTOs;
+
 public class TaskService
 {
     private readonly ITaskRepository _tasks;

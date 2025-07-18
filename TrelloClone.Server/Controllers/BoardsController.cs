@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using TrelloClone.Shared.DTOs;
 
 [ApiController]
 [Route("api/boards")]
@@ -15,7 +18,7 @@ public class BoardsController : ControllerBase
         try
         {
             var dto = await _boardService.CreateBoardAsync(req.Name, req.OwnerId);
-            return CreatedAtAction(nameof(Get), new { id = dto.Id }, dto);
+            return CreatedAtAction(nameof(Get), new { boardId = dto.Id }, dto);
         }
         catch (Exception ex)
         {
@@ -23,11 +26,49 @@ public class BoardsController : ControllerBase
         }
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<BoardDto>> Get(Guid id)
+    [HttpPut("{boardId:guid}")]
+    public async Task<ActionResult<BoardDto>> Update(Guid boardId, [FromBody] UpdateBoardRequest req)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
+        try
+        {
+            var dto = await _boardService.UpdateBoardAsync(
+                boardId,
+                req.Name,
+                userGuid
+            );
+
+            return Ok(dto);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);  // 403
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);  // 409
+        }
+    }
+
+    [HttpDelete("{boardId:guid}")]
+    public async Task<IActionResult> Delete(Guid boardId)
+    {
+        await _boardService.DeleteBoardAsync(boardId);
+        return NoContent();
+    }
+
+    [HttpGet("{boardId:guid}")]
+    public async Task<ActionResult<BoardDto>> Get(Guid boardId)
     {
         try { 
-            var dto = await _boardService.GetBoardAsync(id);
+            var dto = await _boardService.GetBoardAsync(boardId);
             if (dto == null) return NotFound();
             return Ok(dto);
         }
@@ -38,9 +79,17 @@ public class BoardsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<BoardDto>> GetBoards()
+    public async Task<ActionResult<BoardDto[]>> GetBoards([FromQuery] Guid ownerId)
     {
-        // For now, return empty list
-        return Ok(new List<BoardDto>());
+        try
+        {
+            var dto = await _boardService.GetAllBoardsAsync(ownerId);
+            if (dto == null) return NotFound();
+            return Ok(dto);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }

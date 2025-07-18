@@ -1,4 +1,4 @@
-namespace TrelloClone.Client.Models;
+namespace TrelloClone.Shared.DTOs;
 
 public class CreateBoardRequest
 {

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using TrelloClone.Client.Models;
+using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services
 {

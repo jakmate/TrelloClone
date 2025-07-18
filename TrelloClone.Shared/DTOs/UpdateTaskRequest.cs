@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public class UpdateTaskRequest
 {
     public string? Name { get; set; }

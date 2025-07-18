@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public class TaskDto
 {
     public Guid Id { get; set; }

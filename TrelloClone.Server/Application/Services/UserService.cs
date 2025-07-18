@@ -1,3 +1,5 @@
+using TrelloClone.Shared.DTOs;
+
 public class UserService
 {
     private readonly IUserRepository _users;
@@ -20,7 +22,7 @@ public class UserService
     public async Task AddUserToBoardAsync(Guid boardId, Guid userId)
     {
         // ensure both exist
-        var board = await _boards.GetByIdWithColumnsAsync(boardId)
+        var board = await _boards.GetByIdAsync(boardId)
                     ?? throw new KeyNotFoundException("Board not found.");
         var user = await _users.GetByIdWithBoardsAsync(userId)
                     ?? throw new KeyNotFoundException("User not found.");
@@ -42,7 +44,7 @@ public class UserService
             Id = user.Id,
             UserName = user.UserName,
             Boards = user.BoardUsers
-                           .Select(bu => new BoardSummaryDto
+                           .Select(bu => new BoardDto
                            {
                                Id = bu.Board.Id,
                                Name = bu.Board.Name

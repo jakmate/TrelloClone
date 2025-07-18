@@ -1,6 +1,9 @@
 public interface IBoardRepository
 {
-    Task<bool> ExistsWithNameAsync(string name, Guid ownerId);
+    Task<bool> ExistsWithNameAsync(string name, Guid userId);
+    Task<Board?> GetByIdAsync(Guid boardId);
+    Task<List<Board>> GetAllByUserIdAsync(Guid userId);
     void Add(Board board);
-    Task<Board?> GetByIdWithColumnsAsync(Guid id);
+    void Update(Board board);
+    void Remove(Board board);
 }

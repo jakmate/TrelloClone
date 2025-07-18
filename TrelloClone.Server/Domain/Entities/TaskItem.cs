@@ -1,4 +1,4 @@
-public enum PriorityLevel { Low, Medium, High }
+using TrelloClone.Shared.DTOs;
 
 public class TaskItem
 {

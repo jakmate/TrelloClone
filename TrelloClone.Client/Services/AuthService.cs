@@ -3,7 +3,7 @@ using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
-using TrelloClone.Client.Models;
+using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services;
 

@@ -1,5 +1,5 @@
 @page "/boards"
-@using TrelloClone.Client.Models
+@using TrelloClone.Shared.DTOs
 @using TrelloClone.Client.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
@@ -43,7 +43,10 @@
                     @foreach (var board in boards)
                     {
                         <div class="col-md-3 mb-3">
-                            <BoardCard Board="board" />
+                            <BoardCard 
+                                Board="board"
+                                OnUpdate="ShowUpdateModal"
+                                OnDelete="DeleteBoard" />
                         </div>
                     }
                 </div>
@@ -92,7 +95,42 @@
             </div>
         </div>
 
-        @if (showCreateModal)
+        <!-- Update Board Modal -->
+        <div class="modal fade @(showUpdateModal ? "show" : "")" style="display: @(showUpdateModal ? "block" : "none")" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Update Board</h5>
+                        <button type="button" class="btn-close" @onclick="HideUpdateModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <EditForm Model="updateRequest" OnValidSubmit="UpdateBoard">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger" />
+                            
+                            <div class="mb-3">
+                                <label for="updateBoardName" class="form-label">Board Name</label>
+                                <InputText id="updateBoardName" class="form-control" @bind-Value="updateRequest.Name" />
+                                <ValidationMessage For="@(() => updateRequest.Name)" />
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @onclick="HideUpdateModal">Cancel</button>
+                                <button type="submit" class="btn btn-primary" disabled="@isUpdating">
+                                    @if (isUpdating)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                    }
+                                    Update Board
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (showCreateModal || showUpdateModal)
         {
             <div class="modal-backdrop fade show"></div>
         }
@@ -111,10 +149,14 @@
 @code {
     private List<BoardDto> boards = new();
     private CreateBoardRequest newBoard = new();
+    private UpdateBoardRequest updateRequest = new();
     private UserDto? currentUser;
     private bool isLoading = true;
     private bool showCreateModal = false;
+    private bool showUpdateModal = false;
     private bool isCreating = false;
+    private bool isUpdating = false;
+    private Guid? updatingBoardId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -141,7 +183,10 @@
         isLoading = true;
         try
         {
-            boards = await BoardService.GetBoardsAsync();
+            if (currentUser != null)
+            {
+                boards = await BoardService.GetBoardsAsync(currentUser.Id);
+            }
         }
         catch (Exception ex)
         {
@@ -168,6 +213,20 @@
         newBoard = new();
     }
 
+    private void ShowUpdateModal(BoardDto board)
+    {
+        updatingBoardId = board.Id;
+        updateRequest = new UpdateBoardRequest { Name = board.Name };
+        showUpdateModal = true;
+    }
+
+    private void HideUpdateModal()
+    {
+        showUpdateModal = false;
+        updatingBoardId = null;
+        updateRequest = new();
+    }
+
     private async Task CreateBoard()
     {
         if (string.IsNullOrWhiteSpace(newBoard.Name) || currentUser == null)
@@ -187,6 +246,51 @@
         finally
         {
             isCreating = false;
+        }
+    }
+
+    private async Task UpdateBoard()
+    {
+        if (string.IsNullOrWhiteSpace(updateRequest.Name) || !updatingBoardId.HasValue)
+            return;
+
+        isUpdating = true;
+        try
+        {
+            var updatedBoard = await BoardService.UpdateBoardAsync(updatingBoardId.Value, updateRequest);
+            
+            // Update local board list
+            var index = boards.FindIndex(b => b.Id == updatingBoardId.Value);
+            if (index >= 0)
+            {
+                boards[index] = updatedBoard;
+            }
+            
+            HideUpdateModal();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error updating board: {ex.Message}");
+        }
+        finally
+        {
+            isUpdating = false;
+        }
+    }
+
+    private async Task DeleteBoard(BoardDto board)
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{board.Name}'?");
+        if (!confirm) return;
+
+        try
+        {
+            await BoardService.DeleteBoardAsync(board.Id);
+            boards.RemoveAll(b => b.Id == board.Id);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting board: {ex.Message}");
         }
     }
 }

@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public class CreateColumnRequest
 {
     public string Title { get; set; } = null!;

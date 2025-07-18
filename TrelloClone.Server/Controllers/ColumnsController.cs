@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TrelloClone.Shared.DTOs;
 
 [ApiController]
 [Route("api/boards/{boardId:guid}/columns")]
@@ -32,7 +33,6 @@ public class ColumnsController : ControllerBase
     [HttpDelete("{columnId:guid}")]
     public async Task<IActionResult> Delete(Guid boardId, Guid columnId)
     {
-        // optionally verify column belongs to board
         await _svc.DeleteColumnAsync(columnId);
         return NoContent();
     }
