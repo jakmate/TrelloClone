@@ -1,21 +1,39 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using TrelloClone.Shared.DTOs;
 
 [ApiController]
 [Route("api/boards/{boardId:guid}/columns")]
+[Authorize]
 public class ColumnsController : ControllerBase
 {
-    private readonly ColumnService _svc;
-    public ColumnsController(ColumnService svc) => _svc = svc;
+    private readonly ColumnService _columnService;
+    public ColumnsController(ColumnService columnService)
+        => _columnService = columnService;
+
+    [HttpGet]
+    public async Task<ActionResult<List<ColumnDto>>> GetAll(Guid boardId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
+        var list = await _columnService.GetColumnsForBoardAsync(boardId);
+        return Ok(list);
+    }
 
     [HttpPost]
     public async Task<ActionResult<ColumnDto>> Create(
-        Guid boardId,
-        [FromBody] CreateColumnRequest req)
+    Guid boardId,
+    [FromBody] CreateColumnRequest req)
     {
-        // ensure route & body match
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
         if (req.BoardId != boardId) return BadRequest();
-        var dto = await _svc.CreateColumnAsync(req);
+        var dto = await _columnService.CreateColumnAsync(req);
         return CreatedAtAction(
             nameof(GetAll),
             new { boardId },
@@ -23,17 +41,28 @@ public class ColumnsController : ControllerBase
         );
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<ColumnDto>>> GetAll(Guid boardId)
+    [HttpPut("{columnId:guid}")]
+    public async Task<ActionResult<ColumnDto>> Update(
+        Guid boardId,
+        Guid columnId,
+        [FromBody] UpdateColumnRequest req)
     {
-        var list = await _svc.GetColumnsForBoardAsync(boardId);
-        return Ok(list);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
+        var dto = await _columnService.UpdateColumnAsync(boardId, columnId, req);
+        return Ok(dto);
     }
 
     [HttpDelete("{columnId:guid}")]
-    public async Task<IActionResult> Delete(Guid boardId, Guid columnId)
+    public async Task<IActionResult> Delete(Guid columnId)
     {
-        await _svc.DeleteColumnAsync(columnId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
+        await _columnService.DeleteColumnAsync(columnId);
         return NoContent();
     }
 }

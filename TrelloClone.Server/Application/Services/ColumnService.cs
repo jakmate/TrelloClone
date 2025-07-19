@@ -16,39 +16,6 @@ public class ColumnService
         _uow = uow;
     }
 
-    public async Task<ColumnDto> CreateColumnAsync(CreateColumnRequest req)
-    {
-        // 1) Business rule: board must exist
-        var board = await _boards.GetByIdAsync(req.BoardId)
-                    ?? throw new KeyNotFoundException("Board not found.");
-
-        // 2) Business rule: unique title per board
-        if (await _columns.ExistsWithTitleAsync(req.BoardId, req.Title))
-            throw new InvalidOperationException("Column title already in use.");
-
-        // 3) Map to domain
-        var column = new Column
-        {
-            Title = req.Title,
-            Position = req.Position,
-            BoardId = req.BoardId
-        };
-        _columns.Add(column);
-
-        // 4) Persist
-        await _uow.SaveChangesAsync();
-
-        // 5) Map back to DTO
-        return new ColumnDto
-        {
-            Id = column.Id,
-            Title = column.Title,
-            Position = column.Position,
-            BoardId = column.BoardId,
-            Tasks = new List<TaskDto>()
-        };
-    }
-
     public async Task<List<ColumnDto>> GetColumnsForBoardAsync(Guid boardId)
     {
         var list = await _columns.ListByBoardAsync(boardId);
@@ -66,6 +33,57 @@ public class ColumnService
                 AssignedUserId = t.AssignedUserId
             }).ToList()
         }).ToList();
+    }
+
+    public async Task<ColumnDto> CreateColumnAsync(CreateColumnRequest req)
+    {
+        var board = await _boards.GetByIdAsync(req.BoardId)
+                    ?? throw new KeyNotFoundException("Board not found.");
+
+        if (await _columns.ExistsWithTitleAsync(req.BoardId, req.Title))
+            throw new InvalidOperationException("Column title already in use.");
+
+        var column = new Column
+        {
+            Title = req.Title,
+            Position = req.Position,
+            BoardId = req.BoardId
+        };
+        _columns.Add(column);
+
+        await _uow.SaveChangesAsync();
+
+        return new ColumnDto
+        {
+            Id = column.Id,
+            Title = column.Title,
+            Position = column.Position,
+            BoardId = column.BoardId,
+            Tasks = new List<TaskDto>()
+        };
+    }
+
+    public async Task<ColumnDto> UpdateColumnAsync(Guid boardId, Guid columnId, UpdateColumnRequest req)
+    {
+        var column = await _columns.GetByIdAsync(columnId);
+        if (column == null)
+            throw new InvalidOperationException("Column not found.");
+
+        if (column.Title != req.Title)
+        {
+            bool nameExists = await _columns.ExistsWithTitleAsync(boardId, req.Title);
+            if (nameExists)
+                throw new InvalidOperationException("You already have a column with that name.");
+        }
+
+        column.Title = req.Title;
+        await _uow.SaveChangesAsync();
+
+        return new ColumnDto
+        {
+            Id = column.Id,
+            Title = column.Title
+        };
     }
 
     public async Task DeleteColumnAsync(Guid columnId)

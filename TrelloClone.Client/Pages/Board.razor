@@ -1,0 +1,517 @@
+@page "/board/{boardId:guid}"
+@using TrelloClone.Shared.DTOs
+@inject ColumnService ColumnService
+@inject TaskService TaskService
+@inject NavigationManager Navigation
+
+<div class="container-fluid p-3">
+    @if (loading)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (columns == null)
+    {
+        <div class="alert alert-danger">
+            <h4>Error</h4>
+            <p>Failed to load board columns.</p>
+            <button class="btn btn-primary" @onclick="GoBack">Go Back</button>
+        </div>
+    }
+    else
+    {
+        <div class="row mb-3">
+            <div class="col">
+                <h2>Board Columns</h2>
+                <button class="btn btn-primary" @onclick="ShowCreateColumn">
+                    <i class="bi bi-plus-lg"></i> Add Column
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var column in columns.OrderBy(c => c.Position))
+            {
+                <div class="col-md-4 col-lg-3">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            @if (editingColumnId == column.Id)
+                            {
+                                <input type="text" class="form-control form-control-sm" @bind="editColumnTitle" @onkeypress="(e) => OnEditColumnKeyPress(e, column.Id)" />
+                            }
+                            else
+                            {
+                                <h5 class="mb-0" @onclick="() => StartEditColumn(column.Id, column.Title)" style="cursor: pointer;" title="Click to edit">@column.Title</h5>
+                            }
+                            <div class="btn-group">
+                                @if (editingColumnId == column.Id)
+                                {
+                                    <button class="btn btn-sm btn-success" @onclick="() => SaveColumnEdit(column.Id)">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" @onclick="CancelEditColumn">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditColumn(column.Id, column.Title)" title="Edit column">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                }
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteColumn(column.Id)">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            @if (column.Tasks?.Any() == true)
+                            {
+                                @foreach (var task in column.Tasks)
+                                {
+                                    <div class="card mb-2">
+                                        <div class="card-body p-2">
+                                            @if (editingTaskId == task.Id)
+                                            {
+                                                <div class="mb-2">
+                                                    <input type="text" class="form-control form-control-sm mb-2" @bind="editTaskName" @onkeypress="(e) => OnEditTaskKeyPress(e, column.Id, task.Id)" />
+                                                    <select class="form-select form-select-sm" @bind="editTaskPriority">
+                                                        <option value="@PriorityLevel.Low">Low</option>
+                                                        <option value="@PriorityLevel.Medium">Medium</option>
+                                                        <option value="@PriorityLevel.High">High</option>
+                                                    </select>
+                                                </div>
+                                                <div class="d-flex justify-content-end">
+                                                    <button class="btn btn-sm btn-success me-1" @onclick="() => SaveTaskEdit(column.Id, task.Id)">
+                                                        <i class="bi bi-check"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-secondary" @onclick="CancelEditTask">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div style="cursor: pointer;" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Click to edit">
+                                                        <h6 class="card-title mb-1">@task.Name</h6>
+                                                        <small class="text-muted">Priority: @task.Priority</small>
+                                                    </div>
+                                                    <div class="btn-group">
+                                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTask(column.Id, task.Id)">
+                                                            <i class="bi bi-trash3"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted">No tasks yet</p>
+                            }
+                            <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="() => ShowCreateTask(column.Id)">
+                                <i class="bi bi-plus"></i> Add Task
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (showCreateTaskModal)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Task</h5>
+                    <button type="button" class="btn-close" @onclick="HideCreateTask"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="taskName" class="form-label">Task Name</label>
+                        <input type="text" class="form-control" id="taskName" @bind="newTaskName" @onkeypress="OnTaskKeyPress" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="taskPriority" class="form-label">Priority</label>
+                        <select class="form-select" id="taskPriority" @bind="newTaskPriority">
+                            <option value="@PriorityLevel.Low">Low</option>
+                            <option value="@PriorityLevel.Medium">Medium</option>
+                            <option value="@PriorityLevel.High">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideCreateTask">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="CreateTask" disabled="@(string.IsNullOrWhiteSpace(newTaskName) || creatingTask)">
+                        @if (creatingTask)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        Create Task
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop show"></div>
+}
+
+@if (showCreateModal)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Column</h5>
+                    <button type="button" class="btn-close" @onclick="HideCreateColumn"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="columnTitle" class="form-label">Column Title</label>
+                        <input type="text" class="form-control" id="columnTitle" @bind="newColumnTitle" @onkeypress="OnKeyPress" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideCreateColumn">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="CreateColumn" disabled="@(string.IsNullOrWhiteSpace(newColumnTitle) || creating)">
+                        @if (creating)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        Create
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop show"></div>
+}
+
+@code {
+    [Parameter] public Guid BoardId { get; set; }
+
+    private List<ColumnDto>? columns;
+    private bool loading = true;
+    private bool showCreateModal = false;
+    private bool creating = false;
+    private string newColumnTitle = string.Empty;
+
+    // Task creation fields
+    private bool showCreateTaskModal = false;
+    private bool creatingTask = false;
+    private string newTaskName = string.Empty;
+    private PriorityLevel newTaskPriority = PriorityLevel.Medium;
+    private Guid selectedColumnId;
+
+    // Edit fields
+    private Guid editingColumnId = Guid.Empty;
+    private string editColumnTitle = string.Empty;
+    private Guid editingTaskId = Guid.Empty;
+    private string editTaskName = string.Empty;
+    private PriorityLevel editTaskPriority = PriorityLevel.Medium;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadColumns();
+    }
+
+    private async Task LoadColumns()
+    {
+        try
+        {
+            loading = true;
+            columns = await ColumnService.GetColumnsForBoardAsync(BoardId);
+
+            if (columns != null)
+            {
+                foreach (var column in columns)
+                {
+                    column.Tasks = await TaskService.GetTasksForColumnAsync(column.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading columns: {ex.Message}");
+            columns = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void ShowCreateColumn()
+    {
+        newColumnTitle = string.Empty;
+        showCreateModal = true;
+    }
+
+    private void HideCreateColumn()
+    {
+        showCreateModal = false;
+        newColumnTitle = string.Empty;
+    }
+
+    private async Task CreateColumn()
+    {
+        if (string.IsNullOrWhiteSpace(newColumnTitle) || creating) return;
+
+        try
+        {
+            creating = true;
+            var position = columns?.Count ?? 0;
+            var request = new CreateColumnRequest
+            {
+                BoardId = BoardId,
+                Title = newColumnTitle.Trim(),
+                Position = position
+            };
+
+            var newColumn = await ColumnService.CreateColumnAsync(request);
+            columns?.Add(newColumn);
+            HideCreateColumn();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating column: {ex.Message}");
+        }
+        finally
+        {
+            creating = false;
+        }
+    }
+
+    private async Task DeleteColumn(Guid columnId)
+    {
+        if (!await ConfirmDelete()) return;
+
+        try
+        {
+            await ColumnService.DeleteColumnAsync(BoardId, columnId);
+            columns?.RemoveAll(c => c.Id == columnId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting column: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> ConfirmDelete()
+    {
+        return await Task.FromResult(true);
+    }
+
+    private async Task OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newColumnTitle))
+        {
+            await CreateColumn();
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    // Task management methods
+    private void ShowCreateTask(Guid columnId)
+    {
+        selectedColumnId = columnId;
+        newTaskName = string.Empty;
+        newTaskPriority = PriorityLevel.Medium;
+        showCreateTaskModal = true;
+    }
+
+    private void HideCreateTask()
+    {
+        showCreateTaskModal = false;
+        newTaskName = string.Empty;
+        selectedColumnId = Guid.Empty;
+    }
+
+    private async Task CreateTask()
+    {
+        if (string.IsNullOrWhiteSpace(newTaskName) || creatingTask) return;
+
+        try
+        {
+            creatingTask = true;
+            var request = new CreateTaskRequest
+            {
+                Name = newTaskName.Trim(),
+                Priority = newTaskPriority,
+                ColumnId = selectedColumnId
+            };
+
+            var newTask = await TaskService.CreateTaskAsync(request);
+            
+            var column = columns?.FirstOrDefault(c => c.Id == selectedColumnId);
+            if (column != null)
+            {
+                column.Tasks ??= new List<TaskDto>();
+                column.Tasks.Add(newTask);
+            }
+
+            HideCreateTask();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating task: {ex.Message}");
+        }
+        finally
+        {
+            creatingTask = false;
+        }
+    }
+
+    private async Task DeleteTask(Guid columnId, Guid taskId)
+    {
+        if (!await ConfirmDelete()) return;
+
+        try
+        {
+            await TaskService.DeleteTaskAsync(columnId, taskId);
+            
+            var column = columns?.FirstOrDefault(c => c.Id == columnId);
+            column?.Tasks?.RemoveAll(t => t.Id == taskId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting task: {ex.Message}");
+        }
+    }
+
+    private async Task OnTaskKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newTaskName))
+        {
+            await CreateTask();
+        }
+    }
+
+    // Column editing methods
+    private void StartEditColumn(Guid columnId, string title)
+    {
+        editingColumnId = columnId;
+        editColumnTitle = title;
+    }
+
+    private void CancelEditColumn()
+    {
+        editingColumnId = Guid.Empty;
+        editColumnTitle = string.Empty;
+    }
+
+    private async Task SaveColumnEdit(Guid columnId)
+    {
+        if (string.IsNullOrWhiteSpace(editColumnTitle)) 
+        {
+            return;
+        }
+
+        try
+        {
+            var request = new UpdateColumnRequest
+            {
+                Title = editColumnTitle.Trim()
+            };
+            
+            var updatedColumn = await ColumnService.UpdateColumnAsync(BoardId, columnId, request);
+            
+            var column = columns?.FirstOrDefault(c => c.Id == columnId);
+            if (column != null)
+            {
+                column.Title = updatedColumn.Title;
+            }
+
+            CancelEditColumn();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating column: {ex.Message}");
+        }
+    }
+
+    private async Task OnEditColumnKeyPress(KeyboardEventArgs e, Guid columnId)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(editColumnTitle))
+        {
+            await SaveColumnEdit(columnId);
+        }
+        else if (e.Key == "Escape")
+        {
+            CancelEditColumn();
+        }
+    }
+
+    // Task editing methods
+    private void StartEditTask(Guid taskId, string name, PriorityLevel priority)
+    {
+        editingTaskId = taskId;
+        editTaskName = name;
+        editTaskPriority = priority;
+    }
+
+    private void CancelEditTask()
+    {
+        editingTaskId = Guid.Empty;
+        editTaskName = string.Empty;
+        editTaskPriority = PriorityLevel.Medium;
+    }
+
+    private async Task SaveTaskEdit(Guid columnId, Guid taskId)
+    {
+        if (string.IsNullOrWhiteSpace(editTaskName)) return;
+
+        try
+        {
+            var request = new UpdateTaskRequest
+            {
+                Name = editTaskName.Trim(),
+                Priority = editTaskPriority
+            };
+
+            var updatedTask = await TaskService.UpdateTaskAsync(columnId, taskId, request);
+            
+            var column = columns?.FirstOrDefault(c => c.Id == columnId);
+            var task = column?.Tasks?.FirstOrDefault(t => t.Id == taskId);
+            if (task != null)
+            {
+                task.Name = updatedTask.Name;
+                task.Priority = updatedTask.Priority;
+            }
+
+            CancelEditTask();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating task: {ex.Message}");
+        }
+    }
+
+    private async Task OnEditTaskKeyPress(KeyboardEventArgs e, Guid columnId, Guid taskId)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(editTaskName))
+        {
+            await SaveTaskEdit(columnId, taskId);
+        }
+        else if (e.Key == "Escape")
+        {
+            CancelEditTask();
+        }
+    }
+}

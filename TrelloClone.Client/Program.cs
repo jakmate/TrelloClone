@@ -19,7 +19,8 @@ builder.Services.AddScoped<IBoardService>(provider =>
     var authStateProvider = provider.GetRequiredService<AuthenticationStateProvider>();
     return new BoardService(httpClient, authStateProvider);
 });
-
+builder.Services.AddScoped<ColumnService>();
+builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<AuthHttpMessageHandler>();
 builder.Services.AddScoped<HttpClient>(sp =>
 {

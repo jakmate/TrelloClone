@@ -19,36 +19,6 @@ public class TaskService
         _uow = uow;
     }
 
-    public async Task<TaskDto> CreateTaskAsync(CreateTaskRequest req)
-    {
-        // Ensure column exists
-        var col = await _columns.GetByIdAsync(req.ColumnId)
-                  ?? throw new KeyNotFoundException("Column not found.");
-
-        // Map to domain
-        var task = new TaskItem
-        {
-            Name = req.Name,
-            Priority = req.Priority,
-            AssignedUserId = req.AssignedUserId,
-            ColumnId = req.ColumnId
-        };
-        _tasks.Add(task);
-
-        // Persist
-        await _uow.SaveChangesAsync();
-
-        // Map back
-        return new TaskDto
-        {
-            Id = task.Id,
-            Name = task.Name,
-            Priority = task.Priority,
-            AssignedUserId = task.AssignedUserId,
-            ColumnId = task.ColumnId
-        };
-    }
-
     public async Task<List<TaskDto>> GetTasksForColumnAsync(Guid columnId)
     {
         var list = await _tasks.ListByColumnAsync(columnId);
@@ -62,23 +32,46 @@ public class TaskService
         }).ToList();
     }
 
+    public async Task<TaskDto> CreateTaskAsync(CreateTaskRequest req)
+    {
+        var col = await _columns.GetByIdAsync(req.ColumnId)
+                  ?? throw new KeyNotFoundException("Column not found.");
+
+        var task = new TaskItem
+        {
+            Name = req.Name,
+            Priority = req.Priority,
+            AssignedUserId = req.AssignedUserId,
+            ColumnId = req.ColumnId
+        };
+        _tasks.Add(task);
+
+        await _uow.SaveChangesAsync();
+
+        return new TaskDto
+        {
+            Id = task.Id,
+            Name = task.Name,
+            Priority = task.Priority,
+            AssignedUserId = task.AssignedUserId,
+            ColumnId = task.ColumnId
+        };
+    }
+
     public async Task<TaskDto> UpdateTaskAsync(Guid taskId, UpdateTaskRequest req)
     {
         var task = await _tasks.GetByIdAsync(taskId)
                    ?? throw new KeyNotFoundException("Task not found.");
 
-        // Apply changes
         if (req.Name is { } n) task.Name = n;
         if (req.Priority is { } p) task.Priority = p;
         if (req.AssignedUserId is { } uId)
         {
-            // validate user exists
             var usr = await _users.GetByIdWithBoardsAsync(uId)
                       ?? throw new KeyNotFoundException("Assigned user not found.");
             task.AssignedUserId = uId;
         }
 
-        // EF Core change-tracking picks up the modifications
         await _uow.SaveChangesAsync();
 
         return new TaskDto
