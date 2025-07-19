@@ -183,10 +183,7 @@
         isLoading = true;
         try
         {
-            if (currentUser != null)
-            {
-                boards = await BoardService.GetBoardsAsync(currentUser.Id);
-            }
+            boards = await BoardService.GetBoardsAsync();
         }
         catch (Exception ex)
         {
@@ -200,11 +197,8 @@
 
     private void ShowCreateModal()
     {
-        if (currentUser != null)
-        {
-            newBoard = new CreateBoardRequest { OwnerId = currentUser.Id };
-            showCreateModal = true;
-        }
+        newBoard = new CreateBoardRequest();
+        showCreateModal = true;
     }
 
     private void HideCreateModal()

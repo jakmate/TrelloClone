@@ -2,30 +2,69 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services
 {
     public class AuthStateProvider : AuthenticationStateProvider
     {
         private readonly IJSRuntime _jsRuntime;
-        private readonly HttpClient _httpClient;
+        private ClaimsPrincipal _currentUser = new(new ClaimsIdentity());
 
-        public AuthStateProvider(IJSRuntime jsRuntime, HttpClient httpClient)
+        public AuthStateProvider(IJSRuntime jsRuntime)
         {
             _jsRuntime = jsRuntime;
-            _httpClient = httpClient;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
-
+            var token = await GetTokenAsync();
             if (string.IsNullOrEmpty(token))
             {
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
+            var claimsPrincipal = GetClaimsFromToken(token);
+            if (claimsPrincipal == null)
+            {
+                await RemoveTokenAsync();
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            }
+
+            _currentUser = claimsPrincipal;
+            return new AuthenticationState(claimsPrincipal);
+        }
+
+        public async Task<string?> GetTokenAsync()
+        {
+            return await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+        }
+
+        public async Task SetTokenAsync(string token)
+        {
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", token);
+            var claimsPrincipal = GetClaimsFromToken(token);
+            if (claimsPrincipal != null)
+            {
+                _currentUser = claimsPrincipal;
+                NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
+            }
+        }
+
+        public async Task RemoveTokenAsync()
+        {
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+            _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
+        }
+
+        public void MarkUserAsLoggedOut()
+        {
+            _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
+        }
+
+        private ClaimsPrincipal? GetClaimsFromToken(string token)
+        {
             try
             {
                 var handler = new JwtSecurityTokenHandler();
@@ -34,50 +73,17 @@ namespace TrelloClone.Client.Services
                 // Check if token is expired
                 if (jsonToken.ValidTo < DateTime.UtcNow)
                 {
-                    await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
-                    return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                    return null;
                 }
 
                 var claims = jsonToken.Claims.ToList();
                 var identity = new ClaimsIdentity(claims, "jwt");
-                var user = new ClaimsPrincipal(identity);
-
-                // Set Authorization header for HTTP requests
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-                return new AuthenticationState(user);
+                return new ClaimsPrincipal(identity);
             }
             catch
             {
-                await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                return null;
             }
-        }
-
-        public void MarkUserAsAuthenticated(UserDto user)
-        {
-            var claims = new List<Claim>
-            {
-                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(ClaimTypes.Name, user.UserName),
-                new(ClaimTypes.Email, user.Email)
-            };
-
-            var identity = new ClaimsIdentity(claims, "jwt");
-            var claimsPrincipal = new ClaimsPrincipal(identity);
-
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
-        }
-
-        public void MarkUserAsLoggedOut()
-        {
-            var identity = new ClaimsIdentity();
-            var user = new ClaimsPrincipal(identity);
-
-            _httpClient.DefaultRequestHeaders.Authorization = null;
-
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
         }
     }
 }

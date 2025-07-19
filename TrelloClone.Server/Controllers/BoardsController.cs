@@ -5,6 +5,7 @@ using TrelloClone.Shared.DTOs;
 
 [ApiController]
 [Route("api/boards")]
+[Authorize]
 public class BoardsController : ControllerBase
 {
     private readonly BoardService _boardService;
@@ -15,6 +16,10 @@ public class BoardsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<BoardDto>> Create([FromBody] CreateBoardRequest req)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
         try
         {
             var dto = await _boardService.CreateBoardAsync(req.Name, req.OwnerId);
@@ -60,6 +65,10 @@ public class BoardsController : ControllerBase
     [HttpDelete("{boardId:guid}")]
     public async Task<IActionResult> Delete(Guid boardId)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
         await _boardService.DeleteBoardAsync(boardId);
         return NoContent();
     }
@@ -67,6 +76,10 @@ public class BoardsController : ControllerBase
     [HttpGet("{boardId:guid}")]
     public async Task<ActionResult<BoardDto>> Get(Guid boardId)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
         try { 
             var dto = await _boardService.GetBoardAsync(boardId);
             if (dto == null) return NotFound();
@@ -79,12 +92,16 @@ public class BoardsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<BoardDto[]>> GetBoards([FromQuery] Guid ownerId)
+    public async Task<ActionResult<BoardDto[]>> GetBoards()
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
         try
         {
-            var dto = await _boardService.GetAllBoardsAsync(ownerId);
-            if (dto == null) return NotFound();
+            var dto = await _boardService.GetAllBoardsAsync(userGuid);
+            if (dto == null) return Ok(new BoardDto[0]); // Return empty array instead of NotFound
             return Ok(dto);
         }
         catch (Exception ex)

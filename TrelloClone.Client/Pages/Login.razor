@@ -15,6 +15,13 @@
                     <h3 class="text-center">Login</h3>
                 </div>
                 <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+                    
                     <EditForm Model="loginRequest" OnValidSubmit="HandleLogin">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger" />
@@ -54,18 +61,34 @@
 @code {
     private LoginRequest loginRequest = new();
     private bool isLoading = false;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if already authenticated
+        if (await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/boards");
+        }
+    }
 
     private async Task HandleLogin()
     {
         isLoading = true;
+        errorMessage = string.Empty;
+        
         try
         {
             await AuthService.LoginAsync(loginRequest);
             Navigation.NavigateTo("/boards");
         }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Invalid email or password. Please try again.";
+        }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Login failed: {ex.Message}");
+            errorMessage = $"An error occurred: {ex.Message}";
         }
         finally
         {

@@ -1,12 +1,14 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Components.Authorization;
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services;
 
 public interface IBoardService
 {
-    Task<List<BoardDto>> GetBoardsAsync(Guid ownerId);
+    Task<List<BoardDto>> GetBoardsAsync();
     Task<BoardDto?> GetBoardAsync(Guid id);
     Task<BoardDto> CreateBoardAsync(CreateBoardRequest request);
     Task<BoardDto> UpdateBoardAsync(Guid id, UpdateBoardRequest request);
@@ -16,15 +18,24 @@ public interface IBoardService
 public class BoardService : IBoardService
 {
     private readonly HttpClient _httpClient;
+    private readonly AuthenticationStateProvider _authStateProvider;
 
-    public BoardService(HttpClient httpClient)
+    public BoardService(HttpClient httpClient, AuthenticationStateProvider authStateProvider)
     {
         _httpClient = httpClient;
+        _authStateProvider = authStateProvider;
     }
 
-    public async Task<List<BoardDto>> GetBoardsAsync(Guid ownerId)
+    public async Task<List<BoardDto>> GetBoardsAsync()
     {
-        return await _httpClient.GetFromJsonAsync<List<BoardDto>>($"api/boards?ownerId={ownerId}") ?? new List<BoardDto>(); ;
+        var authState = await _authStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+            return new List<BoardDto>();
+
+        var response = await _httpClient.GetFromJsonAsync<BoardDto[]>($"api/boards?ownerId={userId}");
+        return response?.ToList() ?? new List<BoardDto>();
     }
 
     public async Task<BoardDto?> GetBoardAsync(Guid id)
@@ -33,7 +44,17 @@ public class BoardService : IBoardService
     }
 
     public async Task<BoardDto> CreateBoardAsync(CreateBoardRequest request)
-    {   
+    {
+        // Get current user ID for the request
+        var authState = await _authStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+            throw new UnauthorizedAccessException("User not authenticated");
+
+        // Set the OwnerId if not already set
+        request.OwnerId = userGuid;
+
         var response = await _httpClient.PostAsJsonAsync("api/boards", request);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<BoardDto>() ?? throw new InvalidOperationException("Failed to create board");
@@ -49,12 +70,8 @@ public class BoardService : IBoardService
     public async Task<bool> DeleteBoardAsync(Guid id)
     {
         var response = await _httpClient.DeleteAsync($"api/boards/{id}");
-
-        // Return true for successful deletion (204 No Content)
         if (response.StatusCode == HttpStatusCode.NoContent)
             return true;
-
-        // Throw exception for error cases
         var error = await response.Content.ReadAsStringAsync();
         throw new HttpRequestException($"Delete failed: {error}");
     }

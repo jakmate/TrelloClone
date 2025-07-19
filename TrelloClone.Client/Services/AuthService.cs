@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Security.Claims;
-using System.Text.Json;
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services;
@@ -14,18 +12,17 @@ public interface IAuthService
     Task LogoutAsync();
     Task<bool> IsAuthenticatedAsync();
     Task<UserDto?> GetCurrentUserAsync();
+    Task<bool> ValidateTokenAsync();
 }
 
 public class AuthService : IAuthService
 {
     private readonly HttpClient _httpClient;
-    private readonly IJSRuntime _jsRuntime;
     private readonly AuthStateProvider _authStateProvider;
 
-    public AuthService(HttpClient httpClient, IJSRuntime jsRuntime, AuthenticationStateProvider authStateProvider)
+    public AuthService(HttpClient httpClient, AuthenticationStateProvider authStateProvider)
     {
         _httpClient = httpClient;
-        _jsRuntime = jsRuntime;
         _authStateProvider = (AuthStateProvider)authStateProvider;
     }
 
@@ -36,10 +33,9 @@ public class AuthService : IAuthService
         if (response.IsSuccessStatusCode)
         {
             var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
-            if (authResponse != null)
+            if (authResponse?.Token != null)
             {
-                await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", authResponse.Token);
-                _authStateProvider.MarkUserAsAuthenticated(authResponse.User);
+                await _authStateProvider.SetTokenAsync(authResponse.Token);
                 return authResponse;
             }
         }
@@ -55,10 +51,9 @@ public class AuthService : IAuthService
         if (response.IsSuccessStatusCode)
         {
             var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
-            if (authResponse != null)
+            if (authResponse?.Token != null)
             {
-                await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", authResponse.Token);
-                _authStateProvider.MarkUserAsAuthenticated(authResponse.User);
+                await _authStateProvider.SetTokenAsync(authResponse.Token);
                 return authResponse;
             }
         }
@@ -69,14 +64,13 @@ public class AuthService : IAuthService
 
     public async Task LogoutAsync()
     {
-        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
-        _authStateProvider.MarkUserAsLoggedOut();
+        await _authStateProvider.RemoveTokenAsync();
     }
 
     public async Task<bool> IsAuthenticatedAsync()
     {
-        var token = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
-        return !string.IsNullOrEmpty(token);
+        var authState = await _authStateProvider.GetAuthenticationStateAsync();
+        return authState.User.Identity?.IsAuthenticated == true;
     }
 
     public async Task<UserDto?> GetCurrentUserAsync()
@@ -99,5 +93,18 @@ public class AuthService : IAuthService
             }
         }
         return null;
+    }
+
+    public async Task<bool> ValidateTokenAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("/api/auth/me");
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
