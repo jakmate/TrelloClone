@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.SignalR.Client;
 using TrelloClone.Client;
 using TrelloClone.Client.Services;
 
@@ -19,9 +21,11 @@ builder.Services.AddScoped<IBoardService>(provider =>
     var authStateProvider = provider.GetRequiredService<AuthenticationStateProvider>();
     return new BoardService(httpClient, authStateProvider);
 });
+builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<ColumnService>();
 builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<AuthHttpMessageHandler>();
+
 builder.Services.AddScoped<HttpClient>(sp =>
 {
     var handler = sp.GetRequiredService<AuthHttpMessageHandler>();
@@ -33,6 +37,29 @@ builder.Services.AddScoped<HttpClient>(sp =>
     };
     
     return httpClient;
+});
+
+builder.Services.AddScoped(provider =>
+{
+    var authStateProvider = provider.GetRequiredService<AuthStateProvider>();
+    return new HubConnectionBuilder()
+        .WithUrl("http://localhost:5084/boardhub", options =>
+        {
+            options.AccessTokenProvider = async () =>
+            {
+                var token = await authStateProvider.GetTokenAsync();
+                return token;
+            };
+        })
+        .WithAutomaticReconnect()
+        .Build();
+});
+
+builder.Services.AddScoped<NotificationHubClient>(provider =>
+{
+    var hubConnection = provider.GetRequiredService<HubConnection>();
+    var logger = provider.GetRequiredService<ILogger<NotificationHubClient>>();
+    return new NotificationHubClient(hubConnection, logger);
 });
 
 await builder.Build().RunAsync();

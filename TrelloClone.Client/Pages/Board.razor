@@ -2,6 +2,7 @@
 @using TrelloClone.Shared.DTOs
 @inject ColumnService ColumnService
 @inject TaskService TaskService
+@inject IInvitationService InvitationService
 @inject NavigationManager Navigation
 
 <div class="container-fluid p-3">
@@ -28,6 +29,9 @@
                 <h2>Board Columns</h2>
                 <button class="btn btn-primary" @onclick="ShowCreateColumn">
                     <i class="bi bi-plus-lg"></i> Add Column
+                </button>
+                <button class="btn btn-outline-primary" @onclick="ShowInviteUser">
+                    <i class="bi bi-person-plus"></i> Invite User
                 </button>
             </div>
         </div>
@@ -199,6 +203,38 @@
     <div class="modal-backdrop show"></div>
 }
 
+@if (showInviteModal)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Invite User to Board</h5>
+                    <button type="button" class="btn-close" @onclick="HideInviteUser"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" @bind="inviteUsername" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideInviteUser">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SendInvite" 
+                        disabled="@(string.IsNullOrWhiteSpace(inviteUsername) || sendingInvite)">
+                        @if (sendingInvite)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Send Invite
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop show"></div>
+}
+
 @code {
     [Parameter] public Guid BoardId { get; set; }
 
@@ -221,6 +257,12 @@
     private Guid editingTaskId = Guid.Empty;
     private string editTaskName = string.Empty;
     private PriorityLevel editTaskPriority = PriorityLevel.Medium;
+
+    // Invite fields
+    private bool showInviteModal = false;
+    private bool sendingInvite = false;
+    private string inviteUsername = string.Empty;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -512,6 +554,39 @@
         else if (e.Key == "Escape")
         {
             CancelEditTask();
+        }
+    }
+
+    private void ShowInviteUser()
+    {
+        inviteUsername = string.Empty;
+        showInviteModal = true;
+    }
+
+    private void HideInviteUser()
+    {
+        showInviteModal = false;
+        inviteUsername = string.Empty;
+    }
+
+    private async Task SendInvite()
+    {
+        if (string.IsNullOrWhiteSpace(inviteUsername) || sendingInvite) return;
+
+        try
+        {
+            sendingInvite = true;
+            // Pass username instead of email
+            await InvitationService.SendInvitation(BoardId, inviteUsername.Trim());
+            HideInviteUser();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error sending invite: {ex.Message}");
+        }
+        finally
+        {
+            sendingInvite = false;
         }
     }
 }

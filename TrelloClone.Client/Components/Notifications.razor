@@ -1,0 +1,101 @@
+@using TrelloClone.Shared.DTOs
+@inject IInvitationService InvitationService
+@inject NotificationHubClient NotificationHub
+@implements IDisposable
+
+<div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle" @onclick="ToggleDropdown">
+        <i class="bi bi-bell"></i>
+        @if (UnreadCount > 0)
+        {
+            <span class="badge bg-danger">@UnreadCount</span>
+        }
+    </button>
+    <div class="dropdown-menu @(IsOpen ? "show" : "")" aria-labelledby="notificationsDropdown">
+        <div class="px-3 py-2" style="min-width: 300px;">
+            <h6>Invitations</h6>
+            @if (Invitations.Count == 0)
+            {
+                <p>No pending invitations</p>
+            }
+            else
+            {
+                <ul class="list-group">
+                    @foreach (var invitation in Invitations)
+                    {
+                        <li class="list-group-item">
+                            <div>
+                                <strong>@invitation.BoardName</strong>
+                                <p>Invited by: @invitation.InviterName</p>
+                                <small class="text-muted">@invitation.SentAt.ToString("g")</small>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button class="btn btn-sm btn-success me-2" @onclick="() => Accept(invitation.Id)">Accept</button>
+                                    <button class="btn btn-sm btn-danger" @onclick="() => Decline(invitation.Id)">Decline</button>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool IsOpen { get; set; }
+    private int UnreadCount { get; set; }
+    private List<BoardInvitationDto> Invitations { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInvitations();
+        NotificationHub.OnInvitationReceived += HandleNewInvitation;
+        await NotificationHub.StartAsync();
+    }
+
+    private async Task LoadInvitations()
+    {
+        Invitations = await InvitationService.GetPendingInvitations();
+        UnreadCount = Invitations.Count;
+    }
+
+    private void HandleNewInvitation(BoardInvitationDto invitation)
+    {
+        Invitations.Add(invitation);
+        UnreadCount++;
+        StateHasChanged();
+    }
+
+    private void ToggleDropdown()
+    {
+        IsOpen = !IsOpen;
+        if (IsOpen) UnreadCount = 0; // Mark as read when opened
+    }
+
+    private async Task Accept(Guid invitationId)
+    {
+        await InvitationService.AcceptInvitation(invitationId);
+        RemoveInvitation(invitationId);
+    }
+
+    private async Task Decline(Guid invitationId)
+    {
+        await InvitationService.DeclineInvitation(invitationId);
+        RemoveInvitation(invitationId);
+    }
+
+    private void RemoveInvitation(Guid invitationId)
+    {
+        var invitation = Invitations.FirstOrDefault(i => i.Id == invitationId);
+        if (invitation != null)
+        {
+            Invitations.Remove(invitation);
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        NotificationHub.OnInvitationReceived -= HandleNewInvitation;
+    }
+}

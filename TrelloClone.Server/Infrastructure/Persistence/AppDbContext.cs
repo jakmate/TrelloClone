@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<User> Users => Set<User>();
     public DbSet<BoardUser> BoardUsers => Set<BoardUser>();
+    public DbSet<BoardInvitation> BoardInvitation => Set<BoardInvitation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -19,6 +20,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new TaskItemConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new BoardUserConfiguration());
+        modelBuilder.ApplyConfiguration(new BoardInvitationConfiguration());
 
         // composite PK for join table
         modelBuilder.Entity<BoardUser>()

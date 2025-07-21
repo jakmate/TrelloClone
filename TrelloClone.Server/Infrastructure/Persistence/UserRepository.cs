@@ -18,8 +18,8 @@ public class UserRepository : IUserRepository
     public async Task<User?> GetByEmailAsync(string email) =>
         await _ctx.Users.FirstOrDefaultAsync(u => u.Email == email);
 
-    public async Task<bool> GetByUsernameAsync(string userName) =>
-       await _ctx.Users.AnyAsync(u => u.UserName == userName);
+    public async Task<User?> GetByUsernameAsync(string userName) =>
+       await _ctx.Users.FirstOrDefaultAsync(u => u.UserName == userName);
 
     public async Task<List<User>> GetAllAsync() =>
         await _ctx.Users.ToListAsync();

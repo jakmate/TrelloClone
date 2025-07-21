@@ -7,4 +7,5 @@ public class Board
 	// Navigation
 	public ICollection<Column> Columns { get; set; } = new List<Column>();
 	public ICollection<BoardUser> BoardUsers { get; set; } = new List<BoardUser>();
+    public ICollection<BoardInvitation> Invitations { get; set; } = new List<BoardInvitation>();
 }

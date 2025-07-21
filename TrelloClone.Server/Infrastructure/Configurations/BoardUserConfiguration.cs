@@ -7,5 +7,8 @@ public class BoardUserConfiguration : IEntityTypeConfiguration<BoardUser>
     {
         builder.ToTable("BoardUsers");
         builder.HasKey(bu => new { bu.BoardId, bu.UserId });
+        builder.Property(bu => bu.PermissionLevel)
+            .IsRequired()
+            .HasConversion<string>();
     }
 }

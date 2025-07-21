@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using TrelloClone.Server.Application.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +60,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IBoardUserRepository, BoardUserRepository>();
 builder.Services.AddScoped<IColumnRepository, ColumnRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+builder.Services.AddScoped<IBoardInvitationRepository, BoardInvitationRepository>();
 
 // Services
 builder.Services.AddScoped<AuthService>();
@@ -66,6 +68,7 @@ builder.Services.AddScoped<BoardService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ColumnService>();
 builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<InvitationService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
@@ -124,6 +127,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-// app.MapHub<BoardHub>("/boardHub");
+app.MapHub<BoardHub>("/boardhub");
 
 app.Run();
