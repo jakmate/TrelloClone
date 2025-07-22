@@ -60,7 +60,6 @@ public class InvitationService
             SentAt = invitation.SentAt
         };
 
-        // Notify invited user
         try
         {
             await _hubContext.Clients.User(invitedUser.Id.ToString())
@@ -92,7 +91,6 @@ public class InvitationService
         invitation.Status = InvitationStatus.Accepted;
         await _uow.SaveChangesAsync();
 
-        // Notify board members
         await _hubContext.Clients.Group(invitation.BoardId.ToString())
             .SendAsync("UserJoinedBoard", new { BoardId = invitation.BoardId, UserId = userId });
     }

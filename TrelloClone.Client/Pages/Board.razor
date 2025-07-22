@@ -1,5 +1,6 @@
 @page "/board/{boardId:guid}"
 @using TrelloClone.Shared.DTOs
+@inject IBoardService BoardService
 @inject ColumnService ColumnService
 @inject TaskService TaskService
 @inject IInvitationService InvitationService
@@ -27,12 +28,16 @@
         <div class="row mb-3">
             <div class="col">
                 <h2>Board Columns</h2>
-                <button class="btn btn-primary" @onclick="ShowCreateColumn">
-                    <i class="bi bi-plus-lg"></i> Add Column
-                </button>
-                <button class="btn btn-outline-primary" @onclick="ShowInviteUser">
-                    <i class="bi bi-person-plus"></i> Invite User
-                </button>
+                @if (canEdit) {
+                    <button class="btn btn-primary" @onclick="ShowCreateColumn">
+                        <i class="bi bi-plus-lg"></i> Add Column
+                    </button>
+                }
+                @if (canInvite) {
+                    <button class="btn btn-outline-primary" @onclick="ShowInviteUser">
+                        <i class="bi bi-person-plus"></i> Invite User
+                    </button>
+                }
             </div>
         </div>
 
@@ -42,7 +47,7 @@
                 <div class="col-md-4 col-lg-3">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            @if (editingColumnId == column.Id)
+                            @if (editingColumnId == column.Id && canEdit)
                             {
                                 <input type="text" class="form-control form-control-sm" @bind="editColumnTitle" @onkeypress="(e) => OnEditColumnKeyPress(e, column.Id)" />
                             }
@@ -50,26 +55,28 @@
                             {
                                 <h5 class="mb-0" @onclick="() => StartEditColumn(column.Id, column.Title)" style="cursor: pointer;" title="Click to edit">@column.Title</h5>
                             }
-                            <div class="btn-group">
-                                @if (editingColumnId == column.Id)
-                                {
-                                    <button class="btn btn-sm btn-success" @onclick="() => SaveColumnEdit(column.Id)">
-                                        <i class="bi bi-check"></i>
+                            @if (canEdit) {
+                                <div class="btn-group">
+                                    @if (editingColumnId == column.Id)
+                                    {
+                                        <button class="btn btn-sm btn-success" @onclick="() => SaveColumnEdit(column.Id)">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-secondary" @onclick="CancelEditColumn">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditColumn(column.Id, column.Title)" title="Edit column">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    }
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteColumn(column.Id)">
+                                        <i class="bi bi-trash3"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-secondary" @onclick="CancelEditColumn">
-                                        <i class="bi bi-x"></i>
-                                    </button>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditColumn(column.Id, column.Title)" title="Edit column">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                }
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteColumn(column.Id)">
-                                    <i class="bi bi-trash3"></i>
-                                </button>
-                            </div>
+                                </div>
+                            }
                         </div>
                         <div class="card-body">
                             @if (column.Tasks?.Any() == true)
@@ -78,7 +85,7 @@
                                 {
                                     <div class="card mb-2">
                                         <div class="card-body p-2">
-                                            @if (editingTaskId == task.Id)
+                                            @if (editingTaskId == task.Id && canEdit)
                                             {
                                                 <div class="mb-2">
                                                     <input type="text" class="form-control form-control-sm mb-2" @bind="editTaskName" @onkeypress="(e) => OnEditTaskKeyPress(e, column.Id, task.Id)" />
@@ -104,14 +111,16 @@
                                                         <h6 class="card-title mb-1">@task.Name</h6>
                                                         <small class="text-muted">Priority: @task.Priority</small>
                                                     </div>
-                                                    <div class="btn-group">
-                                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
-                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTask(column.Id, task.Id)">
-                                                            <i class="bi bi-trash3"></i>
-                                                        </button>
-                                                    </div>
+                                                    @if (canEdit) {
+                                                        <div class="btn-group">
+                                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </button>
+                                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTask(column.Id, task.Id)">
+                                                                <i class="bi bi-trash3"></i>
+                                                            </button>
+                                                        </div>
+                                                    }
                                                 </div>
                                             }
                                         </div>
@@ -122,9 +131,11 @@
                             {
                                 <p class="text-muted">No tasks yet</p>
                             }
-                            <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="() => ShowCreateTask(column.Id)">
-                                <i class="bi bi-plus"></i> Add Task
-                            </button>
+                            @if (canEdit) {
+                                <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="() => ShowCreateTask(column.Id)">
+                                    <i class="bi bi-plus"></i> Add Task
+                                </button>
+                            }
                         </div>
                     </div>
                 </div>
@@ -133,115 +144,112 @@
     }
 </div>
 
-@if (showCreateTaskModal)
-{
-    <div class="modal show d-block" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create New Task</h5>
-                    <button type="button" class="btn-close" @onclick="HideCreateTask"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="taskName" class="form-label">Task Name</label>
-                        <input type="text" class="form-control" id="taskName" @bind="newTaskName" @onkeypress="OnTaskKeyPress" />
-                    </div>
-                    <div class="mb-3">
-                        <label for="taskPriority" class="form-label">Priority</label>
-                        <select class="form-select" id="taskPriority" @bind="newTaskPriority">
-                            <option value="@PriorityLevel.Low">Low</option>
-                            <option value="@PriorityLevel.Medium">Medium</option>
-                            <option value="@PriorityLevel.High">High</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="HideCreateTask">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="CreateTask" disabled="@(string.IsNullOrWhiteSpace(newTaskName) || creatingTask)">
-                        @if (creatingTask)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        }
-                        Create Task
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop show"></div>
-}
 
-@if (showCreateModal)
-{
-    <div class="modal show d-block" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create New Column</h5>
-                    <button type="button" class="btn-close" @onclick="HideCreateColumn"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="columnTitle" class="form-label">Column Title</label>
-                        <input type="text" class="form-control" id="columnTitle" @bind="newColumnTitle" @onkeypress="OnKeyPress" />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="HideCreateColumn">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="CreateColumn" disabled="@(string.IsNullOrWhiteSpace(newColumnTitle) || creating)">
-                        @if (creating)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        }
-                        Create
-                    </button>
-                </div>
+<BaseModal Show="@showCreateTaskModal" Title="Create New Task" OnCancel="HideCreateTask">
+    <ChildContent>
+        <div class="mb-3">
+            <label for="taskName" class="form-label">Task Name</label>
+            <input type="text" 
+                   class="form-control" 
+                   id="taskName" 
+                   @bind="newTaskName" 
+                   @onkeypress="OnTaskKeyPress" />
+            <div class="mb-3">
+                <label for="taskPriority" class="form-label">Priority</label>
+                <select class="form-select" id="taskPriority" @bind="newTaskPriority">
+                    <option value="@PriorityLevel.Low">Low</option>
+                    <option value="@PriorityLevel.Medium">Medium</option>
+                    <option value="@PriorityLevel.High">High</option>
+                </select>
             </div>
         </div>
-    </div>
-    <div class="modal-backdrop show"></div>
-}
+    </ChildContent>
 
-@if (showInviteModal)
-{
-    <div class="modal show d-block" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Invite User to Board</h5>
-                    <button type="button" class="btn-close" @onclick="HideInviteUser"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" @bind="inviteUsername" />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="HideInviteUser">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="SendInvite" 
-                        disabled="@(string.IsNullOrWhiteSpace(inviteUsername) || sendingInvite)">
-                        @if (sendingInvite)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        Send Invite
-                    </button>
-                </div>
-            </div>
+    <FooterContent>
+        <button type="button" class="btn btn-secondary" @onclick="HideCreateTask">
+            Cancel
+        </button>
+        <button type="button"
+                class="btn btn-primary"
+                @onclick="CreateTask"
+                disabled="@(string.IsNullOrWhiteSpace(newTaskName) || creatingTask)">
+            @if (creatingTask)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            Create Task
+        </button>
+    </FooterContent>
+</BaseModal>
+
+
+<BaseModal Show="@showCreateColumnModal" Title="Create New Column" OnCancel="HideCreateColumn">
+    <ChildContent>
+        <div class="mb-3">
+            <label for="columnTitle" class="form-label">Column Title</label>
+            <input type="text" 
+                   class="form-control" 
+                   id="columnTitle" 
+                   @bind="newColumnTitle" 
+                   @onkeypress="OnKeyPress" />
         </div>
-    </div>
-    <div class="modal-backdrop show"></div>
-}
+    </ChildContent>
+
+    <FooterContent>
+        <button type="button" class="btn btn-secondary" @onclick="HideCreateColumn">
+            Cancel
+        </button>
+        <button type="button" 
+                class="btn btn-primary" 
+                @onclick="CreateColumn" 
+                disabled="@(string.IsNullOrWhiteSpace(newColumnTitle) || creatingColumn)">
+            @if (creatingColumn)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            Create
+        </button>
+    </FooterContent>
+</BaseModal>
+
+
+<BaseModal Show="@showInviteModal" Title="Invite User to Board" OnCancel="HideInviteUser">
+    <ChildContent>
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" @bind="inviteUsername" />
+        </div>
+        <div class="mb-3">
+            <label for="permissionLevel" class="form-label">Permissions</label>
+            <select class="form-select" id="permissionLevel" @bind="newPermissionLevel">
+                <option value="@PermissionLevel.Viewer">Viewer</option>
+                <option value="@PermissionLevel.Editor">Editor</option>
+                <option value="@PermissionLevel.Admin">Admin</option>
+            </select>
+        </div>
+    </ChildContent>
+
+    <FooterContent>
+        <button type="button" class="btn btn-secondary" @onclick="HideInviteUser">Cancel</button>
+        <button type="button" class="btn btn-primary" @onclick="SendInvite" 
+            disabled="@(string.IsNullOrWhiteSpace(inviteUsername) || sendingInvite)">
+            @if (sendingInvite)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            Send Invite
+        </button>
+    </FooterContent>
+</BaseModal>
+
 
 @code {
     [Parameter] public Guid BoardId { get; set; }
 
     private List<ColumnDto>? columns;
     private bool loading = true;
-    private bool showCreateModal = false;
-    private bool creating = false;
+    private bool showCreateColumnModal = false;
+    private bool creatingColumn = false;
     private string newColumnTitle = string.Empty;
 
     // Task creation fields
@@ -250,6 +258,7 @@
     private string newTaskName = string.Empty;
     private PriorityLevel newTaskPriority = PriorityLevel.Medium;
     private Guid selectedColumnId;
+    private PermissionLevel newPermissionLevel = PermissionLevel.Viewer;
 
     // Edit fields
     private Guid editingColumnId = Guid.Empty;
@@ -263,9 +272,14 @@
     private bool sendingInvite = false;
     private string inviteUsername = string.Empty;
 
+    // Permissions
+    private bool canEdit;
+    private bool canInvite;
 
     protected override async Task OnInitializedAsync()
     {
+        canEdit = await BoardService.CanEditAsync(BoardId);
+        canInvite = await BoardService.CanInviteAsync(BoardId);
         await LoadColumns();
     }
 
@@ -298,22 +312,22 @@
     private void ShowCreateColumn()
     {
         newColumnTitle = string.Empty;
-        showCreateModal = true;
+        showCreateColumnModal = true;
     }
 
     private void HideCreateColumn()
     {
-        showCreateModal = false;
+        showCreateColumnModal = false;
         newColumnTitle = string.Empty;
     }
 
     private async Task CreateColumn()
     {
-        if (string.IsNullOrWhiteSpace(newColumnTitle) || creating) return;
+        if (string.IsNullOrWhiteSpace(newColumnTitle) || creatingColumn) return;
 
         try
         {
-            creating = true;
+            creatingColumn = true;
             var position = columns?.Count ?? 0;
             var request = new CreateColumnRequest
             {
@@ -328,11 +342,11 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error creating column: {ex.Message}");
+            Console.WriteLine($"Error creatingColumn column: {ex.Message}");
         }
         finally
         {
-            creating = false;
+            creatingColumn = false;
         }
     }
 
@@ -412,7 +426,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error creating task: {ex.Message}");
+            Console.WriteLine($"Error creatingColumn task: {ex.Message}");
         }
         finally
         {
@@ -576,7 +590,7 @@
         try
         {
             sendingInvite = true;
-            await InvitationService.SendInvitation(BoardId, inviteUsername.Trim());
+            await InvitationService.SendInvitation(BoardId, inviteUsername.Trim(), newPermissionLevel);
             HideInviteUser();
         }
         catch (Exception ex)

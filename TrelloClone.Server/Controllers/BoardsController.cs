@@ -109,4 +109,18 @@ public class BoardsController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+
+    [HttpGet("{boardId}/permission")]
+    public async Task<ActionResult<PermissionLevel>> GetUserPermission(Guid boardId)
+    {
+        var userId = GetCurrentUserId();
+        var permission = await _boardService.GetUserPermissionAsync(boardId, userId);
+        return Ok(permission);
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.Parse(userIdString);
+    }
 }

@@ -13,6 +13,10 @@ public interface IBoardService
     Task<BoardDto> CreateBoardAsync(CreateBoardRequest request);
     Task<BoardDto> UpdateBoardAsync(Guid id, UpdateBoardRequest request);
     Task<bool> DeleteBoardAsync(Guid id);
+    
+    Task<PermissionLevel> GetUserPermissionAsync(Guid boardId);
+    Task<bool> CanEditAsync(Guid boardId);
+    Task<bool> CanInviteAsync(Guid boardId);
 }
 
 public class BoardService : IBoardService
@@ -74,5 +78,22 @@ public class BoardService : IBoardService
             return true;
         var error = await response.Content.ReadAsStringAsync();
         throw new HttpRequestException($"Delete failed: {error}");
+    }
+
+    public async Task<PermissionLevel> GetUserPermissionAsync(Guid boardId)
+    {
+        return await _httpClient.GetFromJsonAsync<PermissionLevel>($"api/boards/{boardId}/permission");
+    }
+
+    public async Task<bool> CanEditAsync(Guid boardId)
+    {
+        var permission = await GetUserPermissionAsync(boardId);
+        return permission >= PermissionLevel.Editor;
+    }
+
+    public async Task<bool> CanInviteAsync(Guid boardId)
+    {
+        var permission = await GetUserPermissionAsync(boardId);
+        return permission == PermissionLevel.Admin;
     }
 }

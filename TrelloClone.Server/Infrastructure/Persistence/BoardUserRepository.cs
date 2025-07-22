@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TrelloClone.Shared.DTOs;
 
 public class BoardUserRepository : IBoardUserRepository
 {
@@ -9,4 +10,12 @@ public class BoardUserRepository : IBoardUserRepository
 
     public async Task<bool> ExistsAsync(Guid boardId, Guid userId) =>
         await _ctx.BoardUsers.AnyAsync(bu => bu.BoardId == boardId && bu.UserId == userId);
+
+    public async Task<PermissionLevel> GetUserPermissionAsync(Guid boardId, Guid userId)
+    {
+        var boardUser = await _ctx.BoardUsers
+            .FirstOrDefaultAsync(bu => bu.BoardId == boardId && bu.UserId == userId);
+
+        return boardUser?.PermissionLevel ?? PermissionLevel.Viewer;
+    }
 }

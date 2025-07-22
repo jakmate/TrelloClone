@@ -21,7 +21,12 @@ public class BoardService
         var board = new Board
         {
             Name = name,
-            BoardUsers = new List<BoardUser> { new BoardUser { UserId = ownerId } }
+            BoardUsers = new List<BoardUser> { 
+                new BoardUser { 
+                    UserId = ownerId,
+                    PermissionLevel = PermissionLevel.Admin 
+                } 
+            }
         };
 
         _boards.Add(board);
@@ -91,5 +96,10 @@ public class BoardService
             Id = board.Id,
             Name = board.Name,
         }).ToArray();
+    }
+
+    public async Task<PermissionLevel> GetUserPermissionAsync(Guid boardId, Guid userId)
+    {
+        return await _boardUsers.GetUserPermissionAsync(boardId, userId);
     }
 }

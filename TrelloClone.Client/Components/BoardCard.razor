@@ -3,14 +3,17 @@
 
 <div class="card h-100 board-card" style="cursor: pointer;" @onclick="NavigateToBoard">
     <div class="card-body position-relative">
-        <div class="position-absolute top-0 end-0 p-2 d-flex gap-1">
-            <button class="btn btn-sm btn-outline-secondary" @onclick="HandleUpdate" @onclick:stopPropagation="true">
-                <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger" @onclick="HandleDelete" @onclick:stopPropagation="true">
-                <i class="bi bi-trash3"></i>
-            </button>
-        </div>
+        @if (CanEdit)
+        {
+            <div class="position-absolute top-0 end-0 p-2 d-flex gap-1">
+                <button class="btn btn-sm btn-outline-secondary" @onclick="HandleUpdate" @onclick:stopPropagation="true">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" @onclick="HandleDelete" @onclick:stopPropagation="true">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+        }
         
         <h5 class="card-title">@Board.Name</h5>
     </div>
@@ -21,6 +24,7 @@
 
 @code {
     [Parameter] public BoardDto Board { get; set; } = null!;
+    [Parameter] public bool CanEdit { get; set; }
     [Parameter] public EventCallback<BoardDto> OnUpdate { get; set; }
     [Parameter] public EventCallback<BoardDto> OnDelete { get; set; }
 
