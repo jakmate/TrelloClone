@@ -576,7 +576,6 @@
         try
         {
             sendingInvite = true;
-            // Pass username instead of email
             await InvitationService.SendInvitation(BoardId, inviteUsername.Trim());
             HideInviteUser();
         }

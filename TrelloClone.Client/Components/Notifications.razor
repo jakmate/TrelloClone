@@ -48,9 +48,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadInvitations();
         NotificationHub.OnInvitationReceived += HandleNewInvitation;
-        await NotificationHub.StartAsync();
+        await LoadInvitations();
+        try
+        {
+            await NotificationHub.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR connection failed: {ex.Message}");
+        }
     }
 
     private async Task LoadInvitations()
@@ -59,11 +66,14 @@
         UnreadCount = Invitations.Count;
     }
 
-    private void HandleNewInvitation(BoardInvitationDto invitation)
+    private async void HandleNewInvitation(BoardInvitationDto invitation)
     {
-        Invitations.Add(invitation);
-        UnreadCount++;
-        StateHasChanged();
+        await InvokeAsync(() =>
+        {
+            Invitations.Add(invitation);
+            UnreadCount++;
+            StateHasChanged();
+        });
     }
 
     private void ToggleDropdown()

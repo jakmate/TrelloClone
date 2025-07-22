@@ -32,4 +32,12 @@ public class BoardInvitationRepository : IBoardInvitationRepository
             })
             .ToListAsync();
     }
+
+    public async Task<BoardInvitation?> GetPendingInvitationAsync(Guid boardId, Guid userId)
+    {
+        return await _ctx.BoardInvitation
+            .FirstOrDefaultAsync(i => i.BoardId == boardId &&
+                                     i.InvitedUserId == userId &&
+                                     i.Status == InvitationStatus.Pending);
+    }
 }

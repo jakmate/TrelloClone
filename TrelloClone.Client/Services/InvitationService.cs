@@ -39,18 +39,22 @@ namespace TrelloClone.Client.Services
 
         public async Task AcceptInvitation(Guid invitationId)
         {
-            var userId = await GetCurrentUserId();
-            if (userId == Guid.Empty) return;
-
-            await _http.PatchAsync($"api/invitations/{invitationId}/accept?userId={userId}", null);
+            var response = await _http.PatchAsync($"api/invitations/{invitationId}/accept", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to accept invitation: {error}");
+            }
         }
 
         public async Task DeclineInvitation(Guid invitationId)
         {
-            var userId = await GetCurrentUserId();
-            if (userId == Guid.Empty) return;
-
-            await _http.PatchAsync($"api/invitations/{invitationId}/decline?userId={userId}", null);
+            var response = await _http.PatchAsync($"api/invitations/{invitationId}/decline", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to decline invitation: {error}");
+            }
         }
 
         private async Task<Guid> GetCurrentUserId()
@@ -62,17 +66,19 @@ namespace TrelloClone.Client.Services
 
         public async Task SendInvitation(Guid boardId, string invitedUsername, PermissionLevel permission = PermissionLevel.Editor)
         {
-            var userId = await GetCurrentUserId();
-            if (userId == Guid.Empty) return;
-
             var request = new
             {
                 BoardId = boardId,
                 Username = invitedUsername,
-                PermissionLevel = permission
+                Permission = permission
             };
 
-            await _http.PostAsJsonAsync("api/invitations", request);
+            var response = await _http.PostAsJsonAsync("api/invitations", request);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to send invitation: {error}");
+            }
         }
     }
 }

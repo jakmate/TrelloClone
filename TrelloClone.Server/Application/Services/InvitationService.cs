@@ -5,6 +5,7 @@ using TrelloClone.Shared.DTOs;
 public class InvitationService
 {
     private readonly IUserRepository _users;
+    private readonly IBoardRepository _boards;
     private readonly IBoardUserRepository _boardUsers;
     private readonly IBoardInvitationRepository _boardInvitations;
     private readonly IUnitOfWork _uow;
@@ -12,12 +13,14 @@ public class InvitationService
 
     public InvitationService(
         IUserRepository users,
+        IBoardRepository boards,
         IBoardUserRepository boardUsers,
         IBoardInvitationRepository boardInvitations,
         IUnitOfWork uow,
         IHubContext<BoardHub> hubContext)
     {
         _users = users;
+        _boards = boards;
         _boardUsers = boardUsers;
         _boardInvitations = boardInvitations;
         _uow = uow;
@@ -28,6 +31,12 @@ public class InvitationService
     {
         var invitedUser = await _users.GetByUsernameAsync(invitedUsername);
         if (invitedUser == null) throw new Exception("User not found");
+
+        var existingMember = await _boardUsers.ExistsAsync(boardId, invitedUser.Id);
+        if (existingMember == true) throw new Exception("User is already a member of this board");
+
+        var existingInvitation = await _boardInvitations.GetPendingInvitationAsync(boardId, invitedUser.Id);
+        if (existingInvitation != null) throw new Exception("User already has a pending invitation for this board");
 
         var invitation = new BoardInvitation
         {
@@ -40,9 +49,27 @@ public class InvitationService
         _boardInvitations.Add(invitation);
         await _uow.SaveChangesAsync();
 
+        var board = await _boards.GetByIdAsync(boardId);
+        var inviter = await _users.GetByIdAsync(inviterId);
+        var invitationDto = new BoardInvitationDto
+        {
+            Id = invitation.Id,
+            BoardId = invitation.BoardId,
+            BoardName = board?.Name ?? "Unknown Board",
+            InviterName = inviter?.UserName ?? "Unknown User",
+            SentAt = invitation.SentAt
+        };
+
         // Notify invited user
-        await _hubContext.Clients.User(invitedUser.Id.ToString())
-            .SendAsync("ReceiveInvitation", invitation);
+        try
+        {
+            await _hubContext.Clients.User(invitedUser.Id.ToString())
+                .SendAsync("ReceiveInvitation", invitationDto);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR notification failed: {ex.Message}");
+        }
     }
 
     public async Task AcceptInvitation(Guid invitationId, Guid userId)
@@ -51,7 +78,9 @@ public class InvitationService
         if (invitation == null || invitation.InvitedUserId != userId)
             throw new UnauthorizedAccessException();
 
-        // Add user to board
+        if (invitation.Status != InvitationStatus.Pending)
+            throw new Exception("Invitation is no longer pending");
+
         var boardUser = new BoardUser
         {
             BoardId = invitation.BoardId,
@@ -61,12 +90,24 @@ public class InvitationService
 
         _boardUsers.Add(boardUser);
         invitation.Status = InvitationStatus.Accepted;
-
         await _uow.SaveChangesAsync();
 
         // Notify board members
         await _hubContext.Clients.Group(invitation.BoardId.ToString())
             .SendAsync("UserJoinedBoard", new { BoardId = invitation.BoardId, UserId = userId });
+    }
+
+    public async Task DeclineInvitation(Guid invitationId, Guid userId)
+    {
+        var invitation = await _boardInvitations.GetByIdAsync(invitationId);
+        if (invitation == null || invitation.InvitedUserId != userId)
+            throw new UnauthorizedAccessException();
+
+        if (invitation.Status != InvitationStatus.Pending)
+            throw new Exception("Invitation is no longer pending");
+
+        invitation.Status = InvitationStatus.Rejected;
+        await _uow.SaveChangesAsync();
     }
 
     public async Task<List<BoardInvitationDto>> GetPendingInvitations(Guid userId)

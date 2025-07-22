@@ -5,6 +5,7 @@ using TrelloClone.Shared.DTOs;
 
 
 namespace TrelloClone.Server.Controllers;
+
 [ApiController]
 [Route("api/invitations")]
 [Authorize]
@@ -20,21 +21,55 @@ public class InvitationsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> SendInvitation(SendInvitationDto dto)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
-            return Unauthorized();
-        await _invitationService.SendInvitation(dto.BoardId, userGuid, dto.Username, dto.Permission);
-        return Ok();
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userId, out var userGuid))
+                return Unauthorized();
+
+            await _invitationService.SendInvitation(dto.BoardId, userGuid, dto.Username, dto.Permission);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Error: {ex.Message}");
+        }
     }
 
     [HttpPatch("{invitationId}/accept")]
     public async Task<IActionResult> AcceptInvitation(Guid invitationId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
-            return Unauthorized();
-        await _invitationService.AcceptInvitation(invitationId, userGuid);
-        return Ok();
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userId, out var userGuid))
+                return Unauthorized();
+
+            await _invitationService.AcceptInvitation(invitationId, userGuid);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Error: {ex.Message}");
+        }
+    }
+
+    [HttpPatch("{invitationId}/decline")]
+    public async Task<IActionResult> DeclineInvitation(Guid invitationId)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userId, out var userGuid))
+                return Unauthorized();
+
+            await _invitationService.DeclineInvitation(invitationId, userGuid);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Error: {ex.Message}");
+        }
     }
 
     [HttpGet]

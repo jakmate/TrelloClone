@@ -38,6 +38,7 @@ namespace TrelloClone.Client.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error starting SignalR connection");
+                throw;
             }
         }
     }
