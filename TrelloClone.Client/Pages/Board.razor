@@ -1,4 +1,5 @@
-@page "/board/{boardId:guid}"
+﻿@page "/board/{boardId:guid}"
+@using Microsoft.AspNetCore.Components.Web
 @using TrelloClone.Shared.DTOs
 @inject IBoardService BoardService
 @inject ColumnService ColumnService
@@ -44,7 +45,15 @@
         <div class="row g-3">
             @foreach (var column in columns.OrderBy(c => c.Position))
             {
-                <div class="col-md-4 col-lg-3">
+                <div class="col-md-4 col-lg-3 column-container
+                     @(columnDragOverId == column.Id ? "drag-over" : "")"
+                     draggable="@canEdit" 
+                     @ondragstart="(e) => OnColumnDragStart(e, column)"
+                     @ondragover="(e) => OnColumnDragOver(e, column)"
+                     @ondragover:preventDefault="true"
+                     @ondrop="(e) => OnColumnDrop(e, column)"
+                     @ondragend="OnColumnDragEnd"
+                     data-column-id="@column.Id">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             @if (editingColumnId == column.Id && canEdit)
@@ -78,12 +87,18 @@
                                 </div>
                             }
                         </div>
-                        <div class="card-body">
+                        <div class="card-body @GetDropZoneClass(column.Id)"
+                             @ondrop="(e) => OnTaskDrop(e, column.Id)" 
+                             @ondragover:preventDefault="true" 
+                             @ondragenter:preventDefault="true">
                             @if (column.Tasks?.Any() == true)
                             {
                                 @foreach (var task in column.Tasks)
                                 {
-                                    <div class="card mb-2">
+                                    <div class="card mb-2"
+                                         draggable="@canEdit" 
+                                         @ondragstart="(e) => OnTaskDragStart(e, task)"
+                                         data-task-id="@task.Id">
                                         <div class="card-body p-2">
                                             @if (editingTaskId == task.Id && canEdit)
                                             {
@@ -275,6 +290,13 @@
     // Permissions
     private bool canEdit;
     private bool canInvite;
+
+    // Drag and drop fields
+    private TaskDto? draggedTask;
+    private ColumnDto? draggedColumn;
+    private Guid? columnDragOverId = null;
+    private Guid? taskDragOverColumnId = null;
+    private Guid? taskDragOverTaskId = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -601,5 +623,163 @@
         {
             sendingInvite = false;
         }
+    }
+
+    private void OnTaskDragStart(DragEventArgs e, TaskDto task)
+    {
+        if (!canEdit) return;
+        draggedTask = task;
+        e.DataTransfer.EffectAllowed = "move";
+    }
+
+    private void OnTaskDragOver(DragEventArgs e, Guid columnId, Guid? taskId = null)
+    {
+        if (!canEdit || draggedTask == null) return;
+    
+        e.DataTransfer.DropEffect = "move";
+        taskDragOverColumnId = columnId;
+        taskDragOverTaskId = taskId;
+    }
+
+    private void OnTaskDragLeave(DragEventArgs e, Guid columnId)
+    {
+        taskDragOverTaskId = null;
+    }
+
+    private async Task OnTaskDrop(DragEventArgs e, Guid targetColumnId, Guid? targetTaskId = null)
+    {
+        taskDragOverColumnId = null;
+        taskDragOverTaskId = null;
+    
+        if (!canEdit || draggedTask == null) return;
+    
+        var sourceColumn = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id == draggedTask.Id) == true);
+        var targetColumn = columns?.FirstOrDefault(c => c.Id == targetColumnId);
+    
+        if (sourceColumn == null || targetColumn == null) return;
+
+        try
+        {
+            // Optimistic UI update
+            var taskToMove = draggedTask;
+            sourceColumn.Tasks?.Remove(taskToMove);
+            targetColumn.Tasks ??= new List<TaskDto>();
+        
+            // Determine position
+            int insertIndex = targetColumn.Tasks.Count;
+            if (targetTaskId.HasValue)
+            {
+                var targetTaskIndex = targetColumn.Tasks.FindIndex(t => t.Id == targetTaskId);
+                if (targetTaskIndex >= 0)
+                {
+                    insertIndex = targetTaskIndex;
+                }
+            }
+        
+            // Update position
+            taskToMove.ColumnId = targetColumnId;
+            targetColumn.Tasks.Insert(insertIndex, taskToMove);
+        
+            StateHasChanged();
+        
+            // API call - need to update both column and position
+            await TaskService.MoveTaskAsync(taskToMove.Id, targetColumnId, insertIndex);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error moving task: {ex.Message}");
+            await LoadColumns();
+        }
+        finally
+        {
+            draggedTask = null;
+        }
+    }
+
+    private void OnColumnDragStart(DragEventArgs e, ColumnDto column)
+    {
+        if (!canEdit) return;
+        draggedColumn = column;
+        e.DataTransfer.EffectAllowed = "move";
+    }
+
+    private void OnColumnDragOver(DragEventArgs e, ColumnDto targetColumn)
+    {
+        if (!canEdit || draggedColumn == null || draggedColumn.Id == targetColumn.Id) 
+        {
+            e.DataTransfer.DropEffect = "none";
+            columnDragOverId = null;
+            return;
+        }
+        e.DataTransfer.DropEffect = "move";
+        columnDragOverId = targetColumn.Id; // Track hovered column
+    }
+
+    private async Task OnColumnDrop(DragEventArgs e, ColumnDto targetColumn)
+    {
+        columnDragOverId = null;
+        if (!canEdit || draggedColumn == null || draggedColumn.Id == targetColumn.Id) 
+            return;
+
+        try
+        {
+            var draggedIndex = columns.FindIndex(c => c.Id == draggedColumn.Id);
+            var targetIndex = columns.FindIndex(c => c.Id == targetColumn.Id);
+        
+            if (draggedIndex == -1 || targetIndex == -1) return;
+
+            // Remove dragged column
+            var temp = columns[draggedIndex];
+            columns.RemoveAt(draggedIndex);
+        
+            // Insert at target position (no index adjustment needed)
+            columns.Insert(targetIndex, temp);
+
+            // Update positions
+            for (int i = 0; i < columns.Count; i++)
+            {
+                columns[i].Position = i;
+            }
+        
+            StateHasChanged();
+            await ReorderColumns();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reordering columns: {ex.Message}");
+            await LoadColumns();
+        }
+        finally
+        {
+            draggedColumn = null;
+        }
+    }
+
+    private void OnColumnDragEnd(DragEventArgs e)
+    {
+        columnDragOverId = null; 
+        draggedColumn = null;
+    }
+
+    private string GetDropZoneClass(Guid columnId)
+    {
+        return draggedTask != null ? "drag-over" : "";
+    }
+
+    private async Task ReorderColumns()
+    {
+        if (columns == null) return;
+    
+        var tasks = new List<Task>();
+        for (int i = 0; i < columns.Count; i++)
+        {
+            if (columns[i].Position != i)
+            {
+                columns[i].Position = i;
+                tasks.Add(ColumnService.UpdateColumnPositionAsync(BoardId, columns[i].Id, i));
+            }
+        }
+    
+        await Task.WhenAll(tasks); // Batch API calls
     }
 }

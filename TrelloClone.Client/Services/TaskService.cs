@@ -39,4 +39,13 @@ public class TaskService
         var response = await _httpClient.DeleteAsync($"api/columns/{columnId}/tasks/{taskId}");
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task MoveTaskAsync(Guid taskId, Guid newColumnId, int? newPosition = null)
+    {
+        var response = await _httpClient.PutAsJsonAsync(
+            $"api/tasks/{taskId}/move",
+            new { ColumnId = newColumnId, NewPosition = newPosition }
+        );
+        response.EnsureSuccessStatusCode();
+    }
 }

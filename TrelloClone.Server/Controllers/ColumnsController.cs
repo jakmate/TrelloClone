@@ -65,4 +65,15 @@ public class ColumnsController : ControllerBase
         await _columnService.DeleteColumnAsync(columnId);
         return NoContent();
     }
+
+    [HttpPut("{columnId:guid}/position")]
+    public async Task<IActionResult> UpdatePosition(Guid boardId, Guid columnId, [FromBody] UpdateColumnPositionRequest req)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
+        await _columnService.UpdateColumnPositionAsync(columnId, req.Position);
+        return Ok();
+    }
 }

@@ -93,4 +93,27 @@ public class ColumnService
         _columns.Remove(column);
         await _uow.SaveChangesAsync();
     }
+
+    public async Task UpdateColumnPositionAsync(Guid columnId, int position)
+    {
+        var column = await _columns.GetByIdAsync(columnId)
+                    ?? throw new KeyNotFoundException("Column not found.");
+
+        column.Position = position;
+        await _uow.SaveChangesAsync();
+    }
+
+    public async Task ReorderColumnsAsync(Guid boardId, List<ColumnReorderDto> newOrder)
+    {
+        var columns = await _columns.ListByBoardAsync(boardId);
+
+        foreach (var item in newOrder)
+        {
+            var column = columns.FirstOrDefault(c => c.Id == item.ColumnId);
+            if (column != null)
+                column.Position = item.NewPosition;
+        }
+
+        await _uow.SaveChangesAsync();
+    }
 }

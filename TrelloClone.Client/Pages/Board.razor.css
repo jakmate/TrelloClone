@@ -1,0 +1,32 @@
+.column-container.drag-over {
+    border: 2px dashed #007bff;
+    background-color: #f8f9fa;
+    transform: scale(1.02);
+    transition: transform 0.2s ease;
+    box-shadow: 0 0 10px rgba(0,123,255,0.3);
+}
+
+.column-container[draggable="true"]:hover {
+    cursor: grab;
+}
+
+.column-container[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.drop-zone {
+    height: 10px;
+    margin: 2px 0;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+    .drop-zone.active {
+        height: 20px;
+        background-color: rgba(0, 123, 255, 0.2);
+        border: 1px dashed #007bff;
+    }
+
+.card-body.drag-over {
+    background-color: rgba(0, 123, 255, 0.05);
+}

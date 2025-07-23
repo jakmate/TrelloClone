@@ -91,4 +91,16 @@ public class TaskService
         _tasks.Remove(task);
         await _uow.SaveChangesAsync();
     }
+
+    public async Task MoveTaskAsync(Guid taskId, Guid newColumnId)
+    {
+        var task = await _tasks.GetByIdAsync(taskId)
+                   ?? throw new KeyNotFoundException("Task not found.");
+
+        var column = await _columns.GetByIdAsync(newColumnId)
+                    ?? throw new KeyNotFoundException("Column not found.");
+
+        task.ColumnId = newColumnId;
+        await _uow.SaveChangesAsync();
+    }
 }

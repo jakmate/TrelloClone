@@ -64,4 +64,15 @@ public class TasksController : ControllerBase
         await _svc.DeleteTaskAsync(taskId);
         return NoContent();
     }
+
+    [HttpPut("/api/tasks/{taskId:guid}/move")]
+    public async Task<IActionResult> MoveTask(Guid taskId, [FromBody] MoveTaskRequest req)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
+        await _svc.MoveTaskAsync(taskId, req.ColumnId);
+        return Ok();
+    }
 }

@@ -53,4 +53,10 @@ public class ColumnService
         var response = await _httpClient.DeleteAsync($"api/boards/{boardId}/columns/{columnId}");
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task UpdateColumnPositionAsync(Guid boardId, Guid columnId, int position)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/boards/{boardId}/columns/{columnId}/position", new { Position = position });
+        response.EnsureSuccessStatusCode();
+    }
 }
