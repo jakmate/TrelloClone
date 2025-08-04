@@ -62,6 +62,21 @@ public class BoardsController : ControllerBase
         }
     }
 
+    [HttpPut("reorder")]
+    public async Task<IActionResult> ReorderBoards([FromBody] ReorderBoardsRequest request)
+    {
+        var userId = GetCurrentUserId();
+        try
+        {
+            await _boardService.ReorderBoardsAsync(request.Boards, userId);
+            return Ok();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+    }
+
     [HttpDelete("{boardId:guid}")]
     public async Task<IActionResult> Delete(Guid boardId)
     {

@@ -21,8 +21,20 @@ public class BoardRepository : IBoardRepository
             .Include(b => b.Columns)
                 .ThenInclude(c => c.Tasks)
             .Where(b => b.BoardUsers.Any(bu => bu.UserId == userId))
-            .OrderByDescending(b => b.CreatedAt)
+            .OrderBy(b => b.Position)
             .ToListAsync();
+
+    public async Task UpdatePositionsAsync(List<BoardPositionDto> positions)
+    {
+        foreach (var pos in positions)
+        {
+            var board = await _ctx.Boards.FindAsync(pos.Id);
+            if (board != null)
+            {
+                board.Position = pos.Position;
+            }
+        }
+    }
 
     public void Add(Board board) =>
         _ctx.Boards.Add(board);

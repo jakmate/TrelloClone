@@ -18,24 +18,28 @@ public class BoardService
         if (await _boards.ExistsWithNameAsync(name, ownerId))
             throw new InvalidOperationException("You already have a board with that name.");
 
+        // Get next position
+        var existingBoards = await _boards.GetAllByUserIdAsync(ownerId);
+        var nextPosition = existingBoards.Any() ? existingBoards.Max(b => b.Position) + 1 : 0;
+
         var board = new Board
         {
             Name = name,
-            BoardUsers = new List<BoardUser> { 
-                new BoardUser { 
-                    UserId = ownerId,
-                    PermissionLevel = PermissionLevel.Admin 
-                } 
+            Position = nextPosition,
+            BoardUsers = new List<BoardUser> {
+            new BoardUser {
+                UserId = ownerId,
+                PermissionLevel = PermissionLevel.Admin
             }
+        }
         };
-
         _boards.Add(board);
         await _uow.SaveChangesAsync();
-
         return new BoardDto
         {
             Id = board.Id,
             Name = board.Name,
+            Position = board.Position
         };
     }
 
@@ -44,25 +48,22 @@ public class BoardService
         var board = await _boards.GetByIdAsync(boardId);
         if (board == null)
             throw new InvalidOperationException("Board not found.");
-
         bool isMember = await _boardUsers.ExistsAsync(boardId, userId);
         if (!isMember)
             throw new UnauthorizedAccessException("You don't have permission to modify this board.");
-
         if (board.Name != newName)
         {
             bool nameExists = await _boards.ExistsWithNameAsync(newName, userId);
             if (nameExists)
                 throw new InvalidOperationException("You already have a board with that name.");
         }
-
         board.Name = newName;
         await _uow.SaveChangesAsync();
-
         return new BoardDto
         {
             Id = board.Id,
-            Name = board.Name
+            Name = board.Name,
+            Position = board.Position
         };
     }
 
@@ -78,11 +79,11 @@ public class BoardService
     {
         var board = await _boards.GetByIdAsync(boardId);
         if (board == null) return null;
-
         return new BoardDto
         {
             Id = board.Id,
             Name = board.Name,
+            Position = board.Position
         };
     }
 
@@ -95,11 +96,25 @@ public class BoardService
         {
             Id = board.Id,
             Name = board.Name,
+            Position = board.Position
         }).ToArray();
     }
 
     public async Task<PermissionLevel> GetUserPermissionAsync(Guid boardId, Guid userId)
     {
         return await _boardUsers.GetUserPermissionAsync(boardId, userId);
+    }
+
+    public async Task ReorderBoardsAsync(List<BoardPositionDto> positions, Guid userId)
+    {
+        foreach (var pos in positions)
+        {
+            bool isMember = await _boardUsers.ExistsAsync(pos.Id, userId);
+            if (!isMember)
+                throw new UnauthorizedAccessException($"No permission for board {pos.Id}");
+        }
+
+        await _boards.UpdatePositionsAsync(positions);
+        await _uow.SaveChangesAsync();
     }
 }

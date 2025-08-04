@@ -17,6 +17,7 @@ public interface IBoardService
     Task<PermissionLevel> GetUserPermissionAsync(Guid boardId);
     Task<bool> CanEditAsync(Guid boardId);
     Task<bool> CanInviteAsync(Guid boardId);
+    Task<bool> ReorderBoardsAsync(List<BoardPositionDto> positions);
 }
 
 public class BoardService : IBoardService
@@ -95,5 +96,12 @@ public class BoardService : IBoardService
     {
         var permission = await GetUserPermissionAsync(boardId);
         return permission == PermissionLevel.Admin;
+    }
+
+    public async Task<bool> ReorderBoardsAsync(List<BoardPositionDto> positions)
+    {
+        var request = new ReorderBoardsRequest { Boards = positions };
+        var response = await _httpClient.PutAsJsonAsync("api/boards/reorder", request);
+        return response.IsSuccessStatusCode;
     }
 }

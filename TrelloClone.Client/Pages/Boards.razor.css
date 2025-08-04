@@ -1,0 +1,23 @@
+.board-drop-zone {
+    transition: all 0.2s ease;
+}
+
+    .board-drop-zone.drag-over {
+        transition: background 0.2s;
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+
+.board-item.dragging {
+    opacity: 0.5;
+}
+
+.board-item {
+    cursor: grab;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+    .board-item:active {
+        cursor: grabbing;
+    }
