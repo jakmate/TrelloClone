@@ -7,4 +7,5 @@ public class TaskDto
     public PriorityLevel Priority { get; set; }
     public Guid? AssignedUserId { get; set; }
     public Guid ColumnId { get; set; }
+    public int Position { get; set; }
 }

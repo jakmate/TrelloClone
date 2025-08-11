@@ -92,15 +92,9 @@ public class TaskService
         await _uow.SaveChangesAsync();
     }
 
-    public async Task MoveTaskAsync(Guid taskId, Guid newColumnId)
+    public async Task ReorderTasksAsync(List<TaskPositionDto> positions)
     {
-        var task = await _tasks.GetByIdAsync(taskId)
-                   ?? throw new KeyNotFoundException("Task not found.");
-
-        var column = await _columns.GetByIdAsync(newColumnId)
-                    ?? throw new KeyNotFoundException("Column not found.");
-
-        task.ColumnId = newColumnId;
+        await _tasks.UpdatePositionsAsync(positions);
         await _uow.SaveChangesAsync();
     }
 }

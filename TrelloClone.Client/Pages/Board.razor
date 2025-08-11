@@ -10,18 +10,14 @@
 <div class="container-fluid p-3">
     @if (loading)
     {
-        <div class="d-flex justify-content-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
+        <LoadingSpinner></LoadingSpinner>
     }
     else if (columns == null)
     {
         <div class="alert alert-danger">
             <h4>Error</h4>
             <p>Failed to load board columns.</p>
-            <button class="btn btn-primary" @onclick="GoBack">Go Back</button>
+            <button class="btn btn-primary" @onclick="@(() => GoBack())">Go Back</button>
         </div>
     }
     else
@@ -42,115 +38,154 @@
             </div>
         </div>
 
-        <div class="row g-3">
-            @foreach (var column in columns.OrderBy(c => c.Position))
+        <div class="row g-3 columns-container" @ondragover:preventDefault="true">
+            @{
+                var sortedColumns = columns.OrderBy(c => c.Position).ToList();
+            }
+            @for (int i = 0; i < sortedColumns.Count; i++)
             {
-                <div class="col-md-4 col-lg-3 column-container
-                     @(columnDragOverId == column.Id ? "drag-over" : "")"
-                     draggable="@canEdit" 
-                     @ondragstart="(e) => OnColumnDragStart(e, column)"
-                     @ondragover="(e) => OnColumnDragOver(e, column)"
+                var column = sortedColumns[i];
+                var index = i;
+        
+                <div class="col-md-4 col-lg-3 column-drop-zone @(columnDragOverIndex == index ? "drag-over" : "")"
+                     @ondragover="@((e) => HandleColumnDragOver(e, index))"
                      @ondragover:preventDefault="true"
-                     @ondrop="(e) => OnColumnDrop(e, column)"
-                     @ondragend="OnColumnDragEnd"
-                     data-column-id="@column.Id">
-                    <div class="card h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            @if (editingColumnId == column.Id && canEdit)
-                            {
-                                <input type="text" class="form-control form-control-sm" @bind="editColumnTitle" @onkeypress="(e) => OnEditColumnKeyPress(e, column.Id)" />
-                            }
-                            else
-                            {
-                                <h5 class="mb-0" @onclick="() => StartEditColumn(column.Id, column.Title)" style="cursor: pointer;" title="Click to edit">@column.Title</h5>
-                            }
-                            @if (canEdit) {
-                                <div class="btn-group">
-                                    @if (editingColumnId == column.Id)
-                                    {
-                                        <button class="btn btn-sm btn-success" @onclick="() => SaveColumnEdit(column.Id)">
-                                            <i class="bi bi-check"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-secondary" @onclick="CancelEditColumn">
-                                            <i class="bi bi-x"></i>
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditColumn(column.Id, column.Title)" title="Edit column">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                    }
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteColumn(column.Id)">
-                                        <i class="bi bi-trash3"></i>
-                                    </button>
-                                </div>
-                            }
-                        </div>
-                        <div class="card-body @GetDropZoneClass(column.Id)"
-                             @ondrop="(e) => OnTaskDrop(e, column.Id)" 
-                             @ondragover:preventDefault="true" 
-                             @ondragenter:preventDefault="true">
-                            @if (column.Tasks?.Any() == true)
-                            {
-                                @foreach (var task in column.Tasks)
+                     @ondrop="@((e) => HandleColumnDrop(e, index))"
+                     @ondragleave="HandleColumnDragLeave">
+            
+                    <div class="column-item @(draggedColumn?.Id == column.Id ? "dragging" : "")"
+                         draggable="@canEdit" 
+                         @ondragstart="@((e) => HandleColumnDragStart(e, column))">
+                
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                @if (editingColumnId == column.Id && canEdit)
                                 {
-                                    <div class="card mb-2"
-                                         draggable="@canEdit" 
-                                         @ondragstart="(e) => OnTaskDragStart(e, task)"
-                                         data-task-id="@task.Id">
-                                        <div class="card-body p-2">
-                                            @if (editingTaskId == task.Id && canEdit)
-                                            {
-                                                <div class="mb-2">
-                                                    <input type="text" class="form-control form-control-sm mb-2" @bind="editTaskName" @onkeypress="(e) => OnEditTaskKeyPress(e, column.Id, task.Id)" />
-                                                    <select class="form-select form-select-sm" @bind="editTaskPriority">
-                                                        <option value="@PriorityLevel.Low">Low</option>
-                                                        <option value="@PriorityLevel.Medium">Medium</option>
-                                                        <option value="@PriorityLevel.High">High</option>
-                                                    </select>
-                                                </div>
-                                                <div class="d-flex justify-content-end">
-                                                    <button class="btn btn-sm btn-success me-1" @onclick="() => SaveTaskEdit(column.Id, task.Id)">
-                                                        <i class="bi bi-check"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-secondary" @onclick="CancelEditTask">
-                                                        <i class="bi bi-x"></i>
-                                                    </button>
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <div style="cursor: pointer;" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Click to edit">
-                                                        <h6 class="card-title mb-1">@task.Name</h6>
-                                                        <small class="text-muted">Priority: @task.Priority</small>
-                                                    </div>
-                                                    @if (canEdit) {
-                                                        <div class="btn-group">
-                                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
-                                                                <i class="bi bi-pencil"></i>
-                                                            </button>
-                                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTask(column.Id, task.Id)">
-                                                                <i class="bi bi-trash3"></i>
-                                                            </button>
-                                                        </div>
-                                                    }
-                                                </div>
-                                            }
-                                        </div>
+                                    <input type="text" class="form-control form-control-sm" @bind="editColumnTitle" @onkeypress="(e) => OnEditColumnKeyPress(e, column.Id)" />
+                                }
+                                else
+                                {
+                                    <h5 class="mb-0" @onclick="() => StartEditColumn(column.Id, column.Title)" style="cursor: pointer;" title="Click to edit">@column.Title</h5>
+                                }
+                                @if (canEdit) {
+                                    <div class="btn-group">
+                                        @if (editingColumnId == column.Id)
+                                        {
+                                            <button class="btn btn-sm btn-success" @onclick="() => SaveColumnEdit(column.Id)">
+                                                <i class="bi bi-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-secondary" @onclick="CancelEditColumn">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditColumn(column.Id, column.Title)" title="Edit column">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        }
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteColumn(column.Id)">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
                                     </div>
                                 }
-                            }
-                            else
-                            {
-                                <p class="text-muted">No tasks yet</p>
-                            }
-                            @if (canEdit) {
-                                <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="() => ShowCreateTask(column.Id)">
-                                    <i class="bi bi-plus"></i> Add Task
-                                </button>
-                            }
+                            </div>
+                            <div class="card-body @GetDropZoneClass(column.Id)"
+                                 @ondragover:preventDefault="true" 
+                                 @ondragenter:preventDefault="true">
+    
+                                @if (column.Tasks?.Any() == true)
+                                {
+                                    @for (int taskIndex = 0; taskIndex < column.Tasks.Count; taskIndex++)
+                                    {
+                                        var task = column.Tasks[taskIndex];
+                                        var tIndex = taskIndex;
+
+                                        @* Drop zone BEFORE each task *@
+                                        <div class="task-drop-zone-before @(taskDragOverColumnId == column.Id && taskDragOverIndex == tIndex ? "drag-over" : "")"
+                                             style="height: 4px; margin: 2px 0;"
+                                             @ondragover="@((e) => HandleTaskDragOver(e, column.Id, tIndex))"
+                                             @ondragover:preventDefault="true"
+                                             @ondrop="@((e) => HandleTaskDrop(e, column.Id, tIndex))"
+                                             @ondragleave="HandleTaskDragLeave">
+                                        </div>
+
+                                       <div class="card mb-2 @(draggedTask?.Id == task.Id ? "dragging" : "")"
+                                             draggable="@canEdit" 
+                                             @ondragstart="@((e) => HandleTaskDragStart(e, task))"
+                                             @ondragstart:stopPropagation="true"
+                                             data-task-id="@task.Id">
+                                            <div class="card-body p-2">
+                                                @if (editingTaskId == task.Id && canEdit)
+                                                {
+                                                    <div class="mb-2">
+                                                        <input type="text" class="form-control form-control-sm mb-2" @bind="editTaskName" @onkeypress="(e) => OnEditTaskKeyPress(e, column.Id, task.Id)" />
+                                                        <select class="form-select form-select-sm" @bind="editTaskPriority">
+                                                            <option value="@PriorityLevel.Low">Low</option>
+                                                            <option value="@PriorityLevel.Medium">Medium</option>
+                                                            <option value="@PriorityLevel.High">High</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="d-flex justify-content-end">
+                                                        <button class="btn btn-sm btn-success me-1" @onclick="() => SaveTaskEdit(column.Id, task.Id)">
+                                                            <i class="bi bi-check"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-secondary" @onclick="CancelEditTask">
+                                                            <i class="bi bi-x"></i>
+                                                        </button>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <h6 class="card-title mb-1">@task.Name</h6>
+                                                            <small class="text-muted">Priority: @task.Priority</small>
+                                                        </div>
+                                                        @if (canEdit) {
+                                                            <div class="btn-group">
+                                                                <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
+                                                                    <i class="bi bi-pencil"></i>
+                                                                </button>
+                                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTask(column.Id, task.Id)">
+                                                                    <i class="bi bi-trash3"></i>
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+        
+                                    @* Drop zone AFTER the last task *@
+                                    <div class="task-drop-zone-after @(taskDragOverColumnId == column.Id && taskDragOverIndex == column.Tasks.Count ? "drag-over" : "")"
+                                         style="height: 4px; margin: 2px 0;"
+                                         @ondragover="@((e) => HandleTaskDragOver(e, column.Id, column.Tasks.Count))"
+                                         @ondragover:preventDefault="true"
+                                         @ondrop="@((e) => HandleTaskDrop(e, column.Id, column.Tasks.Count))"
+                                         @ondragleave="HandleTaskDragLeave">
+                                    </div>
+                                }
+                                else
+                                {
+                                    @* Empty column drop zone *@
+                                    <div class="empty-column-drop-zone @(taskDragOverColumnId == column.Id ? "drag-over" : "")"
+                                         style="min-height: 20px; margin: 8px 0;"
+                                         @ondragover="@((e) => HandleTaskDragOver(e, column.Id, 0))"
+                                         @ondragover:preventDefault="true"
+                                         @ondrop="@((e) => HandleTaskDrop(e, column.Id, 0))"
+                                         @ondragleave="HandleTaskDragLeave">
+                                        <p class="text-muted">No tasks yet</p>
+                                    </div>
+                                }
+    
+                                @if (canEdit) {
+                                    <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="() => ShowCreateTask(column.Id)">
+                                        <i class="bi bi-plus"></i> Add Task
+                                    </button>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -292,11 +327,11 @@
     private bool canInvite;
 
     // Drag and drop fields
-    private TaskDto? draggedTask;
     private ColumnDto? draggedColumn;
-    private Guid? columnDragOverId = null;
-    private Guid? taskDragOverColumnId = null;
-    private Guid? taskDragOverTaskId = null;
+    private int? columnDragOverIndex;
+    private TaskDto? draggedTask;
+    private Guid? taskDragOverColumnId;
+    private int? taskDragOverIndex;
 
     protected override async Task OnInitializedAsync()
     {
@@ -625,161 +660,185 @@
         }
     }
 
-    private void OnTaskDragStart(DragEventArgs e, TaskDto task)
+    private void HandleTaskDragStart(DragEventArgs e, TaskDto task)
     {
         if (!canEdit) return;
         draggedTask = task;
-        e.DataTransfer.EffectAllowed = "move";
+        draggedColumn = null; // Ensure column dragging is disabled
     }
 
-    private void OnTaskDragOver(DragEventArgs e, Guid columnId, Guid? taskId = null)
+    private void HandleTaskDragOver(DragEventArgs e, Guid columnId, int taskIndex)
     {
-        if (!canEdit || draggedTask == null) return;
-    
-        e.DataTransfer.DropEffect = "move";
-        taskDragOverColumnId = columnId;
-        taskDragOverTaskId = taskId;
+        if (draggedTask != null && canEdit)
+        {
+            taskDragOverColumnId = columnId;
+            taskDragOverIndex = taskIndex;
+        }
     }
 
-    private void OnTaskDragLeave(DragEventArgs e, Guid columnId)
-    {
-        taskDragOverTaskId = null;
-    }
-
-    private async Task OnTaskDrop(DragEventArgs e, Guid targetColumnId, Guid? targetTaskId = null)
+    private void HandleTaskDragLeave()
     {
         taskDragOverColumnId = null;
-        taskDragOverTaskId = null;
-    
-        if (!canEdit || draggedTask == null) return;
-    
-        var sourceColumn = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id == draggedTask.Id) == true);
-        var targetColumn = columns?.FirstOrDefault(c => c.Id == targetColumnId);
-    
-        if (sourceColumn == null || targetColumn == null) return;
+        taskDragOverIndex = null;
+    }
+
+    private async Task HandleTaskDrop(DragEventArgs e, Guid targetColumnId, int dropIndex)
+    {
+        if (draggedTask == null || !canEdit) return;
 
         try
         {
-            // Optimistic UI update
-            var taskToMove = draggedTask;
-            sourceColumn.Tasks?.Remove(taskToMove);
+            var sourceColumn = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id == draggedTask.Id) == true);
+            var targetColumn = columns?.FirstOrDefault(c => c.Id == targetColumnId);
+        
+            if (sourceColumn == null || targetColumn == null) return;
+
+            // Don't move if it's the same position
+            if (sourceColumn.Id == targetColumnId)
+            {
+                var currentIndex = sourceColumn.Tasks.FindIndex(t => t.Id == draggedTask.Id);
+                if (currentIndex == dropIndex || currentIndex == dropIndex - 1) return;
+            }
+
+            // Remove from source
+            sourceColumn.Tasks?.Remove(draggedTask);
+
+            // Insert at target position
             targetColumn.Tasks ??= new List<TaskDto>();
         
-            // Determine position
-            int insertIndex = targetColumn.Tasks.Count;
-            if (targetTaskId.HasValue)
+            // Clamp dropIndex to valid range
+            dropIndex = Math.Max(0, Math.Min(dropIndex, targetColumn.Tasks.Count));
+            targetColumn.Tasks.Insert(dropIndex, draggedTask);
+
+            // Update task's column ID if moved between columns
+            if (sourceColumn.Id != targetColumnId)
             {
-                var targetTaskIndex = targetColumn.Tasks.FindIndex(t => t.Id == targetTaskId);
-                if (targetTaskIndex >= 0)
+                draggedTask.ColumnId = targetColumnId;
+            }
+
+            // Create position updates for affected tasks
+            var positions = new List<TaskPositionDto>();
+
+            // Update positions in source column (if different from target)
+            if (sourceColumn.Id != targetColumnId && sourceColumn.Tasks != null)
+            {
+                for (int i = 0; i < sourceColumn.Tasks.Count; i++)
                 {
-                    insertIndex = targetTaskIndex;
+                    sourceColumn.Tasks[i].Position = i;
+                    positions.Add(new TaskPositionDto 
+                    { 
+                        Id = sourceColumn.Tasks[i].Id, 
+                        Position = i,
+                        ColumnId = sourceColumn.Id
+                    });
                 }
             }
-        
-            // Update position
-            taskToMove.ColumnId = targetColumnId;
-            targetColumn.Tasks.Insert(insertIndex, taskToMove);
-        
-            StateHasChanged();
-        
-            // API call - need to update both column and position
-            await TaskService.MoveTaskAsync(taskToMove.Id, targetColumnId, insertIndex);
+
+            // Update positions in target column
+            if (targetColumn.Tasks != null)
+            {
+                for (int i = 0; i < targetColumn.Tasks.Count; i++)
+                {
+                    targetColumn.Tasks[i].Position = i;
+                    targetColumn.Tasks[i].ColumnId = targetColumnId;
+                    positions.Add(new TaskPositionDto 
+                    { 
+                        Id = targetColumn.Tasks[i].Id, 
+                        Position = i,
+                        ColumnId = targetColumnId
+                    });
+                }
+            }
+
+            // Update server
+            await TaskService.ReorderTasksAsync(positions);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error moving task: {ex.Message}");
-            await LoadColumns();
+            await LoadColumns(); // Reload on error
         }
         finally
         {
             draggedTask = null;
+            taskDragOverColumnId = null;
+            taskDragOverIndex = null;
         }
-    }
-
-    private void OnColumnDragStart(DragEventArgs e, ColumnDto column)
-    {
-        if (!canEdit) return;
-        draggedColumn = column;
-        e.DataTransfer.EffectAllowed = "move";
-    }
-
-    private void OnColumnDragOver(DragEventArgs e, ColumnDto targetColumn)
-    {
-        if (!canEdit || draggedColumn == null || draggedColumn.Id == targetColumn.Id) 
-        {
-            e.DataTransfer.DropEffect = "none";
-            columnDragOverId = null;
-            return;
-        }
-        e.DataTransfer.DropEffect = "move";
-        columnDragOverId = targetColumn.Id; // Track hovered column
-    }
-
-    private async Task OnColumnDrop(DragEventArgs e, ColumnDto targetColumn)
-    {
-        columnDragOverId = null;
-        if (!canEdit || draggedColumn == null || draggedColumn.Id == targetColumn.Id) 
-            return;
-
-        try
-        {
-            var draggedIndex = columns.FindIndex(c => c.Id == draggedColumn.Id);
-            var targetIndex = columns.FindIndex(c => c.Id == targetColumn.Id);
-        
-            if (draggedIndex == -1 || targetIndex == -1) return;
-
-            // Remove dragged column
-            var temp = columns[draggedIndex];
-            columns.RemoveAt(draggedIndex);
-        
-            // Insert at target position (no index adjustment needed)
-            columns.Insert(targetIndex, temp);
-
-            // Update positions
-            for (int i = 0; i < columns.Count; i++)
-            {
-                columns[i].Position = i;
-            }
-        
-            StateHasChanged();
-            await ReorderColumns();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error reordering columns: {ex.Message}");
-            await LoadColumns();
-        }
-        finally
-        {
-            draggedColumn = null;
-        }
-    }
-
-    private void OnColumnDragEnd(DragEventArgs e)
-    {
-        columnDragOverId = null; 
-        draggedColumn = null;
     }
 
     private string GetDropZoneClass(Guid columnId)
     {
-        return draggedTask != null ? "drag-over" : "";
+        return draggedTask != null ? "drop-zone-active" : "";
     }
 
-    private async Task ReorderColumns()
+    private void HandleColumnDragStart(DragEventArgs e, ColumnDto column)
     {
-        if (columns == null) return;
-    
-        var tasks = new List<Task>();
-        for (int i = 0; i < columns.Count; i++)
+        if (!canEdit) return;
+        draggedColumn = column;
+    }
+
+    private void HandleColumnDragOver(DragEventArgs e, int index)
+    {
+        if (draggedColumn != null && canEdit)
         {
-            if (columns[i].Position != i)
-            {
-                columns[i].Position = i;
-                tasks.Add(ColumnService.UpdateColumnPositionAsync(BoardId, columns[i].Id, i));
-            }
+            columnDragOverIndex = index;
         }
-    
-        await Task.WhenAll(tasks); // Batch API calls
+    }
+
+    private void HandleColumnDragLeave()
+    {
+        columnDragOverIndex = null;
+    }
+
+    private async Task HandleColumnDrop(DragEventArgs e, int dropIndex)
+    {
+        if (draggedColumn == null || !canEdit) return;
+
+        try
+        {
+            var sortedColumns = columns.OrderBy(c => c.Position).ToList();
+            var draggedIndex = sortedColumns.FindIndex(c => c.Id == draggedColumn.Id);
+
+            if (dropIndex >= sortedColumns.Count) 
+            {
+                dropIndex = sortedColumns.Count - 1;
+            }
+            
+            if (draggedIndex == dropIndex) return; // No change
+
+            // Remove dragged column from current position
+            sortedColumns.RemoveAt(draggedIndex);
+            
+            // Insert at new position
+            sortedColumns.Insert(dropIndex, draggedColumn);
+            
+            // Update positions
+            var positions = new List<ColumnPositionDto>();
+            for (int i = 0; i < sortedColumns.Count; i++)
+            {
+                sortedColumns[i].Position = i;
+                positions.Add(new ColumnPositionDto 
+                { 
+                    Id = sortedColumns[i].Id, 
+                    Position = i 
+                });
+            }
+            
+            // Update server
+            await ColumnService.ReorderColumnsAsync(BoardId, positions);
+            
+            // Update local state
+            columns = sortedColumns;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reordering columns: {ex.Message}");
+            await LoadColumns(); // Reload on error
+        }
+        finally
+        {
+            draggedColumn = null;
+            columnDragOverIndex = null;
+        }
     }
 }

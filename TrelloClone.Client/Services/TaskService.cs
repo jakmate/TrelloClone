@@ -40,12 +40,10 @@ public class TaskService
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task MoveTaskAsync(Guid taskId, Guid newColumnId, int? newPosition = null)
+    public async Task<bool> ReorderTasksAsync(List<TaskPositionDto> positions)
     {
-        var response = await _httpClient.PutAsJsonAsync(
-            $"api/tasks/{taskId}/move",
-            new { ColumnId = newColumnId, NewPosition = newPosition }
-        );
-        response.EnsureSuccessStatusCode();
+        var request = new ReorderTasksRequest { Tasks = positions };
+        var response = await _httpClient.PutAsJsonAsync($"api/columns/{positions.First().ColumnId}/tasks/reorder", request);
+        return response.IsSuccessStatusCode;
     }
 }

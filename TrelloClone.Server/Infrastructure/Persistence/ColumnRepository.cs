@@ -15,10 +15,22 @@ public class ColumnRepository : IColumnRepository
 
     public async Task<List<Column>> ListByBoardAsync(Guid boardId) =>
         await _ctx.Columns
-                  .Where(c => c.BoardId == boardId)
-                  .OrderBy(c => c.Position)
-                  .ToListAsync();
+            .Include(c => c.Tasks)
+            .Where(c => c.BoardId == boardId)
+            .OrderBy(c => c.Position)
+            .ToListAsync();
 
+    public async Task UpdatePositionsAsync(List<ColumnPositionDto> positions)
+    {
+        foreach (var pos in positions)
+        {
+            var column = await _ctx.Columns.FindAsync(pos.Id);
+            if (column != null)
+            {
+                column.Position = pos.Position;
+            }
+        }
+    }
 
     public void Add(Column column) =>
         _ctx.Columns.Add(column);

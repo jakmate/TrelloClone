@@ -13,8 +13,23 @@ public class TaskRepository : ITaskRepository
     public async Task<List<TaskItem>> ListByColumnAsync(Guid columnId) =>
         await _ctx.Tasks
                   .Where(t => t.ColumnId == columnId)
-                  .OrderBy(t => t.CreatedAt)
+                  .OrderBy(t => t.Position)
+                  .ThenBy(t => t.CreatedAt)
                   .ToListAsync();
+
+    public async Task UpdatePositionsAsync(List<TaskPositionDto> positions)
+    {
+        foreach (var pos in positions)
+        {
+            var task = await _ctx.Tasks.FindAsync(pos.Id);
+            if (task != null)
+            {
+                task.Position = pos.Position;
+                if (pos.ColumnId.HasValue)
+                    task.ColumnId = pos.ColumnId.Value;
+            }
+        }
+    }
 
     public void Add(TaskItem task) =>
         _ctx.Tasks.Add(task);

@@ -14,4 +14,6 @@ public class TaskItem
     // Column
     public Guid ColumnId { get; set; }
     public Column Column { get; set; } = null!;
+
+    public int Position { get; set; }
 }

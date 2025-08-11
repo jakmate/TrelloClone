@@ -54,9 +54,10 @@ public class ColumnService
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task UpdateColumnPositionAsync(Guid boardId, Guid columnId, int position)
+    public async Task<bool> ReorderColumnsAsync(Guid boardId, List<ColumnPositionDto> positions)
     {
-        var response = await _httpClient.PutAsJsonAsync($"api/boards/{boardId}/columns/{columnId}/position", new { Position = position });
-        response.EnsureSuccessStatusCode();
+        var request = new ReorderColumnsRequest { Columns = positions };
+        var response = await _httpClient.PutAsJsonAsync($"api/boards/{boardId}/columns/reorder", request);
+        return response.IsSuccessStatusCode;
     }
 }

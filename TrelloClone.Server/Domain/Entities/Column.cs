@@ -2,7 +2,7 @@ public class Column
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = null!;
-    public int Position { get; set; }  // ordering within board
+    public int Position { get; set; }
 
     // Foreign key + nav
     public Guid BoardId { get; set; }

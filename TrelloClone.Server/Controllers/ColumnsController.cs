@@ -15,12 +15,22 @@ public class ColumnsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<ColumnDto>>> GetAll(Guid boardId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
-            return Unauthorized();
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userId, out var userGuid))
+                return Unauthorized();
 
-        var list = await _columnService.GetColumnsForBoardAsync(boardId);
-        return Ok(list);
+            var list = await _columnService.GetColumnsForBoardAsync(boardId);
+            if (list == null)
+                return NotFound();
+
+            return Ok(list);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     [HttpPost]
@@ -66,14 +76,14 @@ public class ColumnsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("{columnId:guid}/position")]
-    public async Task<IActionResult> UpdatePosition(Guid boardId, Guid columnId, [FromBody] UpdateColumnPositionRequest req)
+    [HttpPut("reorder")]
+    public async Task<IActionResult> ReorderColumns(Guid boardId, [FromBody] ReorderColumnsRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
             return Unauthorized();
 
-        await _columnService.UpdateColumnPositionAsync(columnId, req.Position);
+        await _columnService.ReorderColumnsAsync(boardId, request.Columns);
         return Ok();
     }
 }

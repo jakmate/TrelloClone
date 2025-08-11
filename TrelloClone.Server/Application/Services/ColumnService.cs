@@ -19,40 +19,45 @@ public class ColumnService
     public async Task<List<ColumnDto>> GetColumnsForBoardAsync(Guid boardId)
     {
         var list = await _columns.ListByBoardAsync(boardId);
-        return list.Select(c => new ColumnDto
-        {
-            Id = c.Id,
-            Title = c.Title,
-            Position = c.Position,
-            BoardId = c.BoardId,
-            Tasks = c.Tasks.Select(t => new TaskDto
+        return list.OrderBy(c => c.Position) // Add ordering
+            .Select(c => new ColumnDto
             {
-                Id = t.Id,
-                Name = t.Name,
-                Priority = t.Priority,
-                AssignedUserId = t.AssignedUserId
-            }).ToList()
-        }).ToList();
+                Id = c.Id,
+                Title = c.Title,
+                Position = c.Position,
+                BoardId = c.BoardId,
+                Tasks = c.Tasks.OrderBy(t => t.Position).Select(t => new TaskDto // Order tasks too
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Priority = t.Priority,
+                    AssignedUserId = t.AssignedUserId,
+                    ColumnId = t.ColumnId,
+                    Position = t.Position
+                }).ToList()
+            }).ToList();
+        return null;
     }
 
     public async Task<ColumnDto> CreateColumnAsync(CreateColumnRequest req)
     {
         var board = await _boards.GetByIdAsync(req.BoardId)
                     ?? throw new KeyNotFoundException("Board not found.");
-
         if (await _columns.ExistsWithTitleAsync(req.BoardId, req.Title))
             throw new InvalidOperationException("Column title already in use.");
+
+        // Get next position
+        var existingColumns = await _columns.ListByBoardAsync(req.BoardId);
+        var nextPosition = existingColumns.Any() ? existingColumns.Max(c => c.Position) + 1 : 0;
 
         var column = new Column
         {
             Title = req.Title,
-            Position = req.Position,
+            Position = nextPosition, // Use calculated position
             BoardId = req.BoardId
         };
         _columns.Add(column);
-
         await _uow.SaveChangesAsync();
-
         return new ColumnDto
         {
             Id = column.Id,
@@ -94,26 +99,9 @@ public class ColumnService
         await _uow.SaveChangesAsync();
     }
 
-    public async Task UpdateColumnPositionAsync(Guid columnId, int position)
+    public async Task ReorderColumnsAsync(Guid boardId, List<ColumnPositionDto> positions)
     {
-        var column = await _columns.GetByIdAsync(columnId)
-                    ?? throw new KeyNotFoundException("Column not found.");
-
-        column.Position = position;
-        await _uow.SaveChangesAsync();
-    }
-
-    public async Task ReorderColumnsAsync(Guid boardId, List<ColumnReorderDto> newOrder)
-    {
-        var columns = await _columns.ListByBoardAsync(boardId);
-
-        foreach (var item in newOrder)
-        {
-            var column = columns.FirstOrDefault(c => c.Id == item.ColumnId);
-            if (column != null)
-                column.Position = item.NewPosition;
-        }
-
+        await _columns.UpdatePositionsAsync(positions);
         await _uow.SaveChangesAsync();
     }
 }

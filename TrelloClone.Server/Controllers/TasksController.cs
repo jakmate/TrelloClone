@@ -65,14 +65,14 @@ public class TasksController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("/api/tasks/{taskId:guid}/move")]
-    public async Task<IActionResult> MoveTask(Guid taskId, [FromBody] MoveTaskRequest req)
+    [HttpPut("reorder")]
+    public async Task<IActionResult> ReorderTasks([FromBody] ReorderTasksRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
             return Unauthorized();
 
-        await _svc.MoveTaskAsync(taskId, req.ColumnId);
+        await _svc.ReorderTasksAsync(request.Tasks);
         return Ok();
     }
 }
