@@ -13,29 +13,34 @@
 
 <AuthorizeView>
     <Authorized Context="authContext">
-        <div class="container mt-4">
-            <div class="row">
-                <div class="col-md-8">
-                    <h1>My Boards</h1>
-                    @if (currentUser != null)
-                    {
-                        <p class="text-muted">Welcome back, @currentUser.UserName!</p>
-                    }
-                </div>
-                <div class="col-md-4 text-end">
-                    <button class="btn btn-primary" @onclick="ShowCreateModal">
-                        <i class="fas fa-plus"></i> Create Board
+        <div class="boards-page">
+            <div class="page-header">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1>My Boards</h1>
+                        @if (currentUser != null)
+                        {
+                            <p class="welcome-text">Welcome back, <strong>@currentUser.UserName</strong>!</p>
+                        }
+                    </div>
+                    <button class="create-btn" @onclick="ShowCreateModal">
+                        <i class="bi bi-plus-lg"></i> Create Board
                     </button>
                 </div>
             </div>
 
             @if (isLoading)
             {
-                <LoadingSpinner></LoadingSpinner>
+                <div class="loading-container">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Loading your boards...</p>
+                </div>
             }
             else if (boards.Any())
             {
-                <div class="row mt-4">
+                <div class="boards-grid">
                     @{
                         var sortedBoards = boards.OrderBy(b => b.Position).ToList();
                     }
@@ -44,7 +49,7 @@
                         var board = sortedBoards[i];
                         var index = i;
         
-                        <div class="col-md-3 mb-3 board-drop-zone @(dragOverIndex == index ? "drag-over" : "")" 
+                        <div class="board-drop-zone @(dragOverIndex == index ? "drag-over" : "")" 
                              @ondragover="@((e) => HandleDragOver(e, index))"
                              @ondragover:preventDefault="true"
                              @ondrop="@((e) => HandleBoardDrop(e, index))"
@@ -52,7 +57,8 @@
             
                             <div class="board-item @(draggedBoard?.Id == board.Id ? "dragging" : "")" 
                                  draggable="true" 
-                                 @ondragstart="@((e) => HandleBoardDragStart(e, board))">
+                                 @ondragstart="@((e) => HandleBoardDragStart(e, board))"
+                                 @ondragend="HandleBoardDragEnd">
                                 <BoardCard 
                                     Board="board"
                                     CanEdit="@(boardPermissions.ContainsKey(board.Id) && boardPermissions[board.Id])"
@@ -65,94 +71,101 @@
             }
             else
             {
-                <div class="text-center mt-5">
-                    <h3>No boards found</h3>
-                    <p class="text-muted">Create your first board to get started!</p>
+                <div class="empty-state">
+                    <div class="empty-content">
+                        <i class="bi bi-kanban"></i>
+                        <h3>No boards found</h3>
+                        <p>Create your first board to get started!</p>
+                        <button class="btn-primary" @onclick="ShowCreateModal">
+                            <i class="bi bi-plus-lg"></i> Create Board
+                        </button>
+                    </div>
                 </div>
             }
         </div>
 
         <!-- Create Board Modal -->
-        <div class="modal fade @(showCreateModal ? "show" : "")" style="display: @(showCreateModal ? "block" : "none")" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Create New Board</h5>
-                        <button type="button" class="btn-close" @onclick="HideCreateModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <EditForm Model="newBoard" OnValidSubmit="CreateBoard">
-                            <DataAnnotationsValidator />
-                            <ValidationSummary class="text-danger" />
-                            
-                            <div class="mb-3">
-                                <label for="boardName" class="form-label">Board Name</label>
-                                <InputText id="boardName" class="form-control" @bind-Value="newBoard.Name" placeholder="Enter board name" />
-                                <ValidationMessage For="@(() => newBoard.Name)" />
-                            </div>
-                            
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" @onclick="HideCreateModal">Cancel</button>
-                                <button type="submit" class="btn btn-primary" disabled="@isCreating">
-                                    @if (isCreating)
-                                    {
-                                        <span class="spinner-border spinner-border-sm me-2"></span>
-                                    }
-                                    Create Board
-                                </button>
-                            </div>
-                        </EditForm>
-                    </div>
+        <div class="modal @(showCreateModal ? "show" : "")" style="display: @(showCreateModal ? "flex" : "none")">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Create New Board</h3>
+                    <button class="close-btn" @onclick="HideCreateModal">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="newBoard" OnValidSubmit="CreateBoard">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="validation-errors" />
+                        
+                        <div class="form-group">
+                            <label for="boardName">Board Name</label>
+                            <InputText id="boardName" class="form-control" @bind-Value="newBoard.Name" placeholder="Enter board name" />
+                            <ValidationMessage For="@(() => newBoard.Name)" />
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="btn-secondary" @onclick="HideCreateModal">Cancel</button>
+                            <button type="submit" class="btn-primary" disabled="@isCreating">
+                                @if (isCreating)
+                                {
+                                    <span class="spinner"></span>
+                                }
+                                Create Board
+                            </button>
+                        </div>
+                    </EditForm>
                 </div>
             </div>
         </div>
 
         <!-- Update Board Modal -->
-        <div class="modal fade @(showUpdateModal ? "show" : "")" style="display: @(showUpdateModal ? "block" : "none")" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Update Board</h5>
-                        <button type="button" class="btn-close" @onclick="HideUpdateModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <EditForm Model="updateRequest" OnValidSubmit="UpdateBoard">
-                            <DataAnnotationsValidator />
-                            <ValidationSummary class="text-danger" />
-                            
-                            <div class="mb-3">
-                                <label for="updateBoardName" class="form-label">Board Name</label>
-                                <InputText id="updateBoardName" class="form-control" @bind-Value="updateRequest.Name" />
-                                <ValidationMessage For="@(() => updateRequest.Name)" />
-                            </div>
-                            
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" @onclick="HideUpdateModal">Cancel</button>
-                                <button type="submit" class="btn btn-primary" disabled="@isUpdating">
-                                    @if (isUpdating)
-                                    {
-                                        <span class="spinner-border spinner-border-sm me-2"></span>
-                                    }
-                                    Update Board
-                                </button>
-                            </div>
-                        </EditForm>
-                    </div>
+        <div class="modal @(showUpdateModal ? "show" : "")" style="display: @(showUpdateModal ? "flex" : "none")">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Update Board</h3>
+                    <button class="close-btn" @onclick="HideUpdateModal">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="updateRequest" OnValidSubmit="UpdateBoard">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="validation-errors" />
+                        
+                        <div class="form-group">
+                            <label for="updateBoardName">Board Name</label>
+                            <InputText id="updateBoardName" class="form-control" @bind-Value="updateRequest.Name" />
+                            <ValidationMessage For="@(() => updateRequest.Name)" />
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="btn-secondary" @onclick="HideUpdateModal">Cancel</button>
+                            <button type="submit" class="btn-primary" disabled="@isUpdating">
+                                @if (isUpdating)
+                                {
+                                    <span class="spinner"></span>
+                                }
+                                Update Board
+                            </button>
+                        </div>
+                    </EditForm>
                 </div>
             </div>
         </div>
 
         @if (showCreateModal || showUpdateModal)
         {
-            <div class="modal-backdrop fade show"></div>
+            <div class="modal-backdrop"></div>
         }
     </Authorized>
     <NotAuthorized>
-        <div class="container mt-5">
-            <div class="text-center">
+        <div class="access-denied">
+            <div class="denied-content">
+                <i class="bi bi-shield-lock"></i>
                 <h3>Access Denied</h3>
                 <p>You need to be logged in to view boards.</p>
-                <a href="/login" class="btn btn-primary">Login</a>
+                <a href="/login" class="btn-primary">Login</a>
             </div>
         </div>
     </NotAuthorized>
@@ -362,6 +375,12 @@
 
     private void HandleDragLeave()
     {
+        dragOverIndex = null;
+    }
+
+    private void HandleBoardDragEnd()
+    {
+        draggedBoard = null;
         dragOverIndex = null;
     }
 

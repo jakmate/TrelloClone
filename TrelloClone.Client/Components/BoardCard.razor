@@ -1,24 +1,30 @@
 @using TrelloClone.Shared.DTOs
 @inject NavigationManager Navigation
 
-<div class="card h-100 board-card" style="cursor: pointer;" @onclick="NavigateToBoard">
-    <div class="card-body position-relative">
-        @if (CanEdit)
-        {
-            <div class="position-absolute top-0 end-0 p-2 d-flex gap-1">
-                <button class="btn btn-sm btn-outline-secondary" @onclick="HandleUpdate" @onclick:stopPropagation="true">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" @onclick="HandleDelete" @onclick:stopPropagation="true">
-                    <i class="bi bi-trash3"></i>
-                </button>
-            </div>
-        }
+<div class="board-card" @onclick="NavigateToBoard">
+    <div class="card-content">
+        <div class="card-header">
+            <h3 class="card-title">@Board.Name</h3>
+            
+            @if (CanEdit)
+            {
+                <div class="card-actions">
+                    <button class="action-btn edit-btn" @onclick="HandleUpdate" @onclick:stopPropagation="true">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="action-btn delete-btn" @onclick="HandleDelete" @onclick:stopPropagation="true">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </div>
+            }
+        </div>
         
-        <h5 class="card-title">@Board.Name</h5>
-    </div>
-    <div class="card-footer">
-        <small class="text-muted">Click to open</small>
+        <div class="card-footer">
+            <div class="footer-content">
+                <i class="bi bi-grid-3x3-gap"></i>
+                <span>Click to open</span>
+            </div>
+        </div>
     </div>
 </div>
 

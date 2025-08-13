@@ -2,40 +2,66 @@
 @using Microsoft.AspNetCore.Components.Authorization
 
 <CascadingAuthenticationState>
-    <div class="page">
-        <div class="sidebar">
-            <NavMenu />
-        </div>
-        <main>
-            <div class="top-row px-4">
-                <div class="me-3">
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-left">
+                <button class="sidebar-toggle" @onclick="ToggleSidebar">
+                    <i class="bi bi-list"></i>
+                </button>
+                <a href="/" class="brand-logo">
+                    <i class="bi bi-kanban"></i>
+                    <span>TrelloClone</span>
+                </a>
+            </div>
+
+            <div class="header-right">
+                <div class="header-actions">
                     <Notifications />
                 </div>
                 <AuthorizeView>
                     <Authorized>
-                        <span class="me-3">Welcome, @context.User.Identity!.Name</span>
-                        <button class="btn btn-sm btn-outline-light" @onclick="Logout">Logout</button>
+                        <div class="user-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name">@context.User.Identity!.Name</div>
+                            <button class="logout-btn" @onclick="Logout">
+                                <i class="bi bi-box-arrow-right"></i> Sign out
+                            </button>
+                        </div>
                     </Authorized>
                     <NotAuthorized>
-                        <a href="/login" class="btn btn-sm btn-outline-light me-2">Login</a>
-                        <a href="/register" class="btn btn-sm btn-outline-light">Register</a>
+                        <a href="/login" class="auth-btn btn-light">Log in</a>
+                        <a href="/register" class="auth-btn btn-primary">Sign up</a>
                     </NotAuthorized>
                 </AuthorizeView>
             </div>
-            <article class="content px-4">
-                @Body
-            </article>
-        </main>
+        </header>
+
+        <div class="app-body">
+            <aside class="app-sidebar @(sidebarCollapsed ? "collapsed" : "")">
+                <NavMenu />
+            </aside>
+
+            <main class="main-content">
+                <div class="container-fluid">
+                    @Body
+                </div>
+            </main>
+        </div>
     </div>
 </CascadingAuthenticationState>
 
 @code {
+    private bool sidebarCollapsed = false;
     [Inject] private IAuthService AuthService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private void ToggleSidebar() => sidebarCollapsed = !sidebarCollapsed;
 
     private async Task Logout()
     {
         await AuthService.LogoutAsync();
-        Navigation.NavigateTo("/login");
+        Navigation.NavigateTo("/");
     }
 }

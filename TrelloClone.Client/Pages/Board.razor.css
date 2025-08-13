@@ -1,32 +1,108 @@
-.column-container.drag-over {
-    border: 2px dashed #007bff;
-    background-color: #f8f9fa;
-    transform: scale(1.02);
-    transition: transform 0.2s ease;
-    box-shadow: 0 0 10px rgba(0,123,255,0.3);
+.column-drop-zone {
+    transition: var(--transition);
+    border-radius: var(--border-radius);
+    padding: 8px;
 }
 
-.column-container[draggable="true"]:hover {
+.column-drop-zone.drag-over {
+    border: 2px dashed var(--primary);
+    background-color: rgba(0, 102, 255, 0.1);
+    padding: 12px;
+    transform: scale(1.02); /* Added to match boards-page effect */
+}
+
+.column-item {
     cursor: grab;
+    transition: var(--transition);
 }
 
-.column-container[draggable="true"]:active {
+.column-item:active {
     cursor: grabbing;
 }
 
-.drop-zone {
-    height: 10px;
-    margin: 2px 0;
-    border-radius: 4px;
-    transition: all 0.2s ease;
+.column-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.95); /* Added to match boards-page effect */
 }
 
-    .drop-zone.active {
-        height: 20px;
-        background-color: rgba(0, 123, 255, 0.2);
-        border: 1px dashed #007bff;
-    }
+.task-drop-zone-before, 
+.task-drop-zone-after, 
+.empty-column-drop-zone {
+    transition: var(--transition);
+    border-radius: var(--border-radius);
+}
 
-.card-body.drag-over {
-    background-color: rgba(0, 123, 255, 0.05);
+.task-drop-zone-before.visible, 
+.task-drop-zone-after.visible {
+    background-color: rgba(0, 102, 255, 0.05);
+    border: 1px dashed rgba(0, 102, 255, 0.3);
+    height: 12px !important;
+    margin: 6px 0 !important;
+}
+
+.empty-column-drop-zone.visible {
+    background-color: rgba(0, 102, 255, 0.05);
+    border: 1px dashed rgba(0, 102, 255, 0.3);
+    min-height: 50px !important;
+    padding: 8px;
+}
+
+.task-drop-zone-before.drag-over, 
+.task-drop-zone-after.drag-over {
+    height: 20px !important;
+    background-color: rgba(0, 102, 255, 0.3);
+    border: 2px dashed var(--primary);
+    margin: 8px 0 !important;
+}
+
+.empty-column-drop-zone.drag-over {
+    background-color: rgba(0, 102, 255, 0.1);
+    border: 2px dashed var(--primary);
+    min-height: 60px !important;
+    padding: 12px;
+}
+
+.card[draggable="true"] {
+    cursor: grab;
+    transition: var(--transition);
+}
+
+.card[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.card.dragging {
+    opacity: 0.5;
+    transform: scale(0.95); /* Added to match boards-page effect */
+}
+
+.card-body.drop-zone-active {
+    background-color: rgba(0, 102, 255, 0.05);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    padding: 12px;
+}
+
+.columns-container.dragging-active .column-drop-zone:not(.drag-over) {
+    opacity: 0.7;
+}
+
+.card-body.task-dragging-active .task-drop-zone-before:not(.drag-over), 
+.card-body.task-dragging-active .task-drop-zone-after:not(.drag-over), 
+.card-body.task-dragging-active .empty-column-drop-zone:not(.drag-over) {
+    opacity: 0.5;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.card {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Matched boards-page easing */
+    border-radius: var(--border-radius); /* Added for consistency */
+}
+
+.card:hover:not(.dragging) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md); /* Standardized shadow token */
 }

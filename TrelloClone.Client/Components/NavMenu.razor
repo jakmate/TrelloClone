@@ -1,52 +1,48 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">TrelloClone</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
-
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+<div class="sidebar-content">
+    <nav class="nav-menu">
+        <div class="nav-header">Workspace</div>
+        <div class="nav-section">
+            <NavLink class="nav-item" href="" Match="NavLinkMatch.All">
+                <i class="bi bi-house"></i>
+                <span>Home</span>
+            </NavLink>        
+            <AuthorizeView>
+                <Authorized>
+                    <div class="workspace-items">
+                        <NavLink class="nav-item" href="boards">
+                            <i class="bi bi-columns-gap"></i>
+                            <span>Boards</span>
+                        </NavLink>
+                        <NavLink class="nav-item" href="templates">
+                            <i class="bi bi-grid"></i>
+                            <span>Templates</span>
+                        </NavLink>
+                    </div>
+                </Authorized>
+            
+                <NotAuthorized>
+                    <div class="nav-header">Account</div>
+                    <div class="workspace-items">
+                        <NavLink class="nav-item" href="login">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            <span>Login</span>
+                        </NavLink>
+                        <NavLink class="nav-item" href="register">
+                            <i class="bi bi-person-plus"></i>
+                            <span>Register</span>
+                        </NavLink>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
         
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="boards">
-                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Boards
-                    </NavLink>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="login">
-                        <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="register">
-                        <span class="bi bi-person-plus" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
+        <div class="nav-footer">
+            <div class="nav-item">
+                <i class="bi bi-question-circle"></i>
+                <span>Help & Resources</span>
+            </div>
+        </div>
     </nav>
 </div>
-
-@code {
-    private bool collapseNavMenu = true;
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-}

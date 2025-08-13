@@ -38,7 +38,7 @@
             </div>
         </div>
 
-        <div class="row g-3 columns-container" @ondragover:preventDefault="true">
+        <div class="row g-3 columns-container @(draggedColumn != null || draggedTask != null ? "dragging-active" : "")" @ondragover:preventDefault="true">
             @{
                 var sortedColumns = columns.OrderBy(c => c.Position).ToList();
             }
@@ -52,21 +52,30 @@
                      @ondragover:preventDefault="true"
                      @ondrop="@((e) => HandleColumnDrop(e, index))"
                      @ondragleave="HandleColumnDragLeave">
-            
-                    <div class="column-item @(draggedColumn?.Id == column.Id ? "dragging" : "")"
-                         draggable="@canEdit" 
-                         @ondragstart="@((e) => HandleColumnDragStart(e, column))">
-                
+                    <div class="column-item @(draggedColumn?.Id == column.Id ? "dragging" : "")">
                         <div class="card h-100">
                             <div class="card-header d-flex justify-content-between align-items-center">
+                                @if (canEdit)
+                                {
+                                    <div class="drag-handle me-2" 
+                                         draggable="true" 
+                                         @ondragstart="@((e) => HandleColumnDragStart(e, column))"
+                                         @ondragend="HandleColumnDragEnd"
+                                         @ondragstart:stopPropagation="true"
+                                         title="Drag to reorder column">
+                                        <i class="bi bi-grip-vertical"></i>
+                                    </div>
+                                }
+            
                                 @if (editingColumnId == column.Id && canEdit)
                                 {
                                     <input type="text" class="form-control form-control-sm" @bind="editColumnTitle" @onkeypress="(e) => OnEditColumnKeyPress(e, column.Id)" />
                                 }
                                 else
                                 {
-                                    <h5 class="mb-0" @onclick="() => StartEditColumn(column.Id, column.Title)" style="cursor: pointer;" title="Click to edit">@column.Title</h5>
+                                    <h5 class="mb-0 flex-grow-1">@column.Title</h5>
                                 }
+            
                                 @if (canEdit) {
                                     <div class="btn-group">
                                         @if (editingColumnId == column.Id)
@@ -90,7 +99,7 @@
                                     </div>
                                 }
                             </div>
-                            <div class="card-body @GetDropZoneClass(column.Id)"
+                            <div class="card-body @GetDropZoneClass(column.Id) @(draggedTask != null ? "task-dragging-active" : "")"
                                  @ondragover:preventDefault="true" 
                                  @ondragenter:preventDefault="true">
     
@@ -102,19 +111,15 @@
                                         var tIndex = taskIndex;
 
                                         @* Drop zone BEFORE each task *@
-                                        <div class="task-drop-zone-before @(taskDragOverColumnId == column.Id && taskDragOverIndex == tIndex ? "drag-over" : "")"
-                                             style="height: 4px; margin: 2px 0;"
+                                        <div class="task-drop-zone-before @(taskDragOverColumnId == column.Id && taskDragOverIndex == tIndex ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
+                                             style="height: @(draggedTask != null ? "6px" : "4px"); margin: 2px 0;"
                                              @ondragover="@((e) => HandleTaskDragOver(e, column.Id, tIndex))"
                                              @ondragover:preventDefault="true"
                                              @ondrop="@((e) => HandleTaskDrop(e, column.Id, tIndex))"
                                              @ondragleave="HandleTaskDragLeave">
                                         </div>
 
-                                       <div class="card mb-2 @(draggedTask?.Id == task.Id ? "dragging" : "")"
-                                             draggable="@canEdit" 
-                                             @ondragstart="@((e) => HandleTaskDragStart(e, task))"
-                                             @ondragstart:stopPropagation="true"
-                                             data-task-id="@task.Id">
+                                       <div class="card mb-2 @(draggedTask?.Id == task.Id ? "dragging" : "")" data-task-id="@task.Id">
                                             <div class="card-body p-2">
                                                 @if (editingTaskId == task.Id && canEdit)
                                                 {
@@ -138,10 +143,23 @@
                                                 else
                                                 {
                                                     <div class="d-flex justify-content-between align-items-start">
-                                                        <div>
+                                                        @if (canEdit)
+                                                        {
+                                                            <div class="drag-handle me-2" 
+                                                                 draggable="true" 
+                                                                 @ondragstart="@((e) => HandleTaskDragStart(e, task))"
+                                                                 @ondragend="HandleTaskDragEnd"
+                                                                 @ondragstart:stopPropagation="true"
+                                                                 title="Drag to move task">
+                                                                <i class="bi bi-grip-vertical"></i>
+                                                            </div>
+                                                        }
+                
+                                                        <div class="flex-grow-1">
                                                             <h6 class="card-title mb-1">@task.Name</h6>
                                                             <small class="text-muted">Priority: @task.Priority</small>
                                                         </div>
+                
                                                         @if (canEdit) {
                                                             <div class="btn-group">
                                                                 <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
@@ -159,8 +177,8 @@
                                     }
         
                                     @* Drop zone AFTER the last task *@
-                                    <div class="task-drop-zone-after @(taskDragOverColumnId == column.Id && taskDragOverIndex == column.Tasks.Count ? "drag-over" : "")"
-                                         style="height: 4px; margin: 2px 0;"
+                                    <div class="task-drop-zone-after @(taskDragOverColumnId == column.Id && taskDragOverIndex == column.Tasks.Count ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
+                                         style="height: @(draggedTask != null ? "12px" : "8px"); margin: 6px 0;"
                                          @ondragover="@((e) => HandleTaskDragOver(e, column.Id, column.Tasks.Count))"
                                          @ondragover:preventDefault="true"
                                          @ondrop="@((e) => HandleTaskDrop(e, column.Id, column.Tasks.Count))"
@@ -170,13 +188,13 @@
                                 else
                                 {
                                     @* Empty column drop zone *@
-                                    <div class="empty-column-drop-zone @(taskDragOverColumnId == column.Id ? "drag-over" : "")"
-                                         style="min-height: 20px; margin: 8px 0;"
-                                         @ondragover="@((e) => HandleTaskDragOver(e, column.Id, 0))"
-                                         @ondragover:preventDefault="true"
-                                         @ondrop="@((e) => HandleTaskDrop(e, column.Id, 0))"
-                                         @ondragleave="HandleTaskDragLeave">
-                                        <p class="text-muted">No tasks yet</p>
+                                   <div class="empty-column-drop-zone @(taskDragOverColumnId == column.Id ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
+                                            style="min-height: @(draggedTask != null ? "50px" : "40px"); margin: 8px 0;"
+                                            @ondragover="@((e) => HandleTaskDragOver(e, column.Id, 0))"
+                                            @ondragover:preventDefault="true"
+                                            @ondrop="@((e) => HandleTaskDrop(e, column.Id, 0))"
+                                            @ondragleave="HandleTaskDragLeave">
+                                        <p class="text-muted">@(draggedTask != null ? "Drop task here" : "No tasks yet")</p>
                                     </div>
                                 }
     
@@ -682,6 +700,13 @@
         taskDragOverIndex = null;
     }
 
+    private void HandleTaskDragEnd()
+    {
+        draggedTask = null;
+        taskDragOverColumnId = null;
+        taskDragOverIndex = null;
+    }
+
     private async Task HandleTaskDrop(DragEventArgs e, Guid targetColumnId, int dropIndex)
     {
         if (draggedTask == null || !canEdit) return;
@@ -787,6 +812,12 @@
 
     private void HandleColumnDragLeave()
     {
+        columnDragOverIndex = null;
+    }
+
+    private void HandleColumnDragEnd()
+    {
+        draggedColumn = null;
         columnDragOverIndex = null;
     }
 
