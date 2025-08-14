@@ -1,12 +1,13 @@
 ﻿@page "/board/{boardId:guid}"
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Authorization
 @using TrelloClone.Shared.DTOs
+@using TrelloClone.Shared.DTOs.SignalR
 @inject IBoardService BoardService
 @inject ColumnService ColumnService
 @inject TaskService TaskService
 @inject IInvitationService InvitationService
 @inject NavigationManager Navigation
-
 <div class="container-fluid p-3">
     @if (loading)
     {
@@ -25,6 +26,28 @@
         <div class="row mb-3">
             <div class="col">
                 <h2>Board Columns</h2>
+                @if (onlineUsers.Count > 0)
+                {
+                    <div class="online-users-indicator mb-2">
+                        <small class="text-muted">
+                            <i class="bi bi-people"></i> 
+                            Online: @string.Join(", ", onlineUsers.Take(3))
+                            @if (onlineUsers.Count > 3)
+                            {
+                                <span> and @(onlineUsers.Count - 3) more</span>
+                            }
+                        </small>
+                    </div>
+                }
+                @if (draggingUsers.Count > 0)
+                {
+                    <div class="drag-activity-indicator mb-2">
+                        <small class="text-info">
+                            <i class="bi bi-arrows-move"></i> 
+                            @string.Join(", ", draggingUsers)
+                        </small>
+                    </div>
+                }
                 @if (canEdit) {
                     <button class="btn btn-primary" @onclick="ShowCreateColumn">
                         <i class="bi bi-plus-lg"></i> Add Column
@@ -37,7 +60,6 @@
                 }
             </div>
         </div>
-
         <div class="row g-3 columns-container @(draggedColumn != null || draggedTask != null ? "dragging-active" : "")" @ondragover:preventDefault="true">
             @{
                 var sortedColumns = columns.OrderBy(c => c.Position).ToList();
@@ -46,7 +68,6 @@
             {
                 var column = sortedColumns[i];
                 var index = i;
-        
                 <div class="col-md-4 col-lg-3 column-drop-zone @(columnDragOverIndex == index ? "drag-over" : "")"
                      @ondragover="@((e) => HandleColumnDragOver(e, index))"
                      @ondragover:preventDefault="true"
@@ -66,8 +87,17 @@
                                         <i class="bi bi-grip-vertical"></i>
                                     </div>
                                 }
-            
-                                @if (editingColumnId == column.Id && canEdit)
+                                @if (IsBeingEditedByOther("column", column.Id))
+                                {
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-0">@column.Title</h5>
+                                        <small class="text-warning">
+                                            <i class="bi bi-pencil-square"></i> 
+                                            @GetEditingUserName("column", column.Id) is editing...
+                                        </small>
+                                    </div>
+                                }
+                                else if (editingColumnId == column.Id && canEdit)
                                 {
                                     <input type="text" class="form-control form-control-sm" @bind="editColumnTitle" @onkeypress="(e) => OnEditColumnKeyPress(e, column.Id)" />
                                 }
@@ -75,8 +105,7 @@
                                 {
                                     <h5 class="mb-0 flex-grow-1">@column.Title</h5>
                                 }
-            
-                                @if (canEdit) {
+                                @if (canEdit && !IsBeingEditedByOther("column", column.Id)) {
                                     <div class="btn-group">
                                         @if (editingColumnId == column.Id)
                                         {
@@ -98,18 +127,22 @@
                                         </button>
                                     </div>
                                 }
+                                else if (IsBeingEditedByOther("column", column.Id))
+                                {
+                                    <div class="text-warning">
+                                        <i class="bi bi-lock"></i>
+                                    </div>
+                                }
                             </div>
                             <div class="card-body @GetDropZoneClass(column.Id) @(draggedTask != null ? "task-dragging-active" : "")"
                                  @ondragover:preventDefault="true" 
                                  @ondragenter:preventDefault="true">
-    
                                 @if (column.Tasks?.Any() == true)
                                 {
                                     @for (int taskIndex = 0; taskIndex < column.Tasks.Count; taskIndex++)
                                     {
                                         var task = column.Tasks[taskIndex];
                                         var tIndex = taskIndex;
-
                                         @* Drop zone BEFORE each task *@
                                         <div class="task-drop-zone-before @(taskDragOverColumnId == column.Id && taskDragOverIndex == tIndex ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
                                              style="height: @(draggedTask != null ? "6px" : "4px"); margin: 2px 0;"
@@ -118,10 +151,18 @@
                                              @ondrop="@((e) => HandleTaskDrop(e, column.Id, tIndex))"
                                              @ondragleave="HandleTaskDragLeave">
                                         </div>
-
                                        <div class="card mb-2 @(draggedTask?.Id == task.Id ? "dragging" : "")" data-task-id="@task.Id">
                                             <div class="card-body p-2">
-                                                @if (editingTaskId == task.Id && canEdit)
+                                                @if (IsBeingEditedByOther("task", task.Id))
+                                                {
+                                                    <div class="editing-indicator">
+                                                        <small class="text-warning">
+                                                            <i class="bi bi-pencil-square"></i> 
+                                                            @GetEditingUserName("task", task.Id) is editing...
+                                                        </small>
+                                                    </div>
+                                                }
+                                                else if (editingTaskId == task.Id && canEdit)
                                                 {
                                                     <div class="mb-2">
                                                         <input type="text" class="form-control form-control-sm mb-2" @bind="editTaskName" @onkeypress="(e) => OnEditTaskKeyPress(e, column.Id, task.Id)" />
@@ -154,13 +195,12 @@
                                                                 <i class="bi bi-grip-vertical"></i>
                                                             </div>
                                                         }
-                
                                                         <div class="flex-grow-1">
                                                             <h6 class="card-title mb-1">@task.Name</h6>
                                                             <small class="text-muted">Priority: @task.Priority</small>
                                                         </div>
-                
-                                                        @if (canEdit) {
+                                                        @if (canEdit && !IsBeingEditedByOther("task", task.Id)) 
+                                                        {
                                                             <div class="btn-group">
                                                                 <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
                                                                     <i class="bi bi-pencil"></i>
@@ -170,12 +210,17 @@
                                                                 </button>
                                                             </div>
                                                         }
+                                                        else if (IsBeingEditedByOther("task", task.Id))
+                                                        {
+                                                            <div class="text-warning">
+                                                                <i class="bi bi-lock"></i>
+                                                            </div>
+                                                        }
                                                     </div>
                                                 }
                                             </div>
                                         </div>
                                     }
-        
                                     @* Drop zone AFTER the last task *@
                                     <div class="task-drop-zone-after @(taskDragOverColumnId == column.Id && taskDragOverIndex == column.Tasks.Count ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
                                          style="height: @(draggedTask != null ? "12px" : "8px"); margin: 6px 0;"
@@ -197,7 +242,6 @@
                                         <p class="text-muted">@(draggedTask != null ? "Drop task here" : "No tasks yet")</p>
                                     </div>
                                 }
-    
                                 @if (canEdit) {
                                     <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="() => ShowCreateTask(column.Id)">
                                         <i class="bi bi-plus"></i> Add Task
@@ -211,8 +255,6 @@
         </div>
     }
 </div>
-
-
 <TaskModal Show="@showCreateTaskModal"
            TaskModel="@newTaskRequest" 
            OnCancel="@HideCreateTask"
@@ -228,66 +270,66 @@
              OnCancel="@HideInviteUser"
              OnSubmit="@HandleSendInvite"
              IsSubmitting="@sendingInvite" />
-
-
 @code {
     [Parameter] public Guid BoardId { get; set; }
-
     private List<ColumnDto>? columns;
     private bool loading = true;
     private bool showCreateColumnModal = false;
     private bool creatingColumn = false;
     private string newColumnTitle = string.Empty;
-
     // Task creation fields
     private bool showCreateTaskModal = false;
     private bool creatingTask = false;
     private string newTaskName = string.Empty;
     private PriorityLevel newTaskPriority = PriorityLevel.Medium;
     private Guid selectedColumnId;
-    private PermissionLevel newPermissionLevel = PermissionLevel.Viewer;
-
     // Edit fields
     private Guid editingColumnId = Guid.Empty;
     private string editColumnTitle = string.Empty;
     private Guid editingTaskId = Guid.Empty;
     private string editTaskName = string.Empty;
     private PriorityLevel editTaskPriority = PriorityLevel.Medium;
-
     // Invite fields
     private bool showInviteModal = false;
     private bool sendingInvite = false;
     private string inviteUsername = string.Empty;
-
     // Permissions
     private bool canEdit;
     private bool canInvite;
-
     // Drag and drop fields
     private ColumnDto? draggedColumn;
     private int? columnDragOverIndex;
     private TaskDto? draggedTask;
     private Guid? taskDragOverColumnId;
     private int? taskDragOverIndex;
-
     private CreateTaskRequest newTaskRequest = new CreateTaskRequest();
     private CreateColumnRequest newColumnRequest = new CreateColumnRequest();
     private CreateInvitationRequest inviteRequest = new CreateInvitationRequest();
-
+    [Inject] private BoardHubClient BoardHub { get; set; } = default!;
+    [Inject] private ILogger<Board> Logger { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    private HashSet<string> onlineUsers = new();
+    private HashSet<string> draggingUsers = new();
+    private Dictionary<string, string> editingUsers = new(); // itemId -> userName
+    private string currentUserId = string.Empty;
+    private string currentUserName = string.Empty;
     protected override async Task OnInitializedAsync()
     {
+        // Get current user info
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst("sub")?.Value ?? "";
+        currentUserName = authState.User.Identity?.Name ?? "Unknown";
         canEdit = await BoardService.CanEditAsync(BoardId);
         canInvite = await BoardService.CanInviteAsync(BoardId);
         await LoadColumns();
+        await SetupSignalR();
     }
-
     private async Task LoadColumns()
     {
         try
         {
             loading = true;
             columns = await ColumnService.GetColumnsForBoardAsync(BoardId);
-
             if (columns != null)
             {
                 foreach (var column in columns)
@@ -306,7 +348,34 @@
             loading = false;
         }
     }
-
+    private async Task SetupSignalR()
+    {
+        try
+        {
+            // Subscribe to events
+            BoardHub.UserJoinedBoard += OnUserJoinedBoard;
+            BoardHub.UserLeftBoard += OnUserLeftBoard;
+            BoardHub.TaskDragStarted += OnTaskDragStarted;
+            BoardHub.TaskDragEnded += OnTaskDragEnded;
+            BoardHub.TaskMoved += OnTaskMoved;
+            BoardHub.ColumnDragStarted += OnColumnDragStarted;
+            BoardHub.ColumnDragEnded += OnColumnDragEnded;
+            BoardHub.ColumnMoved += OnColumnMoved;
+            BoardHub.TaskCreated += OnTaskCreated;
+            BoardHub.TaskUpdated += OnTaskUpdated;
+            BoardHub.TaskDeleted += OnTaskDeleted;
+            BoardHub.ColumnCreated += OnColumnCreated;
+            BoardHub.ColumnUpdated += OnColumnUpdated;
+            BoardHub.ColumnDeleted += OnColumnDeleted;
+            BoardHub.UserStartedEditing += OnUserStartedEditing;
+            BoardHub.UserStoppedEditing += OnUserStoppedEditing;
+            await BoardHub.JoinBoardAsync(BoardId.ToString());
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error setting up SignalR");
+        }
+    }
     private void ShowCreateColumn()
     {
         newColumnRequest = new CreateColumnRequest
@@ -316,21 +385,19 @@
         };
         showCreateColumnModal = true;
     }
-
     private void HideCreateColumn()
     {
         showCreateColumnModal = false;
     }
-
     private async Task HandleCreateColumn()
     {
         if (string.IsNullOrWhiteSpace(newColumnRequest.Title) || creatingColumn) return;
-
         try
         {
             creatingColumn = true;
             var newColumn = await ColumnService.CreateColumnAsync(newColumnRequest);
             columns?.Add(newColumn);
+            await BoardHub.NotifyColumnCreatedAsync(newColumn);
             HideCreateColumn();
         }
         catch (Exception ex)
@@ -342,32 +409,23 @@
             creatingColumn = false;
         }
     }
-
     private async Task DeleteColumn(Guid columnId)
     {
-        if (!await ConfirmDelete()) return;
-
         try
         {
             await ColumnService.DeleteColumnAsync(BoardId, columnId);
             columns?.RemoveAll(c => c.Id == columnId);
+            await BoardHub.NotifyColumnDeletedAsync(columnId.ToString());
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error deleting column: {ex.Message}");
         }
     }
-
-    private async Task<bool> ConfirmDelete()
-    {
-        return await Task.FromResult(true);
-    }
-
     private void GoBack()
     {
         Navigation.NavigateTo("/");
     }
-
     private void ShowCreateTask(Guid columnId)
     {
         selectedColumnId = columnId;
@@ -377,28 +435,24 @@
         };
         showCreateTaskModal = true;
     }
-
     private void HideCreateTask()
     {
         showCreateTaskModal = false;
     }
-
     private async Task HandleCreateTask()
     {
         if (string.IsNullOrWhiteSpace(newTaskRequest.Name) || creatingTask) return;
-
         try
         {
             creatingTask = true;
             var newTask = await TaskService.CreateTaskAsync(newTaskRequest);
-            
             var column = columns?.FirstOrDefault(c => c.Id == selectedColumnId);
             if (column != null)
             {
                 column.Tasks ??= new List<TaskDto>();
                 column.Tasks.Add(newTask);
             }
-
+            await BoardHub.NotifyTaskCreatedAsync(newTask);
             HideCreateTask();
         }
         catch (Exception ex)
@@ -410,58 +464,56 @@
             creatingTask = false;
         }
     }
-
     private async Task DeleteTask(Guid columnId, Guid taskId)
     {
-        if (!await ConfirmDelete()) return;
-
         try
         {
             await TaskService.DeleteTaskAsync(columnId, taskId);
-            
             var column = columns?.FirstOrDefault(c => c.Id == columnId);
             column?.Tasks?.RemoveAll(t => t.Id == taskId);
+            await BoardHub.NotifyTaskDeletedAsync(taskId.ToString(), columnId.ToString());
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error deleting task: {ex.Message}");
         }
     }
-
-    private void StartEditColumn(Guid columnId, string title)
+    private async void StartEditColumn(Guid columnId, string title)
     {
         editingColumnId = columnId;
         editColumnTitle = title;
+        await BoardHub.NotifyUserStartedEditingAsync("column", columnId.ToString());
     }
-
-    private void CancelEditColumn()
+    private async void CancelEditColumn()
     {
+        if (editingColumnId != Guid.Empty)
+        {
+            await BoardHub.NotifyUserStoppedEditingAsync("column", editingColumnId.ToString());
+        }
         editingColumnId = Guid.Empty;
         editColumnTitle = string.Empty;
     }
-
     private async Task SaveColumnEdit(Guid columnId)
     {
         if (string.IsNullOrWhiteSpace(editColumnTitle)) 
         {
             return;
         }
-
         try
         {
             var request = new UpdateColumnRequest
             {
                 Title = editColumnTitle.Trim()
             };
-            
             var updatedColumn = await ColumnService.UpdateColumnAsync(BoardId, columnId, request);
-            
             var column = columns?.FirstOrDefault(c => c.Id == columnId);
             if (column != null)
             {
                 column.Title = updatedColumn.Title;
             }
-
+            // Notify other users
+            await BoardHub.NotifyColumnUpdatedAsync(updatedColumn);
+            await BoardHub.NotifyUserStoppedEditingAsync("column", columnId.ToString());
             CancelEditColumn();
         }
         catch (Exception ex)
@@ -469,7 +521,6 @@
             Console.WriteLine($"Error updating column: {ex.Message}");
         }
     }
-
     private async Task OnEditColumnKeyPress(KeyboardEventArgs e, Guid columnId)
     {
         if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(editColumnTitle))
@@ -481,25 +532,26 @@
             CancelEditColumn();
         }
     }
-
-    private void StartEditTask(Guid taskId, string name, PriorityLevel priority)
+    private async void StartEditTask(Guid taskId, string name, PriorityLevel priority)
     {
         editingTaskId = taskId;
         editTaskName = name;
         editTaskPriority = priority;
+        await BoardHub.NotifyUserStartedEditingAsync("task", taskId.ToString());
     }
-
-    private void CancelEditTask()
+    private async void CancelEditTask()
     {
+        if (editingTaskId != Guid.Empty)
+        {
+            await BoardHub.NotifyUserStoppedEditingAsync("task", editingTaskId.ToString());
+        }
         editingTaskId = Guid.Empty;
         editTaskName = string.Empty;
         editTaskPriority = PriorityLevel.Medium;
     }
-
     private async Task SaveTaskEdit(Guid columnId, Guid taskId)
     {
         if (string.IsNullOrWhiteSpace(editTaskName)) return;
-
         try
         {
             var request = new UpdateTaskRequest
@@ -507,9 +559,7 @@
                 Name = editTaskName.Trim(),
                 Priority = editTaskPriority
             };
-
             var updatedTask = await TaskService.UpdateTaskAsync(columnId, taskId, request);
-            
             var column = columns?.FirstOrDefault(c => c.Id == columnId);
             var task = column?.Tasks?.FirstOrDefault(t => t.Id == taskId);
             if (task != null)
@@ -517,7 +567,9 @@
                 task.Name = updatedTask.Name;
                 task.Priority = updatedTask.Priority;
             }
-
+            // Notify other users
+            await BoardHub.NotifyTaskUpdatedAsync(updatedTask);
+            await BoardHub.NotifyUserStoppedEditingAsync("task", taskId.ToString());
             CancelEditTask();
         }
         catch (Exception ex)
@@ -525,7 +577,6 @@
             Console.WriteLine($"Error updating task: {ex.Message}");
         }
     }
-
     private async Task OnEditTaskKeyPress(KeyboardEventArgs e, Guid columnId, Guid taskId)
     {
         if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(editTaskName))
@@ -537,22 +588,18 @@
             CancelEditTask();
         }
     }
-
     private void ShowInviteUser()
     {
         inviteRequest = new CreateInvitationRequest();
         showInviteModal = true;
     }
-
     private void HideInviteUser()
     {
         showInviteModal = false;
     }
-
     private async Task HandleSendInvite()
     {
         if (string.IsNullOrWhiteSpace(inviteRequest.Username) || sendingInvite) return;
-
         try
         {
             sendingInvite = true;
@@ -572,14 +619,17 @@
             sendingInvite = false;
         }
     }
-
-    private void HandleTaskDragStart(DragEventArgs e, TaskDto task)
+    private async void HandleTaskDragStart(DragEventArgs e, TaskDto task)
     {
         if (!canEdit) return;
         draggedTask = task;
         draggedColumn = null;
+        await BoardHub.NotifyTaskDragStartedAsync(
+            task.Id.ToString(), 
+            currentUserId, 
+            currentUserName
+        );
     }
-
     private void HandleTaskDragOver(DragEventArgs e, Guid columnId, int taskIndex)
     {
         if (draggedTask != null && canEdit)
@@ -588,51 +638,43 @@
             taskDragOverIndex = taskIndex;
         }
     }
-
     private void HandleTaskDragLeave()
     {
         taskDragOverColumnId = null;
         taskDragOverIndex = null;
     }
-
-    private void HandleTaskDragEnd()
+    private async void HandleTaskDragEnd()
     {
+        if (draggedTask != null)
+        {
+            await BoardHub.NotifyTaskDragEndedAsync(draggedTask.Id.ToString());
+        }
         draggedTask = null;
         taskDragOverColumnId = null;
         taskDragOverIndex = null;
     }
-
     private async Task HandleTaskDrop(DragEventArgs e, Guid targetColumnId, int dropIndex)
     {
         if (draggedTask == null || !canEdit) return;
-
         try
         {
             var sourceColumn = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id == draggedTask.Id) == true);
             var targetColumn = columns?.FirstOrDefault(c => c.Id == targetColumnId);
-        
             if (sourceColumn == null || targetColumn == null) return;
-
             if (sourceColumn.Id == targetColumnId)
             {
                 var currentIndex = sourceColumn.Tasks.FindIndex(t => t.Id == draggedTask.Id);
                 if (currentIndex == dropIndex || currentIndex == dropIndex - 1) return;
             }
-
             sourceColumn.Tasks?.Remove(draggedTask);
-
             targetColumn.Tasks ??= new List<TaskDto>();
-        
             dropIndex = Math.Max(0, Math.Min(dropIndex, targetColumn.Tasks.Count));
             targetColumn.Tasks.Insert(dropIndex, draggedTask);
-
             if (sourceColumn.Id != targetColumnId)
             {
                 draggedTask.ColumnId = targetColumnId;
             }
-
             var positions = new List<TaskPositionDto>();
-
             if (sourceColumn.Id != targetColumnId && sourceColumn.Tasks != null)
             {
                 for (int i = 0; i < sourceColumn.Tasks.Count; i++)
@@ -646,7 +688,6 @@
                     });
                 }
             }
-
             if (targetColumn.Tasks != null)
             {
                 for (int i = 0; i < targetColumn.Tasks.Count; i++)
@@ -661,8 +702,17 @@
                     });
                 }
             }
-
             await TaskService.ReorderTasksAsync(positions);
+            // Notify other users
+            await BoardHub.NotifyTaskMovedAsync(new TaskMoveInfo
+            {
+                TaskId = draggedTask.Id.ToString(),
+                FromColumnId = sourceColumn.Id.ToString(),
+                ToColumnId = targetColumnId.ToString(),
+                NewPosition = dropIndex,
+                UserId = currentUserId,
+                UserName = currentUserName
+            });
         }
         catch (Exception ex)
         {
@@ -676,18 +726,15 @@
             taskDragOverIndex = null;
         }
     }
-
     private string GetDropZoneClass(Guid columnId)
     {
         return draggedTask != null ? "drop-zone-active" : "";
     }
-
     private void HandleColumnDragStart(DragEventArgs e, ColumnDto column)
     {
         if (!canEdit) return;
         draggedColumn = column;
     }
-
     private void HandleColumnDragOver(DragEventArgs e, int index)
     {
         if (draggedColumn != null && canEdit)
@@ -695,37 +742,29 @@
             columnDragOverIndex = index;
         }
     }
-
     private void HandleColumnDragLeave()
     {
         columnDragOverIndex = null;
     }
-
     private void HandleColumnDragEnd()
     {
         draggedColumn = null;
         columnDragOverIndex = null;
     }
-
     private async Task HandleColumnDrop(DragEventArgs e, int dropIndex)
     {
         if (draggedColumn == null || !canEdit) return;
-
         try
         {
             var sortedColumns = columns!.OrderBy(c => c.Position).ToList();
             var draggedIndex = sortedColumns.FindIndex(c => c.Id == draggedColumn.Id);
-
             if (dropIndex >= sortedColumns.Count) 
             {
                 dropIndex = sortedColumns.Count - 1;
             }
-            
             if (draggedIndex == dropIndex) return;
-
             sortedColumns.RemoveAt(draggedIndex);
             sortedColumns.Insert(dropIndex, draggedColumn);
-            
             var positions = new List<ColumnPositionDto>();
             for (int i = 0; i < sortedColumns.Count; i++)
             {
@@ -736,7 +775,6 @@
                     Position = i 
                 });
             }
-            
             await ColumnService.ReorderColumnsAsync(BoardId, positions);
             columns = sortedColumns;
         }
@@ -749,6 +787,219 @@
         {
             draggedColumn = null;
             columnDragOverIndex = null;
+        }
+    }
+    // Event handlers
+    private void OnUserJoinedBoard(string userId, string userName)
+    {
+        if (userId != currentUserId)
+        {
+            onlineUsers.Add($"{userName} ({userId})");
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    private void OnUserLeftBoard(string userId, string userName)
+    {
+        onlineUsers.Remove($"{userName} ({userId})");
+        draggingUsers.Remove(userId);
+        InvokeAsync(StateHasChanged);
+    }
+    private void OnTaskDragStarted(TaskDragInfo dragInfo)
+    {
+        if (dragInfo.UserId != currentUserId)
+        {
+            draggingUsers.Add($"{dragInfo.UserName} is dragging task");
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    private void OnTaskDragEnded(string taskId)
+    {
+        draggingUsers.Clear();
+        InvokeAsync(StateHasChanged);
+    }
+    private void OnTaskMoved(TaskMoveInfo moveInfo)
+    {
+        if (moveInfo.UserId == currentUserId) return;
+        InvokeAsync(async () =>
+        {
+            try
+            {
+                // Update UI with the move
+                var sourceColumn = columns?.FirstOrDefault(c => c.Id.ToString() == moveInfo.FromColumnId);
+                var targetColumn = columns?.FirstOrDefault(c => c.Id.ToString() == moveInfo.ToColumnId);
+                if (sourceColumn?.Tasks != null && targetColumn != null)
+                {
+                    var task = sourceColumn.Tasks.FirstOrDefault(t => t.Id.ToString() == moveInfo.TaskId);
+                    if (task != null)
+                    {
+                        sourceColumn.Tasks.Remove(task);
+                        if (moveInfo.FromColumnId != moveInfo.ToColumnId)
+                        {
+                            task.ColumnId = Guid.Parse(moveInfo.ToColumnId);
+                            targetColumn.Tasks ??= new List<TaskDto>();
+                        }
+                        var insertIndex = Math.Min(moveInfo.NewPosition, targetColumn.Tasks?.Count ?? 0);
+                        targetColumn.Tasks?.Insert(insertIndex, task);
+                    }
+                }
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error handling task move");
+            }
+        });
+    }
+    private void OnColumnMoved(ColumnMoveInfo moveInfo)
+    {
+        if (moveInfo.UserId == currentUserId) return;
+        InvokeAsync(() =>
+        {
+            try
+            {
+                var column = columns?.FirstOrDefault(c => c.Id.ToString() == moveInfo.ColumnId);
+                if (column != null)
+                {
+                    column.Position = moveInfo.NewPosition;
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error handling column move");
+            }
+        });
+    }
+    private void OnTaskCreated(TaskDto task)
+    {
+        InvokeAsync(() =>
+        {
+            var column = columns?.FirstOrDefault(c => c.Id == task.ColumnId);
+            if (column != null)
+            {
+                column.Tasks ??= new List<TaskDto>();
+                column.Tasks.Add(task);
+                StateHasChanged();
+            }
+        });
+    }
+    private void OnTaskUpdated(TaskDto task)
+    {
+        InvokeAsync(() =>
+        {
+            var column = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id == task.Id) == true);
+            var existingTask = column?.Tasks?.FirstOrDefault(t => t.Id == task.Id);
+            if (existingTask != null)
+            {
+                existingTask.Name = task.Name;
+                existingTask.Priority = task.Priority;
+                StateHasChanged();
+            }
+        });
+    }
+    private void OnTaskDeleted(string taskId, string columnId)
+    {
+        InvokeAsync(() =>
+        {
+            var column = columns?.FirstOrDefault(c => c.Id.ToString() == columnId);
+            column?.Tasks?.RemoveAll(t => t.Id.ToString() == taskId);
+            StateHasChanged();
+        });
+    }
+    private void OnColumnCreated(ColumnDto column)
+    {
+        InvokeAsync(() =>
+        {
+            columns?.Add(column);
+            StateHasChanged();
+        });
+    }
+    private void OnColumnUpdated(ColumnDto column)
+    {
+        InvokeAsync(() =>
+        {
+            var existingColumn = columns?.FirstOrDefault(c => c.Id == column.Id);
+            if (existingColumn != null)
+            {
+                existingColumn.Title = column.Title;
+                StateHasChanged();
+            }
+        });
+    }
+    private void OnColumnDeleted(string columnId)
+    {
+        InvokeAsync(() =>
+        {
+            columns?.RemoveAll(c => c.Id.ToString() == columnId);
+            StateHasChanged();
+        });
+    }
+    private void OnUserStartedEditing(string userId, string userName, string itemType, string itemId)
+    {
+        if (userId != currentUserId)
+        {
+            editingUsers[$"{itemType}_{itemId}"] = userName;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    private void OnUserStoppedEditing(string userId, string itemType, string itemId)
+    {
+        editingUsers.Remove($"{itemType}_{itemId}");
+        InvokeAsync(StateHasChanged);
+    }
+    // Helper method to check if someone else is editing an item
+    private bool IsBeingEditedByOther(string itemType, Guid itemId)
+    {
+        return editingUsers.ContainsKey($"{itemType}_{itemId}");
+    }
+    private string GetEditingUserName(string itemType, Guid itemId)
+    {
+        editingUsers.TryGetValue($"{itemType}_{itemId}", out var userName);
+        return userName ?? "";
+    }
+    // Cleanup on disposal
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            // Unsubscribe from events
+            BoardHub.UserJoinedBoard -= OnUserJoinedBoard;
+            BoardHub.UserLeftBoard -= OnUserLeftBoard;
+            BoardHub.TaskDragStarted -= OnTaskDragStarted;
+            BoardHub.TaskDragEnded -= OnTaskDragEnded;
+            BoardHub.TaskMoved -= OnTaskMoved;
+            BoardHub.ColumnDragStarted -= OnColumnDragStarted;
+            BoardHub.ColumnDragEnded -= OnColumnDragEnded;
+            BoardHub.ColumnMoved -= OnColumnMoved;
+            BoardHub.TaskCreated -= OnTaskCreated;
+            BoardHub.TaskUpdated -= OnTaskUpdated;
+            BoardHub.TaskDeleted -= OnTaskDeleted;
+            BoardHub.ColumnCreated -= OnColumnCreated;
+            BoardHub.ColumnUpdated -= OnColumnUpdated;
+            BoardHub.ColumnDeleted -= OnColumnDeleted;
+            BoardHub.UserStartedEditing -= OnUserStartedEditing;
+            BoardHub.UserStoppedEditing -= OnUserStoppedEditing;
+            await BoardHub.LeaveBoardAsync(BoardId.ToString());
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error during disposal");
+        }
+    }
+    private void OnColumnDragStarted(ColumnDragInfo dragInfo)
+    {
+        if (dragInfo.UserId != currentUserId)
+        {
+            draggingUsers.Add($"{dragInfo.UserName} is dragging column");
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    private void OnColumnDragEnded(string columnId)
+    {
+        if (draggingUsers.Count > 0)
+        {
+            draggingUsers.Clear();
+            InvokeAsync(StateHasChanged);
         }
     }
 }

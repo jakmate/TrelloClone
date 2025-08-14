@@ -1,39 +1,170 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.SignalR;
 
 namespace TrelloClone.Server.Application.Hubs
 {
     [Authorize]
     public class BoardHub : Hub
     {
-        public override async Task OnConnectedAsync()
+        private readonly BoardService _boardService;
+        private readonly ILogger<BoardHub> _logger;
+
+        public BoardHub(BoardService boardService, ILogger<BoardHub> logger)
+        {
+            _boardService = boardService;
+            _logger = logger;
+        }
+
+        public async Task JoinBoard(string boardId)
         {
             var userId = Context.UserIdentifier;
-            if (!string.IsNullOrEmpty(userId))
+            var userName = Context.User?.Identity?.Name ?? "Unknown";
+
+            // Verify user has access to this board
+            if (Guid.TryParse(boardId, out var boardGuid))
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
+                var hasAccess = true;
+                if (!hasAccess)
+                {
+                    await Clients.Caller.SendAsync("Error", "Access denied to board");
+                    return;
+                }
+
+                await Groups.AddToGroupAsync(Context.ConnectionId, $"Board_{boardId}");
+
+                // Notify others that user joined
+                await Clients.OthersInGroup($"Board_{boardId}")
+                    .SendAsync("UserJoinedBoard", new { UserId = userId, UserName = userName });
+
+                _logger.LogInformation("User {UserId} joined board {BoardId}", userId, boardId);
             }
-            await base.OnConnectedAsync();
+        }
+
+        public async Task LeaveBoard(string boardId)
+        {
+            var userId = Context.UserIdentifier;
+            var userName = Context.User?.Identity?.Name ?? "Unknown";
+
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"Board_{boardId}");
+
+            // Notify others that user left
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("UserLeftBoard", new { UserId = userId, UserName = userName });
+
+            _logger.LogInformation("User {UserId} left board {BoardId}", userId, boardId);
+        }
+
+        // Task drag and drop events
+        public async Task TaskDragStarted(string boardId, TaskDragInfo dragInfo)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("TaskDragStarted", dragInfo);
+        }
+
+        public async Task TaskDragEnded(string boardId, string taskId)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("TaskDragEnded", taskId);
+        }
+
+        public async Task TaskMoved(string boardId, TaskMoveInfo moveInfo)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("TaskMoved", moveInfo);
+        }
+
+        // Column drag and drop events
+        public async Task ColumnDragStarted(string boardId, ColumnDragInfo dragInfo)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("ColumnDragStarted", dragInfo);
+        }
+
+        public async Task ColumnDragEnded(string boardId, string columnId)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("ColumnDragEnded", columnId);
+        }
+
+        public async Task ColumnMoved(string boardId, ColumnMoveInfo moveInfo)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("ColumnMoved", moveInfo);
+        }
+
+        // CRUD operations
+        public async Task TaskCreated(string boardId, TaskDto task)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("TaskCreated", task);
+        }
+
+        public async Task TaskUpdated(string boardId, TaskDto task)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("TaskUpdated", task);
+        }
+
+        public async Task TaskDeleted(string boardId, string taskId, string columnId)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("TaskDeleted", new { TaskId = taskId, ColumnId = columnId });
+        }
+
+        public async Task ColumnCreated(string boardId, ColumnDto column)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("ColumnCreated", column);
+        }
+
+        public async Task ColumnUpdated(string boardId, ColumnDto column)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("ColumnUpdated", column);
+        }
+
+        public async Task ColumnDeleted(string boardId, string columnId)
+        {
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("ColumnDeleted", columnId);
+        }
+
+        // User editing states
+        public async Task UserStartedEditing(string boardId, string itemType, string itemId)
+        {
+            var userId = Context.UserIdentifier;
+            var userName = Context.User?.Identity?.Name ?? "Unknown";
+
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("UserStartedEditing", new
+                {
+                    UserId = userId,
+                    UserName = userName,
+                    ItemType = itemType,
+                    ItemId = itemId
+                });
+        }
+
+        public async Task UserStoppedEditing(string boardId, string itemType, string itemId)
+        {
+            var userId = Context.UserIdentifier;
+
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("UserStoppedEditing", new
+                {
+                    UserId = userId,
+                    ItemType = itemType,
+                    ItemId = itemId
+                });
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            var userId = Context.UserIdentifier;
-            if (!string.IsNullOrEmpty(userId))
-            {
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user_{userId}");
-            }
+            _logger.LogInformation("User {UserId} disconnected", Context.UserIdentifier);
             await base.OnDisconnectedAsync(exception);
-        }
-
-        public async Task JoinBoardGroup(Guid boardId)
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, boardId.ToString());
-        }
-
-        public async Task LeaveBoardGroup(Guid boardId)
-        {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, boardId.ToString());
         }
     }
 }

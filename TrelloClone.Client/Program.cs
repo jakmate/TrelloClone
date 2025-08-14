@@ -62,4 +62,11 @@ builder.Services.AddScoped<NotificationHubClient>(provider =>
     return new NotificationHubClient(hubConnection, logger);
 });
 
+builder.Services.AddScoped<BoardHubClient>(provider =>
+{
+    var hubConnection = provider.GetRequiredService<HubConnection>();
+    var logger = provider.GetRequiredService<ILogger<BoardHubClient>>();
+    return new BoardHubClient(hubConnection, logger);
+});
+
 await builder.Build().RunAsync();

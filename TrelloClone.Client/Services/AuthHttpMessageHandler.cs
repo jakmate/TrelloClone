@@ -24,11 +24,6 @@ namespace TrelloClone.Client.Services
             {
                 request.Headers.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                Console.WriteLine($"Added token to request: {request.RequestUri}");
-            }
-            else
-            {
-                Console.WriteLine($"No token found for request: {request.RequestUri}");
             }
 
             return await base.SendAsync(request, cancellationToken);
