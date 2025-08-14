@@ -108,6 +108,7 @@
     }
 
     .auth-btn.btn-primary {
+        color: var(--secondary);
         box-shadow: var(--shadow-sm)
     }
 

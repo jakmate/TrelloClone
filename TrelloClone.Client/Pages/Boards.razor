@@ -84,80 +84,16 @@
             }
         </div>
 
-        <!-- Create Board Modal -->
-        <div class="modal @(showCreateModal ? "show" : "")" style="display: @(showCreateModal ? "flex" : "none")">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Create New Board</h3>
-                    <button class="close-btn" @onclick="HideCreateModal">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="newBoard" OnValidSubmit="CreateBoard">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="validation-errors" />
-                        
-                        <div class="form-group">
-                            <label for="boardName">Board Name</label>
-                            <InputText id="boardName" class="form-control" @bind-Value="newBoard.Name" placeholder="Enter board name" />
-                            <ValidationMessage For="@(() => newBoard.Name)" />
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn-secondary" @onclick="HideCreateModal">Cancel</button>
-                            <button type="submit" class="btn-primary" disabled="@isCreating">
-                                @if (isCreating)
-                                {
-                                    <span class="spinner"></span>
-                                }
-                                Create Board
-                            </button>
-                        </div>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-
-        <!-- Update Board Modal -->
-        <div class="modal @(showUpdateModal ? "show" : "")" style="display: @(showUpdateModal ? "flex" : "none")">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Update Board</h3>
-                    <button class="close-btn" @onclick="HideUpdateModal">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="updateRequest" OnValidSubmit="UpdateBoard">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="validation-errors" />
-                        
-                        <div class="form-group">
-                            <label for="updateBoardName">Board Name</label>
-                            <InputText id="updateBoardName" class="form-control" @bind-Value="updateRequest.Name" />
-                            <ValidationMessage For="@(() => updateRequest.Name)" />
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn-secondary" @onclick="HideUpdateModal">Cancel</button>
-                            <button type="submit" class="btn-primary" disabled="@isUpdating">
-                                @if (isUpdating)
-                                {
-                                    <span class="spinner"></span>
-                                }
-                                Update Board
-                            </button>
-                        </div>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-
-        @if (showCreateModal || showUpdateModal)
-        {
-            <div class="modal-backdrop"></div>
-        }
+        <BoardModals ShowCreateModal="@showCreateModal" 
+             ShowUpdateModal="@showUpdateModal"
+             NewBoard="@newBoard"
+             UpdateRequest="@updateRequest"
+             OnCreateBoard="@CreateBoard"
+             OnUpdateBoard="@UpdateBoard"
+             OnHideCreate="HideCreateModal"
+             OnHideUpdate="HideUpdateModal"
+             IsCreating="@isCreating"
+             IsUpdating="@isUpdating" />
     </Authorized>
     <NotAuthorized>
         <div class="access-denied">
@@ -173,6 +109,7 @@
 
 @code {
     private List<BoardDto> boards = new();
+    private List<BoardDto> sortedBoards => boards.OrderBy(b => b.Position).ToList();    
     private CreateBoardRequest newBoard = new();
     private UpdateBoardRequest updateRequest = new();
     private UserDto? currentUser;
@@ -215,20 +152,15 @@
             boardPermissions = new Dictionary<Guid, bool>();
 
             var permissionTasks = boards.Select(async board => 
-            {
-                var canEdit = await BoardService.CanEditAsync(board.Id);
-                return (board.Id, canEdit);
-            }).ToList();
+                (board.Id, await BoardService.CanEditAsync(board.Id))
+            );
 
-            foreach (var task in permissionTasks)
-            {
-                var (boardId, canEdit) = await task;
-                boardPermissions[boardId] = canEdit;
-            }
+            var results = await Task.WhenAll(permissionTasks);
+            boardPermissions = results.ToDictionary(r => r.Id, r => r.Item2);
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error loading boards: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error loading boards: {ex.Message}");
         }
         finally
         {
@@ -270,35 +202,21 @@
         isCreating = true;
         try
         {
-            // Create the new board
             var createdBoard = await BoardService.CreateBoardAsync(newBoard);
-        
-            // Get current boards ordered by position
-            var sortedBoards = boards.OrderBy(b => b.Position).ToList();
-        
-            // Shift existing boards down by 1
-            var positions = new List<BoardPositionDto>();
-            for (int i = 0; i < sortedBoards.Count; i++)
-            {
-                sortedBoards[i].Position = i + 1;
-                positions.Add(new BoardPositionDto 
-                { 
-                    Id = sortedBoards[i].Id, 
-                    Position = i + 1 
-                });
-            }
-
-            // Set new board to position 0
             createdBoard.Position = 0;
-            positions.Add(new BoardPositionDto
-            {
-                Id = createdBoard.Id,
-                Position = 0
+
+            // Update existing board positions
+            var positions = sortedBoards
+                .Select((b, i) => new BoardPositionDto { Id = b.Id, Position = i + 1 })
+                .ToList();
+                
+            positions.Add(new BoardPositionDto { 
+                Id = createdBoard.Id, 
+                Position = 0 
             });
 
-            // Update server with new positions
             await BoardService.ReorderBoardsAsync(positions);
-
+            
             // Update local state
             boards.Add(createdBoard);
             boardPermissions[createdBoard.Id] = true;
@@ -306,7 +224,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error creating board: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("console.error", $"Create error: {ex.Message}");
         }
         finally
         {
@@ -386,42 +304,34 @@
 
     private async Task HandleBoardDrop(DragEventArgs e, int dropIndex)
     {
-        if (draggedBoard == null) return;
+        if (draggedBoard is null) return;
 
         try
         {
-            var sortedBoards = boards.OrderBy(b => b.Position).ToList();
-            var draggedIndex = sortedBoards.FindIndex(b => b.Id == draggedBoard.Id);
-        
-            if (draggedIndex == dropIndex) return; // No change
+            var currentIndex = sortedBoards.FindIndex(b => b.Id == draggedBoard.Id);
+            if (currentIndex == dropIndex) return;
 
-            // Remove dragged board from current position
-            sortedBoards.RemoveAt(draggedIndex);
-        
-            // Insert at new position
-            sortedBoards.Insert(dropIndex, draggedBoard);
-        
-            // Update positions
-            var positions = new List<BoardPositionDto>();
-            for (int i = 0; i < sortedBoards.Count; i++)
-            {
-                sortedBoards[i].Position = i;
-                positions.Add(new BoardPositionDto 
-                { 
-                    Id = sortedBoards[i].Id, 
-                    Position = i 
-                });
-            }
-        
-            // Update server
+            // Create new ordered list
+            var newOrder = sortedBoards.ToList();
+            newOrder.RemoveAt(currentIndex);
+            newOrder.Insert(dropIndex, draggedBoard);
+
+            // Generate position updates
+            var positions = newOrder
+                .Select((b, i) => new BoardPositionDto { Id = b.Id, Position = i })
+                .ToList();
+
             await BoardService.ReorderBoardsAsync(positions);
-        
-            // Update local state
-            boards = sortedBoards;
+            
+            // Update local positions
+            for (int i = 0; i < newOrder.Count; i++)
+            {
+                newOrder[i].Position = i;
+            }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error reordering boards: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("console.error", $"Reorder error: {ex.Message}");
         }
         finally
         {

@@ -1,0 +1,47 @@
+@if (Show)
+{
+    <div class="modal-wrapper">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>@Title</h3>
+                    <button class="close-btn" @onclick="OnCancel">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <EditForm Model="@Model" OnValidSubmit="@OnSubmit">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <ValidationSummary class="validation-errors" />
+                        @ChildContent
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-light" @onclick="OnCancel">
+                            @CancelText
+                        </button>
+                        <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">
+                            @if (IsSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            @SubmitText
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop"></div>
+}
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public object Model { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<EditContext> OnSubmit { get; set; }
+    [Parameter] public bool IsSubmitting { get; set; }
+    [Parameter] public string CancelText { get; set; } = "Cancel";
+    [Parameter] public string SubmitText { get; set; } = "Submit";
+}

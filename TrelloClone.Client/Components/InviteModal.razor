@@ -1,0 +1,30 @@
+@using TrelloClone.Shared.DTOs
+
+<FormModal Show="@Show" 
+           Title="Invite User to Board"
+           Model="@InviteModel"
+           OnCancel="@OnCancel"
+           OnSubmit="@OnSubmit"
+           IsSubmitting="@IsSubmitting"
+           SubmitText="Send Invite">
+    <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <InputText id="username" class="form-control" @bind-Value="InviteModel.Username" />
+    </div>
+    <div class="mb-3">
+        <label for="permissionLevel" class="form-label">Permissions</label>
+        <InputSelect id="permissionLevel" class="form-select" @bind-Value="InviteModel.PermissionLevel">
+            <option value="@PermissionLevel.Viewer">Viewer</option>
+            <option value="@PermissionLevel.Editor">Editor</option>
+            <option value="@PermissionLevel.Admin">Admin</option>
+        </InputSelect>
+    </div>
+</FormModal>
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public CreateInvitationRequest InviteModel { get; set; } = new();
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<EditContext> OnSubmit { get; set; }
+    [Parameter] public bool IsSubmitting { get; set; }
+}

@@ -8,7 +8,7 @@
     border: 2px dashed var(--primary);
     background-color: rgba(0, 102, 255, 0.1);
     padding: 12px;
-    transform: scale(1.02); /* Added to match boards-page effect */
+    transform: scale(1.02);
 }
 
 .column-item {
@@ -22,7 +22,7 @@
 
 .column-item.dragging {
     opacity: 0.5;
-    transform: scale(0.95); /* Added to match boards-page effect */
+    transform: scale(0.95);
 }
 
 .task-drop-zone-before, 
@@ -73,7 +73,7 @@
 
 .card.dragging {
     opacity: 0.5;
-    transform: scale(0.95); /* Added to match boards-page effect */
+    transform: scale(0.95);
 }
 
 .card-body.drop-zone-active {
@@ -98,11 +98,11 @@
 }
 
 .card {
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Matched boards-page easing */
-    border-radius: var(--border-radius); /* Added for consistency */
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--border-radius);
 }
 
 .card:hover:not(.dragging) {
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md); /* Standardized shadow token */
+    box-shadow: var(--shadow-md);
 }

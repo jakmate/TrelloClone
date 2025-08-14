@@ -1,0 +1,42 @@
+@using TrelloClone.Shared.DTOs
+
+<FormModal Show="@ShowCreateModal" 
+           Title="Create New Board"
+           Model="@NewBoard"
+           OnCancel="@OnHideCreate"
+           OnSubmit="@OnCreateBoard"
+           IsSubmitting="@IsCreating"
+           SubmitText="Create Board">
+    <div class="form-group">
+        <label for="boardName">Board Name</label>
+        <InputText id="boardName" class="form-control" @bind-Value="NewBoard.Name" placeholder="Enter board name" />
+        <ValidationMessage For="@(() => NewBoard.Name)" />
+    </div>
+</FormModal>
+
+<FormModal Show="@ShowUpdateModal" 
+           Title="Update Board"
+           Model="@UpdateRequest"
+           OnCancel="@OnHideUpdate"
+           OnSubmit="@OnUpdateBoard"
+           IsSubmitting="@IsUpdating"
+           SubmitText="Update Board">
+    <div class="form-group">
+        <label for="updateBoardName">Board Name</label>
+        <InputText id="updateBoardName" class="form-control" @bind-Value="UpdateRequest.Name" />
+        <ValidationMessage For="@(() => UpdateRequest.Name)" />
+    </div>
+</FormModal>
+
+@code {
+    [Parameter] public bool ShowCreateModal { get; set; }
+    [Parameter] public bool ShowUpdateModal { get; set; }
+    [Parameter] public CreateBoardRequest NewBoard { get; set; } = new();
+    [Parameter] public UpdateBoardRequest UpdateRequest { get; set; } = new();
+    [Parameter] public EventCallback OnHideCreate { get; set; }
+    [Parameter] public EventCallback OnHideUpdate { get; set; }
+    [Parameter] public EventCallback<EditContext> OnCreateBoard { get; set; }
+    [Parameter] public EventCallback<EditContext> OnUpdateBoard { get; set; }
+    [Parameter] public bool IsCreating { get; set; }
+    [Parameter] public bool IsUpdating { get; set; }
+}

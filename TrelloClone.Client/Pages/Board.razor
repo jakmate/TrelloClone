@@ -213,102 +213,21 @@
 </div>
 
 
-<BaseModal Show="@showCreateTaskModal" Title="Create New Task" OnCancel="HideCreateTask">
-    <ChildContent>
-        <div class="mb-3">
-            <label for="taskName" class="form-label">Task Name</label>
-            <input type="text" 
-                   class="form-control" 
-                   id="taskName" 
-                   @bind="newTaskName" 
-                   @onkeypress="OnTaskKeyPress" />
-            <div class="mb-3">
-                <label for="taskPriority" class="form-label">Priority</label>
-                <select class="form-select" id="taskPriority" @bind="newTaskPriority">
-                    <option value="@PriorityLevel.Low">Low</option>
-                    <option value="@PriorityLevel.Medium">Medium</option>
-                    <option value="@PriorityLevel.High">High</option>
-                </select>
-            </div>
-        </div>
-    </ChildContent>
-
-    <FooterContent>
-        <button type="button" class="btn btn-secondary" @onclick="HideCreateTask">
-            Cancel
-        </button>
-        <button type="button"
-                class="btn btn-primary"
-                @onclick="CreateTask"
-                disabled="@(string.IsNullOrWhiteSpace(newTaskName) || creatingTask)">
-            @if (creatingTask)
-            {
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            }
-            Create Task
-        </button>
-    </FooterContent>
-</BaseModal>
-
-
-<BaseModal Show="@showCreateColumnModal" Title="Create New Column" OnCancel="HideCreateColumn">
-    <ChildContent>
-        <div class="mb-3">
-            <label for="columnTitle" class="form-label">Column Title</label>
-            <input type="text" 
-                   class="form-control" 
-                   id="columnTitle" 
-                   @bind="newColumnTitle" 
-                   @onkeypress="OnKeyPress" />
-        </div>
-    </ChildContent>
-
-    <FooterContent>
-        <button type="button" class="btn btn-secondary" @onclick="HideCreateColumn">
-            Cancel
-        </button>
-        <button type="button" 
-                class="btn btn-primary" 
-                @onclick="CreateColumn" 
-                disabled="@(string.IsNullOrWhiteSpace(newColumnTitle) || creatingColumn)">
-            @if (creatingColumn)
-            {
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            }
-            Create
-        </button>
-    </FooterContent>
-</BaseModal>
-
-
-<BaseModal Show="@showInviteModal" Title="Invite User to Board" OnCancel="HideInviteUser">
-    <ChildContent>
-        <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <input type="text" class="form-control" id="username" @bind="inviteUsername" />
-        </div>
-        <div class="mb-3">
-            <label for="permissionLevel" class="form-label">Permissions</label>
-            <select class="form-select" id="permissionLevel" @bind="newPermissionLevel">
-                <option value="@PermissionLevel.Viewer">Viewer</option>
-                <option value="@PermissionLevel.Editor">Editor</option>
-                <option value="@PermissionLevel.Admin">Admin</option>
-            </select>
-        </div>
-    </ChildContent>
-
-    <FooterContent>
-        <button type="button" class="btn btn-secondary" @onclick="HideInviteUser">Cancel</button>
-        <button type="button" class="btn btn-primary" @onclick="SendInvite" 
-            disabled="@(string.IsNullOrWhiteSpace(inviteUsername) || sendingInvite)">
-            @if (sendingInvite)
-            {
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            }
-            Send Invite
-        </button>
-    </FooterContent>
-</BaseModal>
+<TaskModal Show="@showCreateTaskModal"
+           TaskModel="@newTaskRequest" 
+           OnCancel="@HideCreateTask"
+           OnSubmit="@HandleCreateTask"
+           IsSubmitting="@creatingTask" />
+<ColumnModal Show="@showCreateColumnModal"
+             ColumnModel="@newColumnRequest"
+             OnCancel="@HideCreateColumn"
+             OnSubmit="@HandleCreateColumn"
+             IsSubmitting="@creatingColumn" />
+<InviteModal Show="@showInviteModal"
+             InviteModel="@inviteRequest"
+             OnCancel="@HideInviteUser"
+             OnSubmit="@HandleSendInvite"
+             IsSubmitting="@sendingInvite" />
 
 
 @code {
@@ -351,6 +270,10 @@
     private Guid? taskDragOverColumnId;
     private int? taskDragOverIndex;
 
+    private CreateTaskRequest newTaskRequest = new CreateTaskRequest();
+    private CreateColumnRequest newColumnRequest = new CreateColumnRequest();
+    private CreateInvitationRequest inviteRequest = new CreateInvitationRequest();
+
     protected override async Task OnInitializedAsync()
     {
         canEdit = await BoardService.CanEditAsync(BoardId);
@@ -386,38 +309,33 @@
 
     private void ShowCreateColumn()
     {
-        newColumnTitle = string.Empty;
+        newColumnRequest = new CreateColumnRequest
+        {
+            BoardId = BoardId,
+            Position = columns?.Count ?? 0
+        };
         showCreateColumnModal = true;
     }
 
     private void HideCreateColumn()
     {
         showCreateColumnModal = false;
-        newColumnTitle = string.Empty;
     }
 
-    private async Task CreateColumn()
+    private async Task HandleCreateColumn()
     {
-        if (string.IsNullOrWhiteSpace(newColumnTitle) || creatingColumn) return;
+        if (string.IsNullOrWhiteSpace(newColumnRequest.Title) || creatingColumn) return;
 
         try
         {
             creatingColumn = true;
-            var position = columns?.Count ?? 0;
-            var request = new CreateColumnRequest
-            {
-                BoardId = BoardId,
-                Title = newColumnTitle.Trim(),
-                Position = position
-            };
-
-            var newColumn = await ColumnService.CreateColumnAsync(request);
+            var newColumn = await ColumnService.CreateColumnAsync(newColumnRequest);
             columns?.Add(newColumn);
             HideCreateColumn();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error creatingColumn column: {ex.Message}");
+            Console.WriteLine($"Error creating column: {ex.Message}");
         }
         finally
         {
@@ -445,50 +363,34 @@
         return await Task.FromResult(true);
     }
 
-    private async Task OnKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newColumnTitle))
-        {
-            await CreateColumn();
-        }
-    }
-
     private void GoBack()
     {
         Navigation.NavigateTo("/");
     }
 
-    // Task management methods
     private void ShowCreateTask(Guid columnId)
     {
         selectedColumnId = columnId;
-        newTaskName = string.Empty;
-        newTaskPriority = PriorityLevel.Medium;
+        newTaskRequest = new CreateTaskRequest
+        {
+            ColumnId = columnId
+        };
         showCreateTaskModal = true;
     }
 
     private void HideCreateTask()
     {
         showCreateTaskModal = false;
-        newTaskName = string.Empty;
-        selectedColumnId = Guid.Empty;
     }
 
-    private async Task CreateTask()
+    private async Task HandleCreateTask()
     {
-        if (string.IsNullOrWhiteSpace(newTaskName) || creatingTask) return;
+        if (string.IsNullOrWhiteSpace(newTaskRequest.Name) || creatingTask) return;
 
         try
         {
             creatingTask = true;
-            var request = new CreateTaskRequest
-            {
-                Name = newTaskName.Trim(),
-                Priority = newTaskPriority,
-                ColumnId = selectedColumnId
-            };
-
-            var newTask = await TaskService.CreateTaskAsync(request);
+            var newTask = await TaskService.CreateTaskAsync(newTaskRequest);
             
             var column = columns?.FirstOrDefault(c => c.Id == selectedColumnId);
             if (column != null)
@@ -501,7 +403,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error creatingColumn task: {ex.Message}");
+            Console.WriteLine($"Error creating task: {ex.Message}");
         }
         finally
         {
@@ -526,15 +428,6 @@
         }
     }
 
-    private async Task OnTaskKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newTaskName))
-        {
-            await CreateTask();
-        }
-    }
-
-    // Column editing methods
     private void StartEditColumn(Guid columnId, string title)
     {
         editingColumnId = columnId;
@@ -589,7 +482,6 @@
         }
     }
 
-    // Task editing methods
     private void StartEditTask(Guid taskId, string name, PriorityLevel priority)
     {
         editingTaskId = taskId;
@@ -648,24 +540,27 @@
 
     private void ShowInviteUser()
     {
-        inviteUsername = string.Empty;
+        inviteRequest = new CreateInvitationRequest();
         showInviteModal = true;
     }
 
     private void HideInviteUser()
     {
         showInviteModal = false;
-        inviteUsername = string.Empty;
     }
 
-    private async Task SendInvite()
+    private async Task HandleSendInvite()
     {
-        if (string.IsNullOrWhiteSpace(inviteUsername) || sendingInvite) return;
+        if (string.IsNullOrWhiteSpace(inviteRequest.Username) || sendingInvite) return;
 
         try
         {
             sendingInvite = true;
-            await InvitationService.SendInvitation(BoardId, inviteUsername.Trim(), newPermissionLevel);
+            await InvitationService.SendInvitation(
+                BoardId, 
+                inviteRequest.Username.Trim(), 
+                inviteRequest.PermissionLevel
+            );
             HideInviteUser();
         }
         catch (Exception ex)
@@ -682,7 +577,7 @@
     {
         if (!canEdit) return;
         draggedTask = task;
-        draggedColumn = null; // Ensure column dragging is disabled
+        draggedColumn = null;
     }
 
     private void HandleTaskDragOver(DragEventArgs e, Guid columnId, int taskIndex)
@@ -718,33 +613,26 @@
         
             if (sourceColumn == null || targetColumn == null) return;
 
-            // Don't move if it's the same position
             if (sourceColumn.Id == targetColumnId)
             {
                 var currentIndex = sourceColumn.Tasks.FindIndex(t => t.Id == draggedTask.Id);
                 if (currentIndex == dropIndex || currentIndex == dropIndex - 1) return;
             }
 
-            // Remove from source
             sourceColumn.Tasks?.Remove(draggedTask);
 
-            // Insert at target position
             targetColumn.Tasks ??= new List<TaskDto>();
         
-            // Clamp dropIndex to valid range
             dropIndex = Math.Max(0, Math.Min(dropIndex, targetColumn.Tasks.Count));
             targetColumn.Tasks.Insert(dropIndex, draggedTask);
 
-            // Update task's column ID if moved between columns
             if (sourceColumn.Id != targetColumnId)
             {
                 draggedTask.ColumnId = targetColumnId;
             }
 
-            // Create position updates for affected tasks
             var positions = new List<TaskPositionDto>();
 
-            // Update positions in source column (if different from target)
             if (sourceColumn.Id != targetColumnId && sourceColumn.Tasks != null)
             {
                 for (int i = 0; i < sourceColumn.Tasks.Count; i++)
@@ -759,7 +647,6 @@
                 }
             }
 
-            // Update positions in target column
             if (targetColumn.Tasks != null)
             {
                 for (int i = 0; i < targetColumn.Tasks.Count; i++)
@@ -775,13 +662,12 @@
                 }
             }
 
-            // Update server
             await TaskService.ReorderTasksAsync(positions);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error moving task: {ex.Message}");
-            await LoadColumns(); // Reload on error
+            await LoadColumns();
         }
         finally
         {
@@ -827,7 +713,7 @@
 
         try
         {
-            var sortedColumns = columns.OrderBy(c => c.Position).ToList();
+            var sortedColumns = columns!.OrderBy(c => c.Position).ToList();
             var draggedIndex = sortedColumns.FindIndex(c => c.Id == draggedColumn.Id);
 
             if (dropIndex >= sortedColumns.Count) 
@@ -835,15 +721,11 @@
                 dropIndex = sortedColumns.Count - 1;
             }
             
-            if (draggedIndex == dropIndex) return; // No change
+            if (draggedIndex == dropIndex) return;
 
-            // Remove dragged column from current position
             sortedColumns.RemoveAt(draggedIndex);
-            
-            // Insert at new position
             sortedColumns.Insert(dropIndex, draggedColumn);
             
-            // Update positions
             var positions = new List<ColumnPositionDto>();
             for (int i = 0; i < sortedColumns.Count; i++)
             {
@@ -855,16 +737,13 @@
                 });
             }
             
-            // Update server
             await ColumnService.ReorderColumnsAsync(BoardId, positions);
-            
-            // Update local state
             columns = sortedColumns;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error reordering columns: {ex.Message}");
-            await LoadColumns(); // Reload on error
+            await LoadColumns();
         }
         finally
         {
