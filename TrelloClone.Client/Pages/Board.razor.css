@@ -1,96 +1,105 @@
 .column-drop-zone {
-    transition: var(--transition);
-    border-radius: var(--border-radius);
-    padding: 8px;
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 12px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-.column-drop-zone.drag-over {
-    border: 2px dashed var(--primary);
-    background-color: rgba(0, 102, 255, 0.1);
-    padding: 12px;
-    transform: scale(1.02);
-}
+    .column-drop-zone.drag-over {
+        border: 2px dashed var(--primary);
+        background-color: rgba(0, 102, 255, 0.08);
+        padding: 14px;
+        transform: scale(1.015);
+        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.1);
+    }
 
 .column-item {
     cursor: grab;
-    transition: var(--transition);
+    transition: all 0.2s ease;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
-.column-item:active {
-    cursor: grabbing;
-}
+    .column-item:active {
+        cursor: grabbing;
+    }
 
-.column-item.dragging {
-    opacity: 0.5;
-    transform: scale(0.95);
-}
+    .column-item.dragging {
+        opacity: 0.65;
+        transform: scale(0.96);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
 
-.task-drop-zone-before, 
-.task-drop-zone-after, 
+.task-drop-zone-before,
+.task-drop-zone-after,
 .empty-column-drop-zone {
-    transition: var(--transition);
-    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+    border-radius: 6px;
 }
 
-.task-drop-zone-before.visible, 
-.task-drop-zone-after.visible {
-    background-color: rgba(0, 102, 255, 0.05);
-    border: 1px dashed rgba(0, 102, 255, 0.3);
-    height: 12px !important;
-    margin: 6px 0 !important;
-}
+    .task-drop-zone-before.visible,
+    .task-drop-zone-after.visible {
+        background-color: rgba(0, 102, 255, 0.07);
+        border: 1px dashed rgba(0, 80, 200, 0.4);
+        height: 14px !important;
+        margin: 8px 0 !important;
+    }
 
-.empty-column-drop-zone.visible {
-    background-color: rgba(0, 102, 255, 0.05);
-    border: 1px dashed rgba(0, 102, 255, 0.3);
-    min-height: 50px !important;
-    padding: 8px;
-}
+    .empty-column-drop-zone.visible {
+        background-color: rgba(0, 102, 255, 0.07);
+        border: 1px dashed rgba(0, 80, 200, 0.4);
+        min-height: 56px !important;
+        padding: 10px;
+    }
 
-.task-drop-zone-before.drag-over, 
-.task-drop-zone-after.drag-over {
-    height: 20px !important;
-    background-color: rgba(0, 102, 255, 0.3);
-    border: 2px dashed var(--primary);
-    margin: 8px 0 !important;
-}
+    .task-drop-zone-before.drag-over,
+    .task-drop-zone-after.drag-over {
+        height: 24px !important;
+        background-color: rgba(0, 102, 255, 0.2);
+        border: 2px dashed var(--primary);
+        margin: 10px 0 !important;
+    }
 
-.empty-column-drop-zone.drag-over {
-    background-color: rgba(0, 102, 255, 0.1);
-    border: 2px dashed var(--primary);
-    min-height: 60px !important;
-    padding: 12px;
-}
+    .empty-column-drop-zone.drag-over {
+        background-color: rgba(0, 102, 255, 0.12);
+        border: 2px dashed var(--primary);
+        min-height: 64px !important;
+        padding: 14px;
+    }
 
 .card[draggable="true"] {
     cursor: grab;
-    transition: var(--transition);
+    transition: all 0.2s ease;
+    border: 1px solid #e9ecef;
 }
 
-.card[draggable="true"]:active {
-    cursor: grabbing;
-}
+    .card[draggable="true"]:active {
+        cursor: grabbing;
+    }
 
 .card.dragging {
-    opacity: 0.5;
-    transform: scale(0.95);
+    opacity: 0.65;
+    transform: scale(0.96);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
 }
 
 .card-body.drop-zone-active {
-    background-color: rgba(0, 102, 255, 0.05);
-    border-radius: var(--border-radius);
-    transition: var(--transition);
-    padding: 12px;
+    background-color: rgba(0, 102, 255, 0.08);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    padding: 14px;
 }
 
 .columns-container.dragging-active .column-drop-zone:not(.drag-over) {
-    opacity: 0.7;
+    opacity: 0.85;
+    transform: translateY(0);
 }
 
-.card-body.task-dragging-active .task-drop-zone-before:not(.drag-over), 
-.card-body.task-dragging-active .task-drop-zone-after:not(.drag-over), 
+.card-body.task-dragging-active .task-drop-zone-before:not(.drag-over),
+.card-body.task-dragging-active .task-drop-zone-after:not(.drag-over),
 .card-body.task-dragging-active .empty-column-drop-zone:not(.drag-over) {
-    opacity: 0.5;
+    opacity: 0.6;
 }
 
 * {
@@ -98,48 +107,178 @@
 }
 
 .card {
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: var(--border-radius);
+    transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.25s ease;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
 }
 
-.card:hover:not(.dragging) {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    .card:hover:not(.dragging) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+
+.online-users-compact {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    background: rgba(40, 167, 69, 0.12);
+    border-radius: 20px;
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 28px;
+    max-width: 100px;
 }
 
-.online-users-indicator {
-    background: #e8f5e8;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border-left: 3px solid #28a745;
+    .online-users-compact:hover {
+        background: rgba(40, 167, 69, 0.18);
+        max-width: 180px;
+    }
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    background: #28a745;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse-dot 1.8s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.5);
+}
+
+@keyframes pulse-dot {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.5);
+    }
+
+    70% {
+        transform: scale(1.15);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 0 8px rgba(40, 167, 69, 0);
+    }
+}
+
+.online-text {
+    color: #155724;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity 0.2s ease;
+}
+
+.online-tooltip {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: 10px;
+    min-width: 180px;
+    max-width: 240px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 10px);
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+    font-size: 0.85rem;
+}
+
+.online-users-compact:hover .online-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+.user-item {
+    padding: 5px 8px;
+    border-radius: 6px;
+    color: #495057;
+    transition: background-color 0.2s ease;
+}
+
+    .user-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .user-item.current-user {
+        background-color: rgba(0, 123, 255, 0.08);
+        font-weight: 500;
+        color: #0069d9;
+    }
+
+    .user-item.more {
+        color: #6c757d;
+        font-style: italic;
+        font-weight: 500;
+        padding-top: 6px;
+        border-top: 1px solid #eee;
+        margin-top: 4px;
+    }
+
+.board-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+    .board-actions {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+        .board-actions button {
+            flex: 1;
+            padding: 6px 0;
+        }
 }
 
 .drag-activity-indicator {
     background: #e1f5fe;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border-left: 3px solid #17a2b8;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border-left: 3px solid #00bcd4;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
 }
 
 .editing-indicator {
-    background: #fff3cd;
-    padding: 2px 6px;
-    border-radius: 3px;
-    margin-bottom: 8px;
+    background: #fff8e1;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
     border-left: 2px solid #ffc107;
+    font-size: 0.85rem;
 }
 
 .drag-handle {
     cursor: grab;
-    color: #6c757d;
+    color: #adb5bd;
     display: flex;
     align-items: center;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
 }
 
     .drag-handle:active {
         cursor: grabbing;
+        color: #495057;
     }
 
     .drag-handle:hover {
         color: #495057;
+        background-color: #f1f3f5;
     }

@@ -24,40 +24,41 @@
     else
     {
         <div class="row mb-3">
-            <div class="col">
-                <h2>Board Columns</h2>
-                @if (onlineUsers.Count > 0)
-                {
-                    <div class="online-users-indicator mb-2">
-                        <small class="text-muted">
-                            <i class="bi bi-people"></i> 
-                            Online: @string.Join(", ", onlineUsers.Take(3))
-                            @if (onlineUsers.Count > 3)
+            <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                <div class="d-flex align-items-center">
+                    <h2 class="mb-0 me-4">Board Columns</h2>
+                    @{
+                        var totalOnline = onlineUsers.Count + 1; // +1 for current user
+                    }
+                    <div class="online-users-compact">
+                        <span class="online-dot"></span>
+                        <span class="online-text">@totalOnline online</span>
+                        <div class="online-tooltip">
+                            <div class="user-item current-user">@currentUserName (You)</div>
+                            @foreach (var user in onlineUsers.Take(9))
                             {
-                                <span> and @(onlineUsers.Count - 3) more</span>
+                                <div class="user-item">@user</div>
                             }
-                        </small>
+                            @if (onlineUsers.Count > 9)
+                            {
+                                <div class="user-item more">+@(onlineUsers.Count - 9) more</div>
+                            }
+                        </div>
                     </div>
-                }
-                @if (draggingUsers.Count > 0)
-                {
-                    <div class="drag-activity-indicator mb-2">
-                        <small class="text-info">
-                            <i class="bi bi-arrows-move"></i> 
-                            @string.Join(", ", draggingUsers)
-                        </small>
-                    </div>
-                }
-                @if (canEdit) {
-                    <button class="btn btn-primary" @onclick="ShowCreateColumn">
-                        <i class="bi bi-plus-lg"></i> Add Column
-                    </button>
-                }
-                @if (canInvite) {
-                    <button class="btn btn-outline-primary" @onclick="ShowInviteUser">
-                        <i class="bi bi-person-plus"></i> Invite User
-                    </button>
-                }
+                </div>
+            
+                <div class="board-actions">
+                    @if (canEdit) {
+                        <button class="btn btn-primary" @onclick="ShowCreateColumn">
+                            <i class="bi bi-plus-lg"></i> Add Column
+                        </button>
+                    }
+                    @if (canInvite) {
+                        <button class="btn btn-outline-primary" @onclick="ShowInviteUser">
+                            <i class="bi bi-person-plus"></i> Invite User
+                        </button>
+                    }
+                </div>
             </div>
         </div>
         <div class="row g-3 columns-container @(draggedColumn != null || draggedTask != null ? "dragging-active" : "")" @ondragover:preventDefault="true">
@@ -792,15 +793,15 @@
     // Event handlers
     private void OnUserJoinedBoard(string userId, string userName)
     {
-        if (userId != currentUserId)
+        if (userId != currentUserId && userName != currentUserName)
         {
-            onlineUsers.Add($"{userName} ({userId})");
+            onlineUsers.Add(userName);
             InvokeAsync(StateHasChanged);
         }
     }
     private void OnUserLeftBoard(string userId, string userName)
     {
-        onlineUsers.Remove($"{userName} ({userId})");
+        onlineUsers.Remove(userName);
         draggingUsers.Remove(userId);
         InvokeAsync(StateHasChanged);
     }

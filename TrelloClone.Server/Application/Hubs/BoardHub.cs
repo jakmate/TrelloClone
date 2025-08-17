@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.Collections.Concurrent;
 using TrelloClone.Shared.DTOs;
 using TrelloClone.Shared.DTOs.SignalR;
 
@@ -11,6 +12,9 @@ namespace TrelloClone.Server.Application.Hubs
     {
         private readonly BoardService _boardService;
         private readonly ILogger<BoardHub> _logger;
+
+        // Track connected users per board
+        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _boardUsers = new();
 
         public BoardHub(BoardService boardService, ILogger<BoardHub> logger)
         {
@@ -35,9 +39,30 @@ namespace TrelloClone.Server.Application.Hubs
 
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"Board_{boardId}");
 
-                // Notify others that user joined
-                await Clients.OthersInGroup($"Board_{boardId}")
-                    .SendAsync("UserJoinedBoard", new { UserId = userId, UserName = userName });
+                // Get existing users in this board
+                var boardKey = $"Board_{boardId}";
+                var boardUsers = _boardUsers.GetOrAdd(boardKey, _ => new ConcurrentDictionary<string, string>());
+
+                // Send existing users to the joining user (only send username)
+                foreach (var existingUser in boardUsers)
+                {
+                    await Clients.Caller.SendAsync("UserJoinedBoard", new UserBoardEvent
+                    {
+                        UserId = existingUser.Key,
+                        UserName = existingUser.Value
+                    });
+                }
+
+                // Add the new user to tracking
+                boardUsers.TryAdd(userId ?? "", userName);
+
+                // Notify others that user joined (only send username)
+                await Clients.OthersInGroup(boardKey)
+                    .SendAsync("UserJoinedBoard", new UserBoardEvent
+                    {
+                        UserId = userId ?? "",
+                        UserName = userName
+                    });
 
                 _logger.LogInformation("User {UserId} joined board {BoardId}", userId, boardId);
             }
@@ -50,9 +75,26 @@ namespace TrelloClone.Server.Application.Hubs
 
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"Board_{boardId}");
 
+            // Remove user from tracking
+            var boardKey = $"Board_{boardId}";
+            if (_boardUsers.TryGetValue(boardKey, out var boardUsers))
+            {
+                boardUsers.TryRemove(userId ?? "", out _);
+
+                // Clean up empty board tracking
+                if (boardUsers.IsEmpty)
+                {
+                    _boardUsers.TryRemove(boardKey, out _);
+                }
+            }
+
             // Notify others that user left
-            await Clients.OthersInGroup($"Board_{boardId}")
-                .SendAsync("UserLeftBoard", new { UserId = userId, UserName = userName });
+            await Clients.OthersInGroup(boardKey)
+                .SendAsync("UserLeftBoard", new UserBoardEvent
+                {
+                    UserId = userId ?? "",
+                    UserName = userName
+                });
 
             _logger.LogInformation("User {UserId} left board {BoardId}", userId, boardId);
         }
@@ -111,7 +153,7 @@ namespace TrelloClone.Server.Application.Hubs
         public async Task TaskDeleted(string boardId, string taskId, string columnId)
         {
             await Clients.OthersInGroup($"Board_{boardId}")
-                .SendAsync("TaskDeleted", new { TaskId = taskId, ColumnId = columnId });
+                .SendAsync("TaskDeleted", new TaskDeleteInfo { TaskId = taskId, ColumnId = columnId });
         }
 
         public async Task ColumnCreated(string boardId, ColumnDto column)
@@ -139,9 +181,9 @@ namespace TrelloClone.Server.Application.Hubs
             var userName = Context.User?.Identity?.Name ?? "Unknown";
 
             await Clients.OthersInGroup($"Board_{boardId}")
-                .SendAsync("UserStartedEditing", new
+                .SendAsync("UserStartedEditing", new UserEditInfo
                 {
-                    UserId = userId,
+                    UserId = userId ?? "",
                     UserName = userName,
                     ItemType = itemType,
                     ItemId = itemId
@@ -153,9 +195,9 @@ namespace TrelloClone.Server.Application.Hubs
             var userId = Context.UserIdentifier;
 
             await Clients.OthersInGroup($"Board_{boardId}")
-                .SendAsync("UserStoppedEditing", new
+                .SendAsync("UserStoppedEditing", new UserStopEditInfo
                 {
-                    UserId = userId,
+                    UserId = userId ?? "",
                     ItemType = itemType,
                     ItemId = itemId
                 });
@@ -163,7 +205,33 @@ namespace TrelloClone.Server.Application.Hubs
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            _logger.LogInformation("User {UserId} disconnected", Context.UserIdentifier);
+            var userId = Context.UserIdentifier;
+            var userName = Context.User?.Identity?.Name ?? "Unknown";
+
+            // Remove user from all boards they were in
+            foreach (var boardEntry in _boardUsers.ToList())
+            {
+                if (boardEntry.Value.ContainsKey(userId ?? ""))
+                {
+                    boardEntry.Value.TryRemove(userId ?? "", out _);
+
+                    // Notify others in the board
+                    await Clients.OthersInGroup(boardEntry.Key)
+                        .SendAsync("UserLeftBoard", new UserBoardEvent
+                        {
+                            UserId = userId ?? "",
+                            UserName = userName
+                        });
+
+                    // Clean up empty board tracking
+                    if (boardEntry.Value.IsEmpty)
+                    {
+                        _boardUsers.TryRemove(boardEntry.Key, out _);
+                    }
+                }
+            }
+
+            _logger.LogInformation("User {UserId} disconnected", userId);
             await base.OnDisconnectedAsync(exception);
         }
     }
