@@ -1,0 +1,115 @@
+.home-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.hero-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4rem;
+    gap: 2rem;
+}
+
+.hero-content {
+    flex: 1;
+    min-width: 300px;
+}
+
+.hero-visual {
+    flex: 1;
+    min-width: 300px;
+}
+
+.home-container h1 {
+    color: var(--primary);
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.hero-visual .board-preview {
+    display: flex;
+    gap: 1rem;
+    background-color: var(--secondary);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.preview-column {
+    flex: 1;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    padding: 0.75rem;
+    min-width: 120px;
+}
+
+.column-header {
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.preview-card {
+    background-color: var(--card-bg);
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.9rem;
+}
+
+.tech-stack-section, .features-section {
+    margin-bottom: 4rem;
+}
+
+.home-container h2 {
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.tech-grid, .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.tech-category, .feature-card {
+    background-color: var(--secondary);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.home-container h3 {
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.home-container ul {
+    padding-left: 1.5rem;
+}
+
+.home-container li {
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        flex-direction: column;
+    }
+
+    .board-preview {
+        flex-direction: column;
+    }
+}

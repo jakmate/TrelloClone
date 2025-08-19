@@ -1,4 +1,22 @@
+.columns-container {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 1rem 0;
+    flex-wrap: nowrap;
+}
+
+    .columns-container .col-md-4,
+    .columns-container .col-lg-3 {
+        flex: 0 0 300px;
+        min-width: 300px;
+        width: 300px;
+    }
+
 .column-drop-zone {
+    flex: 0 0 300px;
+    min-width: 300px;
+    width: 300px;
     transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
     border-radius: 12px;
     padding: 12px;

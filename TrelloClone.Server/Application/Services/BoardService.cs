@@ -117,4 +117,50 @@ public class BoardService
         await _boards.UpdatePositionsAsync(positions);
         await _uow.SaveChangesAsync();
     }
+
+    public async Task<BoardDto> CreateBoardFromTemplateAsync(CreateBoardFromTemplateRequest request)
+    {
+        if (await _boards.ExistsWithNameAsync(request.Name, request.OwnerId))
+            throw new InvalidOperationException("You already have a board with that name.");
+
+        var existingBoards = await _boards.GetAllByUserIdAsync(request.OwnerId);
+        var nextPosition = 0;
+        foreach (var existingBoard in existingBoards)
+        {
+            existingBoard.Position++;
+        }
+
+        var board = new Board
+        {
+            Name = request.Name,
+            Position = nextPosition,
+            BoardUsers = new List<BoardUser> {
+            new BoardUser {
+                UserId = request.OwnerId,
+                PermissionLevel = PermissionLevel.Admin
+            }
+        },
+            Columns = request.Columns.Select(col => new Column
+            {
+                Title = col.Title,
+                Position = col.Position,
+                Tasks = col.Tasks.Select(task => new TaskItem
+                {
+                    Name = task.Name,
+                    Priority = task.Priority,
+                    Position = task.Position
+                }).ToList()
+            }).ToList()
+        };
+
+        _boards.Add(board);
+        await _uow.SaveChangesAsync();
+
+        return new BoardDto
+        {
+            Id = board.Id,
+            Name = board.Name,
+            Position = board.Position
+        };
+    }
 }

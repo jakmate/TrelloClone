@@ -18,6 +18,7 @@ public interface IBoardService
     Task<bool> CanEditAsync(Guid boardId);
     Task<bool> CanInviteAsync(Guid boardId);
     Task<bool> ReorderBoardsAsync(List<BoardPositionDto> positions);
+    Task<BoardDto> CreateBoardFromTemplateAsync(CreateBoardFromTemplateRequest request);
 }
 
 public class BoardService : IBoardService
@@ -103,5 +104,20 @@ public class BoardService : IBoardService
         var request = new ReorderBoardsRequest { Boards = positions };
         var response = await _httpClient.PutAsJsonAsync("api/boards/reorder", request);
         return response.IsSuccessStatusCode;
+    }
+
+    public async Task<BoardDto> CreateBoardFromTemplateAsync(CreateBoardFromTemplateRequest request)
+    {
+        var authState = await _authStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+            throw new UnauthorizedAccessException("User not authenticated");
+
+        request.OwnerId = userGuid;
+
+        var response = await _httpClient.PostAsJsonAsync("api/boards/from-template", request);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<BoardDto>() ?? throw new Exception("Failed to create board from template");
     }
 }

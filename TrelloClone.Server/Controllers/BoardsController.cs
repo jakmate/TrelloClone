@@ -138,4 +138,24 @@ public class BoardsController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         return Guid.Parse(userIdString);
     }
+
+    [HttpPost("from-template")]
+    public async Task<ActionResult<BoardDto>> CreateBoardFromTemplate([FromBody] CreateBoardFromTemplateRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
+        request.OwnerId = userGuid;
+
+        try
+        {
+            var dto = await _boardService.CreateBoardFromTemplateAsync(request);
+            return CreatedAtAction(nameof(Get), new { boardId = dto.Id }, dto);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 }

@@ -1,0 +1,224 @@
+@page "/templates"
+@using TrelloClone.Shared.DTOs
+@inject IBoardService BoardService
+@inject NavigationManager Navigation
+
+<div class="templates-container">
+    <div class="templates-header">
+        <h1>Board Templates</h1>
+        <p class="templates-subtitle">Choose a template to get started quickly</p>
+    </div>
+
+    <div class="templates-grid">
+        @foreach (var template in templates)
+        {
+            <div class="template-card">
+                <div class="template-preview">
+                    <h3 class="template-title">@template.Title</h3>
+                    <p class="template-description">@template.Description</p>
+                    
+                    <div class="template-board-preview">
+                        @foreach (var column in template.Columns)
+                        {
+                            <div class="template-column">
+                                <div class="template-column-header">@column.Title</div>
+                                @foreach (var task in column.SampleTasks)
+                                {
+                                    <div class="template-task">@task</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+                
+                <div class="template-actions">
+                    @if (selectedTemplateId == template.Id)
+                    {
+                        <div class="template-name-input">
+                            <input type="text" 
+                                   class="form-control" 
+                                   @bind="newBoardName" 
+                                   @onkeypress="(e) => OnBoardNameKeyPress(e, template)"
+                                   placeholder="Enter board name" />
+                            <div class="template-buttons">
+                                <button class="btn btn-success" 
+                                        @onclick="() => CreateBoardFromTemplate(template)"
+                                        disabled="@(string.IsNullOrWhiteSpace(newBoardName) || creatingBoard)">
+                                    @if (creatingBoard)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-1"></span>
+                                    }
+                                    Create Board
+                                </button>
+                                <button class="btn btn-secondary" @onclick="CancelTemplateSelection">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary" @onclick="() => SelectTemplate(template.Id)">
+                            Use This Template
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<BoardTemplate> templates = new();
+    private int? selectedTemplateId;
+    private string newBoardName = string.Empty;
+    private bool creatingBoard = false;
+
+    protected override void OnInitialized()
+    {
+        LoadTemplates();
+    }
+
+    private void LoadTemplates()
+    {
+        templates = new List<BoardTemplate>
+        {
+            new BoardTemplate
+            {
+                Id = 1,
+                Title = "Software Development",
+                Description = "Perfect for managing software projects with development workflow",
+                Columns = new List<TemplateColumn>
+                {
+                    new TemplateColumn 
+                    { 
+                        Title = "Backlog", 
+                        SampleTasks = new[] { "User registration feature", "Database schema design", "API documentation" }
+                    },
+                    new TemplateColumn 
+                    { 
+                        Title = "In Progress", 
+                        SampleTasks = new[] { "Implement authentication", "Create user dashboard" }
+                    },
+                    new TemplateColumn 
+                    { 
+                        Title = "Code Review", 
+                        SampleTasks = new[] { "Review login component" }
+                    },
+                    new TemplateColumn 
+                    { 
+                        Title = "Done", 
+                        SampleTasks = new[] { "Project setup", "Development environment" }
+                    }
+                }
+            },
+            new BoardTemplate
+            {
+                Id = 2,
+                Title = "Marketing Campaign",
+                Description = "Organize marketing campaigns from planning to execution",
+                Columns = new List<TemplateColumn>
+                {
+                    new TemplateColumn 
+                    { 
+                        Title = "Ideas", 
+                        SampleTasks = new[] { "Social media strategy", "Email campaign", "Influencer outreach" }
+                    },
+                    new TemplateColumn 
+                    { 
+                        Title = "Planning", 
+                        SampleTasks = new[] { "Create content calendar", "Design marketing materials" }
+                    },
+                    new TemplateColumn 
+                    { 
+                        Title = "In Progress", 
+                        SampleTasks = new[] { "Write blog posts" }
+                    },
+                    new TemplateColumn 
+                    { 
+                        Title = "Completed", 
+                        SampleTasks = new[] { "Market research", "Target audience analysis" }
+                    }
+                }
+            }
+        };
+    }
+
+    private void SelectTemplate(int templateId)
+    {
+        selectedTemplateId = templateId;
+        var template = templates.FirstOrDefault(t => t.Id == templateId);
+        newBoardName = template?.Title ?? "";
+    }
+
+    private void CancelTemplateSelection()
+    {
+        selectedTemplateId = null;
+        newBoardName = string.Empty;
+    }
+
+    private async Task OnBoardNameKeyPress(KeyboardEventArgs e, BoardTemplate template)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newBoardName))
+        {
+            await CreateBoardFromTemplate(template);
+        }
+        else if (e.Key == "Escape")
+        {
+            CancelTemplateSelection();
+        }
+    }
+
+    private async Task CreateBoardFromTemplate(BoardTemplate template)
+    {
+        if (string.IsNullOrWhiteSpace(newBoardName) || creatingBoard) return;
+
+        try
+        {
+            creatingBoard = true;
+
+            // Create the board with template structure
+            var newBoard = await BoardService.CreateBoardFromTemplateAsync(new CreateBoardFromTemplateRequest
+            {
+                Name = newBoardName.Trim(),
+                TemplateId = template.Id,
+                Columns = template.Columns.Select((col, index) => new CreateColumnRequest
+                {
+                    Title = col.Title,
+                    Position = index,
+                    Tasks = col.SampleTasks.Select((task, taskIndex) => new CreateTaskRequest
+                    {
+                        Name = task,
+                        Priority = PriorityLevel.Medium,
+                        Position = taskIndex
+                    }).ToList()
+                }).ToList()
+            });
+
+            // Navigate to the new board
+            Navigation.NavigateTo($"/board/{newBoard.Id}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating board from template: {ex.Message}");
+        }
+        finally
+        {
+            creatingBoard = false;
+        }
+    }
+
+    public class BoardTemplate
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public List<TemplateColumn> Columns { get; set; } = new();
+    }
+
+    public class TemplateColumn
+    {
+        public string Title { get; set; } = string.Empty;
+        public string[] SampleTasks { get; set; } = Array.Empty<string>();
+    }
+}
