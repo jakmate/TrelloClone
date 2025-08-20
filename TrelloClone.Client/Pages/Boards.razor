@@ -48,6 +48,7 @@
                     {
                         var board = sortedBoards[i];
                         var index = i;
+                        var isOwner = boardOwnership.GetValueOrDefault(board.Id, false);
         
                         <div class="board-drop-zone @(dragOverIndex == index ? "drag-over" : "")" 
                              @ondragover="@((e) => HandleDragOver(e, index))"
@@ -62,8 +63,10 @@
                                 <BoardCard 
                                     Board="board"
                                     CanEdit="@(boardPermissions.ContainsKey(board.Id) && boardPermissions[board.Id])"
+                                    IsOwner="@isOwner"
                                     OnUpdate="ShowUpdateModal"
-                                    OnDelete="DeleteBoard" />
+                                    OnDelete="DeleteBoard"
+                                    OnLeave="LeaveBoard" />
                             </div>
                         </div>
                     }
@@ -120,6 +123,7 @@
     private bool isUpdating = false;
     private Guid? updatingBoardId;
     private Dictionary<Guid, bool> boardPermissions = new();
+    private Dictionary<Guid, bool> boardOwnership = new();
     private BoardDto? draggedBoard;
     private int? dragOverIndex;
 
@@ -150,13 +154,21 @@
         {
             boards = await BoardService.GetBoardsAsync();
             boardPermissions = new Dictionary<Guid, bool>();
+            boardOwnership = new Dictionary<Guid, bool>();
 
             var permissionTasks = boards.Select(async board => 
-                (board.Id, await BoardService.CanEditAsync(board.Id))
-            );
+            {
+                var canEdit = await BoardService.CanEditAsync(board.Id);
+                var isOwner = await BoardService.IsOwnerAsync(board.Id);
+                return (board.Id, canEdit, isOwner);
+            });
 
             var results = await Task.WhenAll(permissionTasks);
-            boardPermissions = results.ToDictionary(r => r.Id, r => r.Item2);
+            foreach (var (id, canEdit, isOwner) in results)
+            {
+                boardPermissions[id] = canEdit;
+                boardOwnership[id] = isOwner;
+            }
         }
         catch (Exception ex)
         {
@@ -205,7 +217,6 @@
             var createdBoard = await BoardService.CreateBoardAsync(newBoard);
             createdBoard.Position = 0;
 
-            // Update existing board positions
             var positions = sortedBoards
                 .Select((b, i) => new BoardPositionDto { Id = b.Id, Position = i + 1 })
                 .ToList();
@@ -217,9 +228,9 @@
 
             await BoardService.ReorderBoardsAsync(positions);
             
-            // Update local state
             boards.Add(createdBoard);
             boardPermissions[createdBoard.Id] = true;
+            boardOwnership[createdBoard.Id] = true;
             HideCreateModal();
         }
         catch (Exception ex)
@@ -242,7 +253,6 @@
         {
             var updatedBoard = await BoardService.UpdateBoardAsync(updatingBoardId.Value, updateRequest);
             
-            // Update local board list
             var index = boards.FindIndex(b => b.Id == updatingBoardId.Value);
             if (index >= 0)
             {
@@ -263,7 +273,7 @@
 
     private async Task DeleteBoard(BoardDto board)
     {
-        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{board.Name}'?");
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{board.Name}'? This action cannot be undone.");
         if (!confirm) return;
 
         try
@@ -271,10 +281,29 @@
             await BoardService.DeleteBoardAsync(board.Id);
             boards.RemoveAll(b => b.Id == board.Id);
             boardPermissions.Remove(board.Id);
+            boardOwnership.Remove(board.Id);
         }
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Error deleting board: {ex.Message}");
+        }
+    }
+
+    private async Task LeaveBoard(BoardDto board)
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to leave '{board.Name}'?");
+        if (!confirm) return;
+
+        try
+        {
+            await BoardService.LeaveBoardAsync(board.Id);
+            boards.RemoveAll(b => b.Id == board.Id);
+            boardPermissions.Remove(board.Id);
+            boardOwnership.Remove(board.Id);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error leaving board: {ex.Message}");
         }
     }
 

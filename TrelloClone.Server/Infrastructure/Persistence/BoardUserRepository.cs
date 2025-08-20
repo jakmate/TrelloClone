@@ -18,4 +18,21 @@ public class BoardUserRepository : IBoardUserRepository
 
         return boardUser?.PermissionLevel ?? PermissionLevel.Viewer;
     }
+
+    public async Task<bool> IsOwnerAsync(Guid boardId, Guid userId)
+    {
+        var boardUser = await _ctx.BoardUsers
+            .FirstOrDefaultAsync(bu => bu.BoardId == boardId && bu.UserId == userId);
+        return boardUser?.PermissionLevel == PermissionLevel.Owner;
+    }
+
+    public async Task RemoveUserAsync(Guid boardId, Guid userId)
+    {
+        var boardUser = await _ctx.BoardUsers
+            .FirstOrDefaultAsync(bu => bu.BoardId == boardId && bu.UserId == userId);
+        if (boardUser != null)
+        {
+            _ctx.BoardUsers.Remove(boardUser);
+        }
+    }
 }

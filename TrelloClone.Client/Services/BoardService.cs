@@ -13,10 +13,12 @@ public interface IBoardService
     Task<BoardDto> CreateBoardAsync(CreateBoardRequest request);
     Task<BoardDto> UpdateBoardAsync(Guid id, UpdateBoardRequest request);
     Task<bool> DeleteBoardAsync(Guid id);
-    
+    Task<bool> LeaveBoardAsync(Guid id);
+
     Task<PermissionLevel> GetUserPermissionAsync(Guid boardId);
     Task<bool> CanEditAsync(Guid boardId);
     Task<bool> CanInviteAsync(Guid boardId);
+    Task<bool> IsOwnerAsync(Guid boardId);
     Task<bool> ReorderBoardsAsync(List<BoardPositionDto> positions);
     Task<BoardDto> CreateBoardFromTemplateAsync(CreateBoardFromTemplateRequest request);
 }
@@ -82,6 +84,18 @@ public class BoardService : IBoardService
         throw new HttpRequestException($"Delete failed: {error}");
     }
 
+    public async Task<bool> LeaveBoardAsync(Guid id)
+    {
+        var response = await _httpClient.PostAsync($"api/boards/{id}/leave", null);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> IsOwnerAsync(Guid boardId)
+    {
+        var permission = await GetUserPermissionAsync(boardId);
+        return permission == PermissionLevel.Owner;
+    }
+
     public async Task<PermissionLevel> GetUserPermissionAsync(Guid boardId)
     {
         return await _httpClient.GetFromJsonAsync<PermissionLevel>($"api/boards/{boardId}/permission");
@@ -96,7 +110,7 @@ public class BoardService : IBoardService
     public async Task<bool> CanInviteAsync(Guid boardId)
     {
         var permission = await GetUserPermissionAsync(boardId);
-        return permission == PermissionLevel.Admin;
+        return permission >= PermissionLevel.Admin;
     }
 
     public async Task<bool> ReorderBoardsAsync(List<BoardPositionDto> positions)

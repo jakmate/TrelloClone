@@ -29,7 +29,7 @@ public class BoardService
             BoardUsers = new List<BoardUser> {
             new BoardUser {
                 UserId = ownerId,
-                PermissionLevel = PermissionLevel.Admin
+                PermissionLevel = PermissionLevel.Owner
             }
         }
         };
@@ -67,12 +67,36 @@ public class BoardService
         };
     }
 
-    public async Task DeleteBoardAsync(Guid boardId)
+    public async Task DeleteBoardAsync(Guid boardId, Guid userId)
     {
         var board = await _boards.GetByIdAsync(boardId)
                     ?? throw new KeyNotFoundException("Board not found.");
+
+        bool isOwner = await _boardUsers.IsOwnerAsync(boardId, userId);
+        if (!isOwner)
+            throw new UnauthorizedAccessException("Only board owners can delete boards.");
+
         _boards.Remove(board);
         await _uow.SaveChangesAsync();
+    }
+
+    public async Task LeaveBoardAsync(Guid boardId, Guid userId)
+    {
+        bool isOwner = await _boardUsers.IsOwnerAsync(boardId, userId);
+        if (isOwner)
+            throw new InvalidOperationException("Board owners cannot leave their boards. Transfer ownership or delete the board instead.");
+
+        bool isMember = await _boardUsers.ExistsAsync(boardId, userId);
+        if (!isMember)
+            throw new InvalidOperationException("You are not a member of this board.");
+
+        await _boardUsers.RemoveUserAsync(boardId, userId);
+        await _uow.SaveChangesAsync();
+    }
+
+    public async Task<bool> IsOwnerAsync(Guid boardId, Guid userId)
+    {
+        return await _boardUsers.IsOwnerAsync(boardId, userId);
     }
 
     public async Task<BoardDto?> GetBoardAsync(Guid boardId)
@@ -137,7 +161,7 @@ public class BoardService
             BoardUsers = new List<BoardUser> {
             new BoardUser {
                 UserId = request.OwnerId,
-                PermissionLevel = PermissionLevel.Admin
+                PermissionLevel = PermissionLevel.Owner
             }
         },
             Columns = request.Columns.Select(col => new Column

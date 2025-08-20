@@ -80,12 +80,37 @@ public class BoardsController : ControllerBase
     [HttpDelete("{boardId:guid}")]
     public async Task<IActionResult> Delete(Guid boardId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
-            return Unauthorized();
+        var userId = GetCurrentUserId();
 
-        await _boardService.DeleteBoardAsync(boardId);
-        return NoContent();
+        try
+        {
+            await _boardService.DeleteBoardAsync(boardId, userId);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+    }
+
+    [HttpPost("{boardId:guid}/leave")]
+    public async Task<IActionResult> LeaveBoard(Guid boardId)
+    {
+        var userId = GetCurrentUserId();
+
+        try
+        {
+            await _boardService.LeaveBoardAsync(boardId, userId);
+            return Ok();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpGet("{boardId:guid}")]
@@ -157,5 +182,13 @@ public class BoardsController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+    }
+
+    [HttpGet("{boardId:guid}/is-owner")]
+    public async Task<ActionResult<bool>> IsOwner(Guid boardId)
+    {
+        var userId = GetCurrentUserId();
+        var isOwner = await _boardService.IsOwnerAsync(boardId, userId);
+        return Ok(isOwner);
     }
 }
