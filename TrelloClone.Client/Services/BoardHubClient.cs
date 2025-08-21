@@ -88,16 +88,22 @@ public class BoardHubClient
     {
         try
         {
+            if (_currentBoardId != null && _currentBoardId != boardId)
+            {
+                await LeaveBoardAsync(_currentBoardId);
+            }
+
             if (_hubConnection.State != HubConnectionState.Connected)
             {
                 await _hubConnection.StartAsync();
             }
 
-            await _hubConnection.InvokeAsync("JoinBoard", boardId);
             _currentBoardId = boardId;
+            await _hubConnection.InvokeAsync("JoinBoard", boardId);
         }
         catch (Exception ex)
         {
+            _currentBoardId = null;
             _logger.LogError(ex, "Error joining board {BoardId}", boardId);
             throw;
         }
@@ -107,11 +113,12 @@ public class BoardHubClient
     {
         try
         {
-            await _hubConnection.InvokeAsync("LeaveBoard", boardId);
             _currentBoardId = null;
+            await _hubConnection.InvokeAsync("LeaveBoard", boardId);
         }
         catch (Exception ex)
         {
+            _currentBoardId = boardId;
             _logger.LogError(ex, "Error leaving board {BoardId}", boardId);
         }
     }

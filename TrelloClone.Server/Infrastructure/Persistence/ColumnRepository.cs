@@ -22,9 +22,12 @@ public class ColumnRepository : IColumnRepository
 
     public async Task UpdatePositionsAsync(List<ColumnPositionDto> positions)
     {
+        var columnIds = positions.Select(p => p.Id).ToList();
+        var columns = await _ctx.Columns.Where(c => columnIds.Contains(c.Id)).ToListAsync();
+
         foreach (var pos in positions)
         {
-            var column = await _ctx.Columns.FindAsync(pos.Id);
+            var column = columns.FirstOrDefault(c => c.Id == pos.Id);
             if (column != null)
             {
                 column.Position = pos.Position;

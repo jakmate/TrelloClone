@@ -26,9 +26,12 @@ public class BoardRepository : IBoardRepository
 
     public async Task UpdatePositionsAsync(List<BoardPositionDto> positions)
     {
+        var boardIds = positions.Select(p => p.Id).ToList();
+        var boards = await _ctx.Boards.Where(b => boardIds.Contains(b.Id)).ToListAsync();
+
         foreach (var pos in positions)
         {
-            var board = await _ctx.Boards.FindAsync(pos.Id);
+            var board = boards.FirstOrDefault(b => b.Id == pos.Id);
             if (board != null)
             {
                 board.Position = pos.Position;

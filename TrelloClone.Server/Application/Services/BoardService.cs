@@ -45,9 +45,8 @@ public class BoardService
 
     public async Task<BoardDto> UpdateBoardAsync(Guid boardId, string newName, Guid userId)
     {
-        var board = await _boards.GetByIdAsync(boardId);
-        if (board == null)
-            throw new InvalidOperationException("Board not found.");
+        var board = await _boards.GetByIdAsync(boardId)
+           ?? throw new KeyNotFoundException("Board not found.");
         bool isMember = await _boardUsers.ExistsAsync(boardId, userId);
         if (!isMember)
             throw new UnauthorizedAccessException("You don't have permission to modify this board.");

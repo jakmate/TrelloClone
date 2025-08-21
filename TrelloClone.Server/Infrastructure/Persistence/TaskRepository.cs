@@ -19,14 +19,15 @@ public class TaskRepository : ITaskRepository
 
     public async Task UpdatePositionsAsync(List<TaskPositionDto> positions)
     {
+        var taskIds = positions.Select(p => p.Id).ToList();
+        var tasks = await _ctx.Tasks.Where(t => taskIds.Contains(t.Id)).ToListAsync();
+
         foreach (var pos in positions)
         {
-            var task = await _ctx.Tasks.FindAsync(pos.Id);
+            var task = tasks.FirstOrDefault(t => t.Id == pos.Id);
             if (task != null)
             {
                 task.Position = pos.Position;
-                if (pos.ColumnId.HasValue)
-                    task.ColumnId = pos.ColumnId.Value;
             }
         }
     }

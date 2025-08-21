@@ -30,7 +30,7 @@ public class InvitationService
     public async Task SendInvitation(Guid boardId, Guid inviterId, string invitedUsername, PermissionLevel permission)
     {
         var invitedUser = await _users.GetByUsernameAsync(invitedUsername);
-        if (invitedUser == null) throw new Exception("User not found");
+        if (invitedUser == null) throw new KeyNotFoundException($"User '{invitedUsername}' not found");
 
         var existingMember = await _boardUsers.ExistsAsync(boardId, invitedUser.Id);
         if (existingMember == true) throw new Exception("User is already a member of this board");

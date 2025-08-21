@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Collections.Concurrent;
 using TrelloClone.Shared.DTOs;
 using TrelloClone.Shared.DTOs.SignalR;
+using TrelloClone.Server.Application.Services;
 
 namespace TrelloClone.Server.Application.Hubs
 {
@@ -11,14 +12,19 @@ namespace TrelloClone.Server.Application.Hubs
     public class BoardHub : Hub
     {
         private readonly BoardService _boardService;
+        private readonly IBoardUserService _boardUserService;
         private readonly ILogger<BoardHub> _logger;
 
         // Track connected users per board
         private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _boardUsers = new();
 
-        public BoardHub(BoardService boardService, ILogger<BoardHub> logger)
+        public BoardHub(
+            BoardService boardService,
+            IBoardUserService boardUserService,
+            ILogger<BoardHub> logger)
         {
             _boardService = boardService;
+            _boardUserService = boardUserService;
             _logger = logger;
         }
 
@@ -28,44 +34,59 @@ namespace TrelloClone.Server.Application.Hubs
             var userName = Context.User?.Identity?.Name ?? "Unknown";
 
             // Verify user has access to this board
-            if (Guid.TryParse(boardId, out var boardGuid))
+            if (!Guid.TryParse(boardId, out var boardGuid) ||
+                !Guid.TryParse(userId, out var userGuid))
             {
-                var hasAccess = true;
-                if (!hasAccess)
+                await Clients.Caller.SendAsync("Error", "Invalid board or user ID");
+                return;
+            }
+
+            try
+            {
+                // Check user permissions
+                var permission = await _boardUserService.GetUserPermissionAsync(boardGuid, userGuid);
+
+                // Allow any valid permission level (Viewer and above)
+                if (permission < PermissionLevel.Viewer)
                 {
                     await Clients.Caller.SendAsync("Error", "Access denied to board");
                     return;
                 }
-
-                await Groups.AddToGroupAsync(Context.ConnectionId, $"Board_{boardId}");
-
-                // Get existing users in this board
-                var boardKey = $"Board_{boardId}";
-                var boardUsers = _boardUsers.GetOrAdd(boardKey, _ => new ConcurrentDictionary<string, string>());
-
-                // Send existing users to the joining user (only send username)
-                foreach (var existingUser in boardUsers)
-                {
-                    await Clients.Caller.SendAsync("UserJoinedBoard", new UserBoardEvent
-                    {
-                        UserId = existingUser.Key,
-                        UserName = existingUser.Value
-                    });
-                }
-
-                // Add the new user to tracking
-                boardUsers.TryAdd(userId ?? "", userName);
-
-                // Notify others that user joined (only send username)
-                await Clients.OthersInGroup(boardKey)
-                    .SendAsync("UserJoinedBoard", new UserBoardEvent
-                    {
-                        UserId = userId ?? "",
-                        UserName = userName
-                    });
-
-                _logger.LogInformation("User {UserId} joined board {BoardId}", userId, boardId);
             }
+            catch
+            {
+                await Clients.Caller.SendAsync("Error", "Error verifying access permissions");
+                return;
+            }
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"Board_{boardId}");
+
+            // Get existing users in this board
+            var boardKey = $"Board_{boardId}";
+            var boardUsers = _boardUsers.GetOrAdd(boardKey, _ => new ConcurrentDictionary<string, string>());
+
+            // Send existing users to the joining user (only send username)
+            foreach (var existingUser in boardUsers)
+            {
+                await Clients.Caller.SendAsync("UserJoinedBoard", new UserBoardEvent
+                {
+                    UserId = existingUser.Key,
+                    UserName = existingUser.Value
+                });
+            }
+
+            // Add the new user to tracking
+            boardUsers.TryAdd(userId ?? "", userName);
+
+            // Notify others that user joined (only send username)
+            await Clients.OthersInGroup(boardKey)
+                .SendAsync("UserJoinedBoard", new UserBoardEvent
+                {
+                    UserId = userId ?? "",
+                    UserName = userName
+                });
+
+            _logger.LogInformation("User {UserId} joined board {BoardId}", userId, boardId);
         }
 
         public async Task LeaveBoard(string boardId)

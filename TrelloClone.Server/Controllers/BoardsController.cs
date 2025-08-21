@@ -22,7 +22,7 @@ public class BoardsController : ControllerBase
 
         try
         {
-            var dto = await _boardService.CreateBoardAsync(req.Name, req.OwnerId);
+            var dto = await _boardService.CreateBoardAsync(req.Name, userGuid);
             return CreatedAtAction(nameof(Get), new { boardId = dto.Id }, dto);
         }
         catch (Exception ex)

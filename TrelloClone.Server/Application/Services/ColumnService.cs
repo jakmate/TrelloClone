@@ -36,7 +36,6 @@ public class ColumnService
                     Position = t.Position
                 }).ToList()
             }).ToList();
-        return null;
     }
 
     public async Task<ColumnDto> CreateColumnAsync(CreateColumnRequest req)
