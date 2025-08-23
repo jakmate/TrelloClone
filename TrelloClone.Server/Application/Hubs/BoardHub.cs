@@ -4,7 +4,6 @@ using System.Security.Claims;
 using System.Collections.Concurrent;
 using TrelloClone.Shared.DTOs;
 using TrelloClone.Shared.DTOs.SignalR;
-using TrelloClone.Server.Application.Services;
 
 namespace TrelloClone.Server.Application.Hubs
 {
@@ -12,7 +11,6 @@ namespace TrelloClone.Server.Application.Hubs
     public class BoardHub : Hub
     {
         private readonly BoardService _boardService;
-        private readonly IBoardUserService _boardUserService;
         private readonly ILogger<BoardHub> _logger;
 
         // Track connected users per board
@@ -20,11 +18,9 @@ namespace TrelloClone.Server.Application.Hubs
 
         public BoardHub(
             BoardService boardService,
-            IBoardUserService boardUserService,
             ILogger<BoardHub> logger)
         {
             _boardService = boardService;
-            _boardUserService = boardUserService;
             _logger = logger;
         }
 
@@ -44,7 +40,7 @@ namespace TrelloClone.Server.Application.Hubs
             try
             {
                 // Check user permissions
-                var permission = await _boardUserService.GetUserPermissionAsync(boardGuid, userGuid);
+                var permission = await _boardService.GetUserPermissionAsync(boardGuid, userGuid);
 
                 // Allow any valid permission level (Viewer and above)
                 if (permission < PermissionLevel.Viewer)
