@@ -6,5 +6,5 @@ public class CreateTaskRequest
 	public PriorityLevel Priority { get; set; }
 	public Guid ColumnId { get; set; }
     public int Position { get; set; }
-    public Guid? AssignedUserId { get; set; }
+    public List<Guid>? AssignedUserIds { get; set; }
 }

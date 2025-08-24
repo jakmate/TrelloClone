@@ -18,6 +18,12 @@ public class TaskService
         return response ?? new List<TaskDto>();
     }
 
+    public async Task<List<UserDto>> GetAvailableUsersForTaskAsync(Guid columnId)
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<UserDto>>($"api/columns/{columnId}/tasks/available-users");
+        return response ?? new List<UserDto>();
+    }
+
     public async Task<TaskDto> CreateTaskAsync(CreateTaskRequest request)
     {
         var response = await _httpClient.PostAsJsonAsync($"api/columns/{request.ColumnId}/tasks", request);

@@ -166,12 +166,35 @@
                                                 else if (editingTaskId == task.Id && canEdit)
                                                 {
                                                     <div class="mb-2">
-                                                        <input type="text" class="form-control form-control-sm mb-2" @bind="editTaskName" @onkeypress="(e) => OnEditTaskKeyPress(e, column.Id, task.Id)" />
-                                                        <select class="form-select form-select-sm" @bind="editTaskPriority">
+                                                        <input type="text" class="form-control form-control-sm mb-2" 
+                                                               @bind="editTaskName" 
+                                                               @onkeypress="(e) => OnEditTaskKeyPress(e, column.Id, task.Id)" />
+                                                        <select class="form-select form-select-sm mb-2" @bind="editTaskPriority">
                                                             <option value="@PriorityLevel.Low">Low</option>
                                                             <option value="@PriorityLevel.Medium">Medium</option>
                                                             <option value="@PriorityLevel.High">High</option>
                                                         </select>
+                                                        @if (availableUsers?.Any() == true)
+                                                        {
+                                                            <div class="mb-2">
+                                                                <label class="form-label small">Assigned Users:</label>
+                                                                <div class="user-checkboxes-small">
+                                                                    @foreach (var user in availableUsers)
+                                                                    {
+                                                                        <div class="form-check form-check-sm">
+                                                                            <input class="form-check-input form-check-input-sm" 
+                                                                                   type="checkbox" 
+                                                                                   id="edit_user_@user.Id" 
+                                                                                   checked="@IsUserAssignedInEdit(user.Id)"
+                                                                                   @onchange="@((e) => ToggleUserAssignmentInEdit(user.Id, (bool)e.Value!))" />
+                                                                            <label class="form-check-label small" for="edit_user_@user.Id">
+                                                                                @user.UserName
+                                                                            </label>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        }
                                                     </div>
                                                     <div class="d-flex justify-content-end">
                                                         <button class="btn btn-sm btn-success me-1" @onclick="() => SaveTaskEdit(column.Id, task.Id)">
@@ -199,6 +222,14 @@
                                                         <div class="flex-grow-1">
                                                             <h6 class="card-title mb-1">@task.Name</h6>
                                                             <small class="text-muted">Priority: @task.Priority</small>
+                                                            @if (task.AssignedUserIds?.Any() == true)
+                                                            {
+                                                                <div class="mt-1">
+                                                                    <small class="text-info">
+                                                                        <i class="bi bi-person"></i> @task.AssignedUserIds.Count assigned
+                                                                    </small>
+                                                                </div>
+                                                            }
                                                         </div>
                                                         @if (canEdit && !IsBeingEditedByOther("task", task.Id)) 
                                                         {
@@ -260,7 +291,8 @@
            TaskModel="@newTaskRequest" 
            OnCancel="@HideCreateTask"
            OnSubmit="@HandleCreateTask"
-           IsSubmitting="@creatingTask" />
+           IsSubmitting="@creatingTask"
+           AvailableUsers="@availableUsers" />
 <ColumnModal Show="@showCreateColumnModal"
              ColumnModel="@newColumnRequest"
              OnCancel="@HideCreateColumn"
@@ -284,6 +316,7 @@
     private bool creatingTask = false;
     private string newTaskName = string.Empty;
     private Guid selectedColumnId;
+    private List<UserDto>? availableUsers;
 
     // Edit fields
     private Guid editingColumnId = Guid.Empty;
@@ -291,6 +324,7 @@
     private Guid editingTaskId = Guid.Empty;
     private string editTaskName = string.Empty;
     private PriorityLevel editTaskPriority = PriorityLevel.Medium;
+    private List<Guid> editTaskAssignedUserIds = new List<Guid>();
 
     // Invite fields
     private bool showInviteModal = false;
@@ -441,13 +475,26 @@
         Navigation.NavigateTo("/");
     }
 
-    private void ShowCreateTask(Guid columnId)
+    private async void ShowCreateTask(Guid columnId)
     {
         selectedColumnId = columnId;
         newTaskRequest = new CreateTaskRequest
         {
-            ColumnId = columnId
+            ColumnId = columnId,
+            AssignedUserIds = new List<Guid>()
         };
+    
+        // Load available users for this column's board
+        try
+        {
+            availableUsers = await TaskService.GetAvailableUsersForTaskAsync(columnId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading available users: {ex.Message}");
+            availableUsers = new List<UserDto>();
+        }
+    
         showCreateTaskModal = true;
     }
 
@@ -560,6 +607,26 @@
         editingTaskId = taskId;
         editTaskName = name;
         editTaskPriority = priority;
+    
+        // Get current task and its assigned users
+        var column = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id == taskId) == true);
+        var task = column?.Tasks?.FirstOrDefault(t => t.Id == taskId);
+        editTaskAssignedUserIds = task?.AssignedUserIds?.ToList() ?? new List<Guid>();
+    
+        // Load available users
+        if (column != null)
+        {
+            try
+            {
+                availableUsers = await TaskService.GetAvailableUsersForTaskAsync(column.Id);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading available users: {ex.Message}");
+                availableUsers = new List<UserDto>();
+            }
+        }
+    
         await BoardHub.NotifyUserStartedEditingAsync("task", taskId.ToString());
     }
 
@@ -572,6 +639,7 @@
         editingTaskId = Guid.Empty;
         editTaskName = string.Empty;
         editTaskPriority = PriorityLevel.Medium;
+        editTaskAssignedUserIds = new List<Guid>();
     }
 
     private async Task SaveTaskEdit(Guid columnId, Guid taskId)
@@ -582,7 +650,8 @@
             var request = new UpdateTaskRequest
             {
                 Name = editTaskName.Trim(),
-                Priority = editTaskPriority
+                Priority = editTaskPriority,
+                AssignedUserIds = editTaskAssignedUserIds
             };
             var updatedTask = await TaskService.UpdateTaskAsync(columnId, taskId, request);
             var column = columns?.FirstOrDefault(c => c.Id == columnId);
@@ -591,8 +660,8 @@
             {
                 task.Name = updatedTask.Name;
                 task.Priority = updatedTask.Priority;
+                task.AssignedUserIds = updatedTask.AssignedUserIds;
             }
-            // Notify other users
             await BoardHub.NotifyTaskUpdatedAsync(updatedTask);
             await BoardHub.NotifyUserStoppedEditingAsync("task", taskId.ToString());
             CancelEditTask();
@@ -1063,6 +1132,28 @@
         {
             draggingUsers.Clear();
             InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private bool IsUserAssignedInEdit(Guid userId)
+    {
+        return editTaskAssignedUserIds.Contains(userId);
+    }
+
+    private void ToggleUserAssignmentInEdit(Guid userId, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!editTaskAssignedUserIds.Contains(userId))
+            {
+                editTaskAssignedUserIds.Add(userId);
+                BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, true);
+            }
+        }
+        else
+        {
+            editTaskAssignedUserIds.Remove(userId);
+            BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, false);
         }
     }
 }

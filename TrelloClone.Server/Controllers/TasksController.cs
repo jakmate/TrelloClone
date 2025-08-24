@@ -22,16 +22,28 @@ public class TasksController : ControllerBase
         return Ok(list);
     }
 
+    [HttpGet("available-users")]
+    public async Task<ActionResult<List<UserDto>>> GetAvailableUsers(Guid columnId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
+        var users = await _svc.GetAvailableUsersForTaskAsync(columnId);
+        return Ok(users);
+    }
+
     [HttpPost]
     public async Task<ActionResult<TaskDto>> Create(
-    Guid columnId,
-    [FromBody] CreateTaskRequest req)
+        Guid columnId,
+        [FromBody] CreateTaskRequest req)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
             return Unauthorized();
 
         if (req.ColumnId != columnId) return BadRequest();
+
         var dto = await _svc.CreateTaskAsync(req);
         return CreatedAtAction(
             nameof(GetAll),

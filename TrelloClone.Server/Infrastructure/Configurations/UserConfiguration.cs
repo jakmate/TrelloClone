@@ -26,10 +26,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasMany(u => u.BoardUsers)
                .WithOne(bu => bu.User)
                .HasForeignKey(bu => bu.UserId);
-
-        // One-to-many with Tasks (assigned)
-        builder.HasMany(u => u.AssignedTasks)
-               .WithOne(t => t.AssignedUser!)
-               .HasForeignKey(t => t.AssignedUserId);
     }
 }

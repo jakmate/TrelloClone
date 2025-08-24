@@ -1,5 +1,4 @@
 @using TrelloClone.Shared.DTOs
-
 <FormModal Show="@Show" 
            Title="Create New Task"
            Model="@TaskModel"
@@ -19,7 +18,45 @@
             <option value="@PriorityLevel.High">High</option>
         </InputSelect>
     </div>
+    <div class="mb-3">
+        <label for="assignedUsers" class="form-label">Assigned Users</label>
+        @if (availableUsers?.Any() == true)
+        {
+            <div class="user-checkboxes">
+                @foreach (var user in availableUsers)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="user_@user.Id" 
+                               checked="@IsUserAssigned(user.Id)"
+                               @onchange="@((e) => ToggleUserAssignment(user.Id, (bool)e.Value!))" />
+                        <label class="form-check-label" for="user_@user.Id">
+                            @user.UserName (@user.Email)
+                        </label>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">Loading available users...</p>
+        }
+    </div>
 </FormModal>
+
+<style>
+    .user-checkboxes {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+    }
+    .user-checkboxes .form-check:not(:last-child) {
+        margin-bottom: 0.5rem;
+    }
+</style>
 
 @code {
     [Parameter] public bool Show { get; set; }
@@ -27,4 +64,29 @@
     [Parameter] public EventCallback OnCancel { get; set; }
     [Parameter] public EventCallback<EditContext> OnSubmit { get; set; }
     [Parameter] public bool IsSubmitting { get; set; }
+    [Parameter] public List<UserDto>? AvailableUsers { get; set; }
+
+    private List<UserDto>? availableUsers => AvailableUsers;
+
+    private bool IsUserAssigned(Guid userId)
+    {
+        return TaskModel.AssignedUserIds?.Contains(userId) ?? false;
+    }
+
+    private void ToggleUserAssignment(Guid userId, bool isChecked)
+    {
+        TaskModel.AssignedUserIds ??= new List<Guid>();
+        
+        if (isChecked)
+        {
+            if (!TaskModel.AssignedUserIds.Contains(userId))
+            {
+                TaskModel.AssignedUserIds.Add(userId);
+            }
+        }
+        else
+        {
+            TaskModel.AssignedUserIds.Remove(userId);
+        }
+    }
 }

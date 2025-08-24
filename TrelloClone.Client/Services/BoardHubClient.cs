@@ -332,6 +332,21 @@ public class BoardHubClient
         }
     }
 
+    public async Task NotifyTaskAssignmentUpdatingAsync(string taskId, Guid userId, bool isAssigned)
+{
+    if (_currentBoardId == null) return;
+    
+    try
+    {
+        await _hubConnection.InvokeAsync("TaskAssignmentUpdating", 
+            _currentBoardId, taskId, userId.ToString(), isAssigned);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error notifying task assignment update");
+    }
+}
+
     public async ValueTask DisposeAsync()
     {
         if (_currentBoardId != null)

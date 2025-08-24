@@ -31,7 +31,7 @@ public class ColumnService
                     Id = t.Id,
                     Name = t.Name,
                     Priority = t.Priority,
-                    AssignedUserId = t.AssignedUserId,
+                    AssignedUserIds = t.AssignedUsers.Select(u => u.Id).ToList(),
                     ColumnId = t.ColumnId,
                     Position = t.Position
                 }).ToList()

@@ -16,6 +16,12 @@ public class BoardRepository : IBoardRepository
                 .ThenInclude(c => c.Tasks)
             .FirstOrDefaultAsync(b => b.Id == boardId);
 
+    public async Task<Board?> GetByIdWithMembersAsync(Guid boardId) =>
+        await _ctx.Boards
+            .Include(b => b.BoardUsers)
+                .ThenInclude(bu => bu.User)
+            .FirstOrDefaultAsync(b => b.Id == boardId);
+
     public async Task<List<Board>> GetAllByUserIdAsync(Guid userId) =>
         await _ctx.Boards
             .Include(b => b.Columns)

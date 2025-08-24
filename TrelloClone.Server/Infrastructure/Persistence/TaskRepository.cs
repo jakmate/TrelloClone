@@ -6,13 +6,15 @@ public class TaskRepository : ITaskRepository
     public TaskRepository(AppDbContext ctx) => _ctx = ctx;
 
     public async Task<TaskItem?> GetByIdAsync(Guid taskId) =>
-        await _ctx.Tasks
-                  .Include(t => t.AssignedUser)
-                  .FirstOrDefaultAsync(t => t.Id == taskId);
+    await _ctx.Tasks
+              .Include(t => t.AssignedUsers)
+              .Include(t => t.TaskAssignments)
+              .FirstOrDefaultAsync(t => t.Id == taskId);
 
     public async Task<List<TaskItem>> ListByColumnAsync(Guid columnId) =>
         await _ctx.Tasks
                   .Where(t => t.ColumnId == columnId)
+                  .Include(t => t.AssignedUsers)
                   .OrderBy(t => t.Position)
                   .ThenBy(t => t.CreatedAt)
                   .ToListAsync();
@@ -30,6 +32,24 @@ public class TaskRepository : ITaskRepository
                 task.Position = pos.Position;
             }
         }
+    }
+
+    public async Task AssignUsersToTaskAsync(Guid taskId, List<Guid> userIds)
+    {
+        // Remove existing assignments
+        var existingAssignments = await _ctx.TaskAssignments
+            .Where(ta => ta.TaskId == taskId)
+            .ToListAsync();
+        _ctx.TaskAssignments.RemoveRange(existingAssignments);
+
+        // Add new assignments
+        var newAssignments = userIds.Select(userId => new TaskAssignment
+        {
+            TaskId = taskId,
+            UserId = userId
+        }).ToList();
+
+        _ctx.TaskAssignments.AddRange(newAssignments);
     }
 
     public void Add(TaskItem task) =>

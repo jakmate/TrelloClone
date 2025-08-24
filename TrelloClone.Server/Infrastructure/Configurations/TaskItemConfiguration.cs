@@ -15,13 +15,7 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         builder.Property(t => t.Priority)
                .IsRequired();
 
-        // AssignedUser (optional)
-        builder.HasOne(t => t.AssignedUser)
-               .WithMany(u => u.AssignedTasks)
-               .HasForeignKey(t => t.AssignedUserId)
-               .OnDelete(DeleteBehavior.SetNull);
-
-        // Column (required)
+        // Column
         builder.HasOne(t => t.Column)
                .WithMany(c => c.Tasks)
                .HasForeignKey(t => t.ColumnId)

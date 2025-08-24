@@ -7,7 +7,6 @@ public class User
 
     // Navigation properties
     public ICollection<BoardUser> BoardUsers { get; set; } = new List<BoardUser>();
-    public ICollection<TaskItem> AssignedTasks { get; set; } = new List<TaskItem>();
     public ICollection<BoardInvitation> SentInvitations { get; set; } = new List<BoardInvitation>();
     public ICollection<BoardInvitation> ReceivedInvitations { get; set; } = new List<BoardInvitation>();
 }
