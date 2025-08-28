@@ -110,10 +110,10 @@
                                     <div class="btn-group">
                                         @if (editingColumnId == column.Id)
                                         {
-                                            <button class="btn btn-sm btn-success" @onclick="() => SaveColumnEdit(column.Id)">
+                                            <button class="btn btn-sm btn-success" @onclick="async () => await SaveColumnEdit(column.Id)">
                                                 <i class="bi bi-check"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-secondary" @onclick="CancelEditColumn">
+                                            <button class="btn btn-sm btn-secondary" @onclick="async () => await CancelEditColumn()">
                                                 <i class="bi bi-x"></i>
                                             </button>
                                         }
@@ -197,10 +197,10 @@
                                                         }
                                                     </div>
                                                     <div class="d-flex justify-content-end">
-                                                        <button class="btn btn-sm btn-success me-1" @onclick="() => SaveTaskEdit(column.Id, task.Id)">
+                                                        <button class="btn btn-sm btn-success me-1" @onclick="async () => await SaveTaskEdit(column.Id, task.Id)">
                                                             <i class="bi bi-check"></i>
                                                         </button>
-                                                        <button class="btn btn-sm btn-secondary" @onclick="CancelEditTask">
+                                                        <button class="btn btn-sm btn-secondary" @onclick="async () => await CancelEditTask()">
                                                             <i class="bi bi-x"></i>
                                                         </button>
                                                     </div>
@@ -224,17 +224,30 @@
                                                             <small class="text-muted">Priority: @task.Priority</small>
                                                             @if (task.AssignedUserIds?.Any() == true)
                                                             {
-                                                                <div class="mt-1">
-                                                                    <small class="text-info">
-                                                                        <i class="bi bi-person"></i> @task.AssignedUserIds.Count assigned
-                                                                    </small>
+                                                                <div class="mt-1 assigned-users">
+                                                                    @foreach (var userId in task.AssignedUserIds.Take(3))
+                                                                    {
+                                                                        var user = availableUsers?.FirstOrDefault(u => u.Id == userId);
+                                                                        if (user != null)
+                                                                        {
+                                                                            <span class="user-avatar" title="@user.UserName">
+                                                                                @user.UserName.Substring(0, Math.Min(2, user.UserName.Length)).ToUpper()
+                                                                            </span>
+                                                                        }
+                                                                    }
+                                                                    @if (task.AssignedUserIds.Count > 3)
+                                                                    {
+                                                                        <span class="user-avatar more-users" title="@(task.AssignedUserIds.Count - 3) more users">
+                                                                            +@(task.AssignedUserIds.Count - 3)
+                                                                        </span>
+                                                                    }
                                                                 </div>
                                                             }
                                                         </div>
                                                         @if (canEdit && !IsBeingEditedByOther("task", task.Id)) 
                                                         {
                                                             <div class="btn-group">
-                                                                <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
+                                                                <button class="btn btn-sm btn-outline-primary" @onclick="async () => await StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </button>
                                                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTask(column.Id, task.Id)">
@@ -378,6 +391,20 @@
                 {
                     column.Tasks = await TaskService.GetTasksForColumnAsync(column.Id);
                 }
+            
+                // Load available users for the board once
+                if (columns.Any())
+                {
+                    try
+                    {
+                        availableUsers = await TaskService.GetAvailableUsersForTaskAsync(columns.First().Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading available users: {ex.Message}");
+                        availableUsers = new List<UserDto>();
+                    }
+                }
             }
         }
         catch (Exception ex)
@@ -412,6 +439,7 @@
             BoardHub.ColumnDeleted += OnColumnDeleted;
             BoardHub.UserStartedEditing += OnUserStartedEditing;
             BoardHub.UserStoppedEditing += OnUserStoppedEditing;
+            BoardHub.TaskAssignmentUpdating += OnTaskAssignmentUpdating;
             await BoardHub.JoinBoardAsync(BoardId.ToString());
         }
         catch (Exception ex)
@@ -551,7 +579,7 @@
         await BoardHub.NotifyUserStartedEditingAsync("column", columnId.ToString());
     }
 
-    private async void CancelEditColumn()
+    private async Task CancelEditColumn()
     {
         if (editingColumnId != Guid.Empty)
         {
@@ -582,7 +610,7 @@
             // Notify other users
             await BoardHub.NotifyColumnUpdatedAsync(updatedColumn);
             await BoardHub.NotifyUserStoppedEditingAsync("column", columnId.ToString());
-            CancelEditColumn();
+            await CancelEditColumn();
         }
         catch (Exception ex)
         {
@@ -598,22 +626,22 @@
         }
         else if (e.Key == "Escape")
         {
-            CancelEditColumn();
+            await CancelEditColumn();
         }
     }
 
-    private async void StartEditTask(Guid taskId, string name, PriorityLevel priority)
+    private async Task StartEditTask(Guid taskId, string name, PriorityLevel priority)
     {
         editingTaskId = taskId;
         editTaskName = name;
         editTaskPriority = priority;
-    
+
         // Get current task and its assigned users
         var column = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id == taskId) == true);
         var task = column?.Tasks?.FirstOrDefault(t => t.Id == taskId);
         editTaskAssignedUserIds = task?.AssignedUserIds?.ToList() ?? new List<Guid>();
-    
-        // Load available users
+
+        // Load available users first
         if (column != null)
         {
             try
@@ -626,11 +654,12 @@
                 availableUsers = new List<UserDto>();
             }
         }
-    
+
         await BoardHub.NotifyUserStartedEditingAsync("task", taskId.ToString());
+        StateHasChanged();
     }
 
-    private async void CancelEditTask()
+    private async Task CancelEditTask()
     {
         if (editingTaskId != Guid.Empty)
         {
@@ -647,13 +676,20 @@
         if (string.IsNullOrWhiteSpace(editTaskName)) return;
         try
         {
+            Console.WriteLine($"Saving task edit - TaskId: {taskId}");
+            Console.WriteLine($"Edit assigned user IDs count: {editTaskAssignedUserIds.Count}");
+            Console.WriteLine($"Edit assigned user IDs: {string.Join(",", editTaskAssignedUserIds)}");
             var request = new UpdateTaskRequest
             {
                 Name = editTaskName.Trim(),
                 Priority = editTaskPriority,
-                AssignedUserIds = editTaskAssignedUserIds
+                AssignedUserIds = editTaskAssignedUserIds.ToList() 
             };
+            Console.WriteLine($"Request assigned user IDs count: {request.AssignedUserIds.Count}");
+            Console.WriteLine($"Request assigned user IDs: {string.Join(",", request.AssignedUserIds)}");
             var updatedTask = await TaskService.UpdateTaskAsync(columnId, taskId, request);
+            Console.WriteLine($"Updated task assigned users count: {updatedTask.AssignedUserIds?.Count ?? 0}");
+            Console.WriteLine($"Updated task assigned users: {string.Join(",", updatedTask.AssignedUserIds ?? new List<Guid>())}");
             var column = columns?.FirstOrDefault(c => c.Id == columnId);
             var task = column?.Tasks?.FirstOrDefault(t => t.Id == taskId);
             if (task != null)
@@ -661,14 +697,16 @@
                 task.Name = updatedTask.Name;
                 task.Priority = updatedTask.Priority;
                 task.AssignedUserIds = updatedTask.AssignedUserIds;
+                Console.WriteLine($"Local task now has {task.AssignedUserIds.Count} assigned users");
             }
             await BoardHub.NotifyTaskUpdatedAsync(updatedTask);
             await BoardHub.NotifyUserStoppedEditingAsync("task", taskId.ToString());
-            CancelEditTask();
+            await CancelEditTask();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error updating task: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
 
@@ -680,7 +718,7 @@
         }
         else if (e.Key == "Escape")
         {
-            CancelEditTask();
+            await CancelEditTask();
         }
     }
 
@@ -1014,6 +1052,7 @@
             {
                 existingTask.Name = task.Name;
                 existingTask.Priority = task.Priority;
+                existingTask.AssignedUserIds = task.AssignedUserIds;
                 StateHasChanged();
             }
         });
@@ -1075,6 +1114,41 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnTaskAssignmentUpdating(string taskId, string userId, bool isAssigned, string updatedByUserId, string updatedByUserName)
+    {
+        if (updatedByUserId == currentUserId) return; // Don't process our own updates
+    
+        InvokeAsync(() =>
+        {
+            try
+            {
+                // Find the task being edited by someone else
+                var column = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id.ToString() == taskId) == true);
+                var task = column?.Tasks?.FirstOrDefault(t => t.Id.ToString() == taskId);
+            
+                if (task != null && Guid.TryParse(userId, out var userGuid))
+                {
+                    if (isAssigned)
+                    {
+                        if (!task.AssignedUserIds.Contains(userGuid))
+                        {
+                            task.AssignedUserIds.Add(userGuid);
+                        }
+                    }
+                    else
+                    {
+                        task.AssignedUserIds.Remove(userGuid);
+                    }
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error handling task assignment update");
+            }
+        });
+    }
+
     // Helper method to check if someone else is editing an item
     private bool IsBeingEditedByOther(string itemType, Guid itemId)
     {
@@ -1109,6 +1183,7 @@
             BoardHub.ColumnDeleted -= OnColumnDeleted;
             BoardHub.UserStartedEditing -= OnUserStartedEditing;
             BoardHub.UserStoppedEditing -= OnUserStoppedEditing;
+            BoardHub.TaskAssignmentUpdating -= OnTaskAssignmentUpdating;
             await BoardHub.LeaveBoardAsync(BoardId.ToString());
         }
         catch (Exception ex)
@@ -1147,13 +1222,16 @@
             if (!editTaskAssignedUserIds.Contains(userId))
             {
                 editTaskAssignedUserIds.Add(userId);
-                BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, true);
+                // Don't await this - fire and forget for real-time updates
+                _ = BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, true);
             }
         }
         else
         {
             editTaskAssignedUserIds.Remove(userId);
-            BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, false);
+            // Don't await this - fire and forget for real-time updates  
+            _ = BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, false);
         }
+        StateHasChanged(); // Update UI immediately
     }
 }

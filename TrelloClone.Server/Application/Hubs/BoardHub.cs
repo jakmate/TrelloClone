@@ -251,5 +251,21 @@ namespace TrelloClone.Server.Application.Hubs
             _logger.LogInformation("User {UserId} disconnected", userId);
             await base.OnDisconnectedAsync(exception);
         }
+
+        public async Task TaskAssignmentUpdating(string boardId, string taskId, string userId, bool isAssigned)
+        {
+            var currentUserId = Context.UserIdentifier;
+            var userName = Context.User?.Identity?.Name ?? "Unknown";
+
+            await Clients.OthersInGroup($"Board_{boardId}")
+                .SendAsync("TaskAssignmentUpdating", new
+                {
+                    TaskId = taskId,
+                    UserId = userId,
+                    IsAssigned = isAssigned,
+                    UpdatedByUserId = currentUserId,
+                    UpdatedByUserName = userName
+                });
+        }
     }
 }

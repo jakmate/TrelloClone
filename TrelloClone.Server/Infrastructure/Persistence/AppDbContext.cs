@@ -22,7 +22,6 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new BoardUserConfiguration());
         modelBuilder.ApplyConfiguration(new BoardInvitationConfiguration());
-        modelBuilder.ApplyConfiguration(new TaskAssignmentConfiguration());
 
         // BoardUser composite PK and relationships
         modelBuilder.Entity<BoardUser>()
@@ -31,25 +30,5 @@ public class AppDbContext : DbContext
             .HasOne(bu => bu.Board).WithMany(b => b.BoardUsers).HasForeignKey(bu => bu.BoardId);
         modelBuilder.Entity<BoardUser>()
             .HasOne(bu => bu.User).WithMany(u => u.BoardUsers).HasForeignKey(bu => bu.UserId);
-
-        // TaskAssignment composite PK and relationships
-        modelBuilder.Entity<TaskAssignment>()
-            .HasKey(ta => new { ta.TaskId, ta.UserId });
-        modelBuilder.Entity<TaskAssignment>()
-            .HasOne(ta => ta.Task)
-            .WithMany(t => t.TaskAssignments)
-            .HasForeignKey(ta => ta.TaskId)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<TaskAssignment>()
-            .HasOne(ta => ta.User)
-            .WithMany()
-            .HasForeignKey(ta => ta.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Configure many-to-many through TaskAssignment
-        modelBuilder.Entity<TaskItem>()
-            .HasMany(t => t.AssignedUsers)
-            .WithMany()
-            .UsingEntity<TaskAssignment>();
     }
 }

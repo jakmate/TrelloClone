@@ -32,6 +32,7 @@ public class BoardHubClient
     public event Action<string>? ColumnDeleted;
     public event Action<string, string, string, string>? UserStartedEditing;
     public event Action<string, string, string>? UserStoppedEditing;
+    public event Action<string, string, bool, string, string>? TaskAssignmentUpdating;
 
     private void SetupEventHandlers()
     {
@@ -82,6 +83,17 @@ public class BoardHubClient
 
         _hubConnection.On<UserStopEditInfo>("UserStoppedEditing", editInfo =>
             UserStoppedEditing?.Invoke(editInfo.UserId, editInfo.ItemType, editInfo.ItemId));
+
+        _hubConnection.On<dynamic>("TaskAssignmentUpdating", (assignmentInfo) =>
+        {
+            TaskAssignmentUpdating?.Invoke(
+                assignmentInfo.TaskId.ToString(),
+                assignmentInfo.UserId.ToString(),
+                (bool)assignmentInfo.IsAssigned,
+                assignmentInfo.UpdatedByUserId.ToString(),
+                assignmentInfo.UpdatedByUserName.ToString()
+            );
+        });
     }
 
     public async Task JoinBoardAsync(string boardId)

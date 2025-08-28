@@ -10,6 +10,7 @@ public class ColumnRepository : IColumnRepository
 
     public async Task<Column?> GetByIdAsync(Guid columnId) =>
         await _ctx.Columns
+                  .Include(c => c.Board)
                   .Include(c => c.Tasks)
                   .FirstOrDefaultAsync(c => c.Id == columnId);
 

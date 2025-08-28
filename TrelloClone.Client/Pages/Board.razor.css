@@ -300,3 +300,29 @@
         color: #495057;
         background-color: #f1f3f5;
     }
+
+.assigned-users {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #6c757d;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+}
+
+    .user-avatar.more-users {
+        background: #dee2e6;
+        color: #6c757d;
+        font-size: 8px;
+    }

@@ -9,6 +9,7 @@ public class TaskRepository : ITaskRepository
     await _ctx.Tasks
               .Include(t => t.AssignedUsers)
               .Include(t => t.TaskAssignments)
+              .Include(t => t.Column)
               .FirstOrDefaultAsync(t => t.Id == taskId);
 
     public async Task<List<TaskItem>> ListByColumnAsync(Guid columnId) =>
@@ -36,20 +37,23 @@ public class TaskRepository : ITaskRepository
 
     public async Task AssignUsersToTaskAsync(Guid taskId, List<Guid> userIds)
     {
-        // Remove existing assignments
-        var existingAssignments = await _ctx.TaskAssignments
-            .Where(ta => ta.TaskId == taskId)
-            .ToListAsync();
-        _ctx.TaskAssignments.RemoveRange(existingAssignments);
+        // load the task with its AssignedUsers navigation
+        var task = await _ctx.Tasks
+                             .Include(t => t.AssignedUsers)
+                             .FirstOrDefaultAsync(t => t.Id == taskId)
+                   ?? throw new KeyNotFoundException($"Task {taskId} not found");
 
-        // Add new assignments
-        var newAssignments = userIds.Select(userId => new TaskAssignment
+        // Clear existing navigation items
+        task.AssignedUsers.Clear();
+
+        if (userIds != null && userIds.Any())
         {
-            TaskId = taskId,
-            UserId = userId
-        }).ToList();
+            // load users and add them to the navigation collection
+            var users = await _ctx.Users.Where(u => userIds.Contains(u.Id)).ToListAsync();
 
-        _ctx.TaskAssignments.AddRange(newAssignments);
+            foreach (var u in users)
+                task.AssignedUsers.Add(u);
+        }
     }
 
     public void Add(TaskItem task) =>
