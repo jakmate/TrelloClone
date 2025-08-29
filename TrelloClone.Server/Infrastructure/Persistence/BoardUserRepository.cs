@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using TrelloClone.Shared.DTOs;
 
 public class BoardUserRepository : IBoardUserRepository
 {

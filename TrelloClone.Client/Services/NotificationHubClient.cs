@@ -1,7 +1,4 @@
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services

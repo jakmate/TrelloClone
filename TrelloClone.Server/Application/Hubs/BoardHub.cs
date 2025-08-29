@@ -1,6 +1,5 @@
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 using TrelloClone.Shared.DTOs;
 using TrelloClone.Shared.DTOs.SignalR;

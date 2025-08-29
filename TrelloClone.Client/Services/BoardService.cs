@@ -1,7 +1,7 @@
+using Microsoft.AspNetCore.Components.Authorization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Components.Authorization;
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services;

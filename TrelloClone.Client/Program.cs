@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -7,6 +6,7 @@ using TrelloClone.Client;
 using TrelloClone.Client.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5084";
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
@@ -30,12 +30,12 @@ builder.Services.AddScoped<HttpClient>(sp =>
 {
     var handler = sp.GetRequiredService<AuthHttpMessageHandler>();
     handler.InnerHandler = new HttpClientHandler();
-    
+
     var httpClient = new HttpClient(handler)
     {
-        BaseAddress = new Uri("http://localhost:5084")
+        BaseAddress = new Uri(apiBaseUrl)
     };
-    
+
     return httpClient;
 });
 
@@ -43,7 +43,7 @@ builder.Services.AddScoped(provider =>
 {
     var authStateProvider = provider.GetRequiredService<AuthStateProvider>();
     return new HubConnectionBuilder()
-        .WithUrl("http://localhost:5084/boardhub", options =>
+        .WithUrl($"{apiBaseUrl}/boardhub", options =>
         {
             options.AccessTokenProvider = async () =>
             {

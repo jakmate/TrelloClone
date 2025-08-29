@@ -1,5 +1,3 @@
-using TrelloClone.Shared.DTOs;
-
 public interface IBoardUserRepository
 {
     void Add(BoardUser boardUser);

@@ -1,6 +1,4 @@
 using Microsoft.JSInterop;
-using System.Net.Http.Headers;
-using System.Net;
 
 namespace TrelloClone.Client.Services
 {

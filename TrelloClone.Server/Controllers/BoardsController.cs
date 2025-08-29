@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TrelloClone.Shared.DTOs;
 
@@ -120,7 +120,8 @@ public class BoardsController : ControllerBase
         if (!Guid.TryParse(userId, out var userGuid))
             return Unauthorized();
 
-        try { 
+        try
+        {
             var dto = await _boardService.GetBoardAsync(boardId);
             if (dto == null) return NotFound();
             return Ok(dto);

@@ -1,5 +1,5 @@
-using TrelloClone.Server.Application.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using TrelloClone.Server.Application.Hubs;
 using TrelloClone.Shared.DTOs;
 
 public class InvitationService
