@@ -6,12 +6,16 @@ using TrelloClone.Client;
 using TrelloClone.Client.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
-var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5084";
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
+if (string.IsNullOrEmpty(apiBaseUrl))
+{
+    throw new InvalidOperationException("ApiBaseUrl configuration is required");
+}
+
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddAuthorizationCore();
-
 builder.Services.AddScoped<AuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<AuthStateProvider>());
 builder.Services.AddScoped<IAuthService, AuthService>();

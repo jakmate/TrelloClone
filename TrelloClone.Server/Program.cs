@@ -24,11 +24,16 @@ else
 }
 
 var connectionString = builder.Configuration.GetConnectionString("Default");
-Console.WriteLine($"Using connection string: {connectionString}");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Database connection string is required");
+}
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is required");
+var issuer = jwtSettings["Issuer"] ?? throw new InvalidOperationException("JWT Issuer is required");
+var audience = jwtSettings["Audience"] ?? throw new InvalidOperationException("JWT Audience is required");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -40,8 +45,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.Zero,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
+            ValidIssuer = issuer,
+            ValidAudience = audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
         };
 
@@ -103,14 +108,14 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 });
 
 // CORS
+var allowedOrigins = builder.Configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>()
+    ?? throw new InvalidOperationException("CORS AllowedOrigins configuration is required");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowClient", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:5069",
-                "https://localhost:7298"
-            )
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
@@ -140,7 +145,15 @@ app.Use(async (context, next) =>
 {
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
+
+    if (!app.Environment.IsDevelopment())
+    {
+        context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+        context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; connect-src 'self' wss:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'";
+    }
     await next();
 });
 
