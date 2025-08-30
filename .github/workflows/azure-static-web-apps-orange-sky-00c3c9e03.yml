@@ -29,8 +29,6 @@ jobs:
           app_location: "./TrelloClone.Client"
           api_location: "Api"
           output_location: "wwwroot"
-        env:
-          ApiBaseUrl: ${{ secrets.API_BASE_URL }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
