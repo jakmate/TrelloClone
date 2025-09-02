@@ -20,7 +20,11 @@ if (builder.Environment.IsDevelopment())
 else
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+        options.UseSqlServer(builder.Configuration.GetConnectionString("Default"),
+            sqlOptions => sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null)));
 }
 
 var connectionString = builder.Configuration.GetConnectionString("Default");

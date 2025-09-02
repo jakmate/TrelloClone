@@ -19,6 +19,7 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<AuthStateProvider>());
 builder.Services.AddScoped<IAuthService, AuthService>();
+
 builder.Services.AddScoped<IBoardService>(provider =>
 {
     var httpClient = provider.GetRequiredService<HttpClient>();
@@ -28,8 +29,8 @@ builder.Services.AddScoped<IBoardService>(provider =>
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<ColumnService>();
 builder.Services.AddScoped<TaskService>();
-builder.Services.AddScoped<AuthHttpMessageHandler>();
 
+builder.Services.AddScoped<AuthHttpMessageHandler>();
 builder.Services.AddScoped<HttpClient>(sp =>
 {
     var handler = sp.GetRequiredService<AuthHttpMessageHandler>();
@@ -59,18 +60,13 @@ builder.Services.AddScoped(provider =>
         .Build();
 });
 
-builder.Services.AddScoped<NotificationHubClient>(provider =>
-{
-    var hubConnection = provider.GetRequiredService<HubConnection>();
-    var logger = provider.GetRequiredService<ILogger<NotificationHubClient>>();
-    return new NotificationHubClient(hubConnection, logger);
-});
+builder.Services.AddScoped<NotificationHubClient>();
+builder.Services.AddScoped<BoardHubClient>();
+builder.Services.AddScoped<SignalRConnectionManager>();
 
-builder.Services.AddScoped<BoardHubClient>(provider =>
-{
-    var hubConnection = provider.GetRequiredService<HubConnection>();
-    var logger = provider.GetRequiredService<ILogger<BoardHubClient>>();
-    return new BoardHubClient(hubConnection, logger);
-});
+var app = builder.Build();
 
-await builder.Build().RunAsync();
+var serviceScope = app.Services.CreateScope();
+var signalRManager = serviceScope.ServiceProvider.GetRequiredService<SignalRConnectionManager>();
+
+await app.RunAsync();

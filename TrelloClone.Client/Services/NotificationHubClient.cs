@@ -24,19 +24,5 @@ namespace TrelloClone.Client.Services
                 OnInvitationReceived?.Invoke(invitation);
             });
         }
-
-        public async Task StartAsync()
-        {
-            try
-            {
-                await _hubConnection.StartAsync();
-                _logger.LogInformation("SignalR connection started");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error starting SignalR connection");
-                throw;
-            }
-        }
     }
 }

@@ -50,14 +50,6 @@
     {
         NotificationHub.OnInvitationReceived += HandleNewInvitation;
         await LoadInvitations();
-        try
-        {
-            await NotificationHub.StartAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"SignalR connection failed: {ex.Message}");
-        }
     }
 
     private async Task LoadInvitations()

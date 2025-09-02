@@ -63,38 +63,6 @@ jobs:
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-    - name: Configure App Settings
-      uses: azure/appservice-settings@v1
-      with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        app-settings-json: |
-          [
-            {
-              "name": "ConnectionStrings__Default",
-              "value": "${{ secrets.DEFAULT }}",
-              "slotSetting": false
-            },
-            {
-              "name": "JwtSettings__SecretKey",
-              "value": "${{ secrets.SECRETKEY }}",
-              "slotSetting": false
-            },
-            {
-              "name": "JwtSettings__Issuer",
-              "value": "${{ secrets.ISSUER }}",
-              "slotSetting": false
-            },
-            {
-              "name": "JwtSettings__Audience",
-              "value": "${{ secrets.AUDIENCE }}",
-              "slotSetting": false
-            },
-            {
-              "name": "CorsSettings__AllowedOrigins__0",
-              "value": "${{ secrets.CLIENT_URL }}",
-              "slotSetting": false
-            }
-          ]
     - name: logout
       run: >
         az logout
