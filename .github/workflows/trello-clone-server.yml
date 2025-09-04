@@ -1,4 +1,4 @@
-name: Build and deploy .NET Core application to Web App TrelloCloneServer with API Management Service TrelloCloneServerapi-TrelloCloneServer
+name: Build and Deploy Backend
 on:
   push:
     branches:
