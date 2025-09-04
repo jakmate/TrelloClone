@@ -49,24 +49,23 @@
                         var board = sortedBoards[i];
                         var index = i;
                         var isOwner = boardOwnership.GetValueOrDefault(board.Id, false);
-        
-                        <div class="board-drop-zone @(dragOverIndex == index ? "drag-over" : "")" 
+
+                        <div class="board-drop-zone @(dragOverIndex == index ? "drag-over" : "")"
                              @ondragover="@((e) => HandleDragOver(e, index))"
                              @ondragover:preventDefault="true"
                              @ondrop="@((e) => HandleBoardDrop(e, index))"
                              @ondragleave="HandleDragLeave">
-            
-                            <div class="board-item @(draggedBoard?.Id == board.Id ? "dragging" : "")" 
-                                 draggable="true" 
+
+                            <div class="board-item @(draggedBoard?.Id == board.Id ? "dragging" : "")"
+                                 draggable="true"
                                  @ondragstart="@((e) => HandleBoardDragStart(e, board))"
                                  @ondragend="HandleBoardDragEnd">
-                                <BoardCard 
-                                    Board="board"
-                                    CanEdit="@(boardPermissions.ContainsKey(board.Id) && boardPermissions[board.Id])"
-                                    IsOwner="@isOwner"
-                                    OnUpdate="ShowUpdateModal"
-                                    OnDelete="DeleteBoard"
-                                    OnLeave="LeaveBoard" />
+                                <BoardCard Board="board"
+                                           CanEdit="@(boardPermissions.ContainsKey(board.Id) && boardPermissions[board.Id])"
+                                           IsOwner="@isOwner"
+                                           OnUpdate="ShowUpdateModal"
+                                           OnDelete="DeleteBoard"
+                                           OnLeave="LeaveBoard" />
                             </div>
                         </div>
                     }
@@ -87,16 +86,16 @@
             }
         </div>
 
-        <BoardModals ShowCreateModal="@showCreateModal" 
-             ShowUpdateModal="@showUpdateModal"
-             NewBoard="@newBoard"
-             UpdateRequest="@updateRequest"
-             OnCreateBoard="@CreateBoard"
-             OnUpdateBoard="@UpdateBoard"
-             OnHideCreate="HideCreateModal"
-             OnHideUpdate="HideUpdateModal"
-             IsCreating="@isCreating"
-             IsUpdating="@isUpdating" />
+        <BoardModals ShowCreateModal="@showCreateModal"
+                     ShowUpdateModal="@showUpdateModal"
+                     NewBoard="@newBoard"
+                     UpdateRequest="@updateRequest"
+                     OnCreateBoard="@CreateBoard"
+                     OnUpdateBoard="@UpdateBoard"
+                     OnHideCreate="HideCreateModal"
+                     OnHideUpdate="HideUpdateModal"
+                     IsCreating="@isCreating"
+                     IsUpdating="@isUpdating" />
     </Authorized>
     <NotAuthorized>
         <div class="access-denied">

@@ -221,7 +221,7 @@
                                                         }
                                                         <div class="flex-grow-1">
                                                             <h6 class="card-title mb-1">@task.Name</h6>
-                                                            <small class="text-muted">Priority: @task.Priority</small>
+                                                            <small class="priority-badge priority-@(task.Priority.ToString().ToLower())">@task.Priority</small>
                                                             @if (task.AssignedUserIds?.Any() == true)
                                                             {
                                                                 <div class="mt-1 assigned-users">
@@ -1222,14 +1222,12 @@
             if (!editTaskAssignedUserIds.Contains(userId))
             {
                 editTaskAssignedUserIds.Add(userId);
-                // Don't await this - fire and forget for real-time updates
                 _ = BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, true);
             }
         }
         else
         {
             editTaskAssignedUserIds.Remove(userId);
-            // Don't await this - fire and forget for real-time updates  
             _ = BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, false);
         }
         StateHasChanged(); // Update UI immediately

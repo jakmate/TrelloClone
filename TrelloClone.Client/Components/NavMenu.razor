@@ -2,14 +2,14 @@
 
 <div class="sidebar-content">
     <nav class="nav-menu">
-        <div class="nav-header">Workspace</div>
         <div class="nav-section">
             <NavLink class="nav-item" href="" Match="NavLinkMatch.All">
                 <i class="bi bi-house"></i>
                 <span>Home</span>
-            </NavLink>        
+            </NavLink>
             <AuthorizeView>
                 <Authorized>
+                    <div class="workspace-header">Workspace</div>
                     <div class="workspace-items">
                         <NavLink class="nav-item" href="boards">
                             <i class="bi bi-columns-gap"></i>
@@ -21,28 +21,21 @@
                         </NavLink>
                     </div>
                 </Authorized>
-            
+
                 <NotAuthorized>
-                    <div class="nav-header">Account</div>
+                    <div class="workspace-header">Account</div>
                     <div class="workspace-items">
                         <NavLink class="nav-item" href="login">
                             <i class="bi bi-box-arrow-in-right"></i>
-                            <span>Login</span>
+                            <span>Log in</span>
                         </NavLink>
                         <NavLink class="nav-item" href="register">
                             <i class="bi bi-person-plus"></i>
-                            <span>Register</span>
+                            <span>Sign up</span>
                         </NavLink>
                     </div>
                 </NotAuthorized>
             </AuthorizeView>
-        </div>
-        
-        <div class="nav-footer">
-            <div class="nav-item">
-                <i class="bi bi-question-circle"></i>
-                <span>Help & Resources</span>
-            </div>
         </div>
     </nav>
 </div>

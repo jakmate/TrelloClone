@@ -3,39 +3,56 @@
 @inject NotificationHubClient NotificationHub
 @implements IDisposable
 
-<div class="dropdown">
-    <button class="btn btn-primary dropdown-toggle" @onclick="ToggleDropdown">
+<div class="notifications-container">
+    <button class="notifications-toggle" @onclick="ToggleDropdown">
         <i class="bi bi-bell"></i>
         @if (UnreadCount > 0)
         {
-            <span class="badge bg-danger">@UnreadCount</span>
+            <span class="notifications-badge">@UnreadCount</span>
         }
     </button>
-    <div class="dropdown-menu @(IsOpen ? "show" : "")" aria-labelledby="notificationsDropdown">
-        <div class="px-3 py-2" style="min-width: 300px;">
+
+    <div class="notifications-dropdown @(IsOpen ? "show" : "")">
+        <div class="notifications-header">
             <h6>Invitations</h6>
+            @if (Invitations.Count > 0)
+            {
+                <span class="notifications-count">@Invitations.Count</span>
+            }
+        </div>
+
+        <div class="notifications-content">
             @if (Invitations.Count == 0)
             {
-                <p>No pending invitations</p>
+                <div class="notifications-empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>No pending invitations</p>
+                </div>
             }
             else
             {
-                <ul class="list-group">
+                <div class="notifications-list">
                     @foreach (var invitation in Invitations)
                     {
-                        <li class="list-group-item">
-                            <div>
-                                <strong>@invitation.BoardName</strong>
-                                <p>Invited by: @invitation.InviterName</p>
-                                <small class="text-muted">@invitation.SentAt.ToString("g")</small>
-                                <div class="d-flex justify-content-end mt-2">
-                                    <button class="btn btn-sm btn-success me-2" @onclick="() => Accept(invitation.Id)">Accept</button>
-                                    <button class="btn btn-sm btn-danger" @onclick="() => Decline(invitation.Id)">Decline</button>
+                        <div class="notification-item">
+                            <div class="notification-content">
+                                <div class="notification-title">@invitation.BoardName</div>
+                                <div class="notification-details">
+                                    <span>Invited by: @invitation.InviterName</span>
+                                    <span class="notification-time">@invitation.SentAt.ToString("g")</span>
                                 </div>
                             </div>
-                        </li>
+                            <div class="notification-actions">
+                                <button class="btn-accept" @onclick="() => Accept(invitation.Id)" title="Accept invitation">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                <button class="btn-decline" @onclick="() => Decline(invitation.Id)" title="Decline invitation">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
                     }
-                </ul>
+                </div>
             }
         </div>
     </div>

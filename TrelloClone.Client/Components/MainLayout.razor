@@ -10,10 +10,9 @@
                 </button>
                 <a href="/" class="brand-logo">
                     <i class="bi bi-kanban"></i>
-                    <span>TrelloClone</span>
+                    <span>Trello</span>
                 </a>
             </div>
-
             <div class="header-right">
                 <div class="header-actions">
                     <Notifications />
@@ -37,12 +36,10 @@
                 </AuthorizeView>
             </div>
         </header>
-
         <div class="app-body">
             <aside class="app-sidebar @(sidebarCollapsed ? "collapsed" : "")">
                 <NavMenu />
             </aside>
-
             <main class="main-content">
                 <div class="container-fluid">
                     @Body
@@ -51,14 +48,11 @@
         </div>
     </div>
 </CascadingAuthenticationState>
-
 @code {
-    private bool sidebarCollapsed = false;
+    private bool sidebarCollapsed = true;
     [Inject] private IAuthService AuthService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-
     private void ToggleSidebar() => sidebarCollapsed = !sidebarCollapsed;
-
     private async Task Logout()
     {
         await AuthService.LogoutAsync();

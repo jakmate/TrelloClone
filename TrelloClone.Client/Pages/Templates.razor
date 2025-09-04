@@ -16,7 +16,7 @@
                 <div class="template-preview">
                     <h3 class="template-title">@template.Title</h3>
                     <p class="template-description">@template.Description</p>
-                    
+
                     <div class="template-board-preview">
                         @foreach (var column in template.Columns)
                         {
@@ -30,23 +30,23 @@
                         }
                     </div>
                 </div>
-                
+
                 <div class="template-actions">
                     @if (selectedTemplateId == template.Id)
                     {
                         <div class="template-name-input">
-                            <input type="text" 
-                                   class="form-control" 
-                                   @bind="newBoardName" 
+                            <input type="text"
+                                   class="form-control"
+                                   @bind="newBoardName"
                                    @onkeypress="(e) => OnBoardNameKeyPress(e, template)"
                                    placeholder="Enter board name" />
                             <div class="template-buttons">
-                                <button class="btn btn-success" 
+                                <button class="btn btn-primary"
                                         @onclick="() => CreateBoardFromTemplate(template)"
                                         disabled="@(string.IsNullOrWhiteSpace(newBoardName) || creatingBoard)">
                                     @if (creatingBoard)
                                     {
-                                        <span class="spinner-border spinner-border-sm me-1"></span>
+                                        <span class="spinner"></span>
                                     }
                                     Create Board
                                 </button>
@@ -90,24 +90,24 @@
                 Description = "Perfect for managing software projects with development workflow",
                 Columns = new List<TemplateColumn>
                 {
-                    new TemplateColumn 
-                    { 
-                        Title = "Backlog", 
+                    new TemplateColumn
+                    {
+                        Title = "Backlog",
                         SampleTasks = new[] { "User registration feature", "Database schema design", "API documentation" }
                     },
-                    new TemplateColumn 
-                    { 
-                        Title = "In Progress", 
+                    new TemplateColumn
+                    {
+                        Title = "In Progress",
                         SampleTasks = new[] { "Implement authentication", "Create user dashboard" }
                     },
-                    new TemplateColumn 
-                    { 
-                        Title = "Code Review", 
+                    new TemplateColumn
+                    {
+                        Title = "Code Review",
                         SampleTasks = new[] { "Review login component" }
                     },
-                    new TemplateColumn 
-                    { 
-                        Title = "Done", 
+                    new TemplateColumn
+                    {
+                        Title = "Done",
                         SampleTasks = new[] { "Project setup", "Development environment" }
                     }
                 }
@@ -119,25 +119,78 @@
                 Description = "Organize marketing campaigns from planning to execution",
                 Columns = new List<TemplateColumn>
                 {
-                    new TemplateColumn 
-                    { 
-                        Title = "Ideas", 
+                    new TemplateColumn
+                    {
+                        Title = "Ideas",
                         SampleTasks = new[] { "Social media strategy", "Email campaign", "Influencer outreach" }
                     },
-                    new TemplateColumn 
-                    { 
-                        Title = "Planning", 
+                    new TemplateColumn
+                    {
+                        Title = "Planning",
                         SampleTasks = new[] { "Create content calendar", "Design marketing materials" }
                     },
-                    new TemplateColumn 
-                    { 
-                        Title = "In Progress", 
+                    new TemplateColumn
+                    {
+                        Title = "In Progress",
                         SampleTasks = new[] { "Write blog posts" }
                     },
-                    new TemplateColumn 
-                    { 
-                        Title = "Completed", 
+                    new TemplateColumn
+                    {
+                        Title = "Completed",
                         SampleTasks = new[] { "Market research", "Target audience analysis" }
+                    }
+                }
+            },
+            new BoardTemplate
+            {
+                Id = 3,
+                Title = "Personal Tasks",
+                Description = "Organize your personal projects and daily tasks",
+                Columns = new List<TemplateColumn>
+                {
+                    new TemplateColumn
+                    {
+                        Title = "To Do",
+                        SampleTasks = new[] { "Grocery shopping", "Schedule dentist appointment", "Clean garage" }
+                    },
+                    new TemplateColumn
+                    {
+                        Title = "In Progress",
+                        SampleTasks = new[] { "Finish book", "Plan weekend trip" }
+                    },
+                    new TemplateColumn
+                    {
+                        Title = "Done",
+                        SampleTasks = new[] { "Pay bills", "Call mom" }
+                    }
+                }
+            },
+            new BoardTemplate
+            {
+                Id = 4,
+                Title = "Event Planning",
+                Description = "Plan and organize events from start to finish",
+                Columns = new List<TemplateColumn>
+                {
+                    new TemplateColumn
+                    {
+                        Title = "Ideas",
+                        SampleTasks = new[] { "Venue research", "Theme ideas", "Guest list" }
+                    },
+                    new TemplateColumn
+                    {
+                        Title = "To Do",
+                        SampleTasks = new[] { "Send invitations", "Book caterer", "Order decorations" }
+                    },
+                    new TemplateColumn
+                    {
+                        Title = "In Progress",
+                        SampleTasks = new[] { "Finalize menu", "Confirm guest count" }
+                    },
+                    new TemplateColumn
+                    {
+                        Title = "Completed",
+                        SampleTasks = new[] { "Book venue", "Set date" }
                     }
                 }
             }

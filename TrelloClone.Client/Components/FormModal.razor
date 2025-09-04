@@ -16,13 +16,13 @@
                         @ChildContent
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-light" @onclick="OnCancel">
+                        <button type="button" class="btn btn-secondary" @onclick="OnCancel">
                             @CancelText
                         </button>
                         <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">
                             @if (IsSubmitting)
                             {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span class="spinner"></span>
                             }
                             @SubmitText
                         </button>

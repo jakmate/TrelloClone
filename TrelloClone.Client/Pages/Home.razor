@@ -5,9 +5,35 @@
 <div class="home-container">
     <div class="hero-section">
         <div class="hero-content">
-            <h1>Trello Clone</h1>
-            <p class="hero-subtitle">A modern, collaborative project management application</p>
-            <p>Organize your projects into boards, manage tasks with drag-and-drop functionality, and collaborate with your team in real-time.</p>
+            <div class="hero-text">
+                <h1>Trello Clone</h1>
+                <p class="hero-subtitle">A modern, collaborative project management application</p>
+                <p class="hero-description">Organize your projects into boards, manage tasks with drag-and-drop functionality, and collaborate with your team in real-time.</p>
+                <div class="hero-actions">
+                    <a href="/register" class="btn btn-primary btn-large">Get Started</a>
+                    <a href="/login" class="btn btn-outline">Sign In</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="board-preview">
+                    <div class="preview-column">
+                        <div class="column-header">To Do</div>
+                        <div class="preview-card">Design homepage</div>
+                        <div class="preview-card">Update CSS variables</div>
+                        <div class="preview-card">Review PR #42</div>
+                    </div>
+                    <div class="preview-column">
+                        <div class="column-header">In Progress</div>
+                        <div class="preview-card">Implement drag & drop</div>
+                        <div class="preview-card">Fix login bug</div>
+                    </div>
+                    <div class="preview-column">
+                        <div class="column-header">Done</div>
+                        <div class="preview-card">Setup database</div>
+                        <div class="preview-card">Create API endpoints</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -28,7 +54,7 @@
                 <ul>
                     <li>ASP.NET Core Web API</li>
                     <li>Entity Framework Core</li>
-                    <li>SQLite Database</li>
+                    <li>SQL Server Database</li>
                     <li>SignalR Real-time Communication</li>
                 </ul>
             </div>
@@ -48,26 +74,44 @@
         <h2>Key Features</h2>
         <div class="features-grid">
             <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-columns-gap"></i>
+                </div>
                 <h3>Boards Management</h3>
                 <p>Create and organize multiple project boards with custom titles and descriptions.</p>
             </div>
             <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-arrows-move"></i>
+                </div>
                 <h3>Drag & Drop Tasks</h3>
                 <p>Intuitive drag-and-drop interface for managing tasks between columns.</p>
             </div>
             <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-lightning-charge"></i>
+                </div>
                 <h3>Real-time Updates</h3>
                 <p>Instant synchronization across all users with SignalR WebSockets.</p>
             </div>
             <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-shield-lock"></i>
+                </div>
                 <h3>User Authentication</h3>
                 <p>Secure JWT-based authentication system for user management.</p>
             </div>
             <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-people"></i>
+                </div>
                 <h3>Team Collaboration</h3>
                 <p>Invite team members to boards and work together seamlessly.</p>
             </div>
             <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-phone"></i>
+                </div>
                 <h3>Responsive Design</h3>
                 <p>Works flawlessly on desktop, tablet, and mobile devices.</p>
             </div>

@@ -1,115 +1,271 @@
 .home-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1.5rem
 }
 
 .hero-section {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
     margin-bottom: 4rem;
-    gap: 2rem;
+    padding: 2rem 0
 }
 
 .hero-content {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    flex-wrap: wrap
+}
+
+.hero-text {
     flex: 1;
-    min-width: 300px;
+    min-width: 300px
 }
 
 .hero-visual {
     flex: 1;
     min-width: 300px;
+    overflow: hidden
 }
 
 .home-container h1 {
     color: var(--primary);
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: .5rem
 }
 
 .hero-subtitle {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     color: var(--text-secondary);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 500
 }
 
-.hero-visual .board-preview {
+.hero-description {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    line-height: 1.6
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: .75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    transition: var(--transition);
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 500;
+    text-align: center;
+    min-width: 120px
+}
+
+.btn-large {
+    padding: .75rem 1.5rem;
+    font-size: 1rem
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: #fff
+}
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm)
+    }
+
+.btn-outline {
+    background-color: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary)
+}
+
+    .btn-outline:hover {
+        background-color: #0c66e41a
+    }
+
+.board-preview {
     display: flex;
     gap: 1rem;
     background-color: var(--secondary);
     padding: 1.5rem;
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
+    overflow-x: auto;
+    max-width: 100%
 }
 
 .preview-column {
     flex: 1;
-    background-color: #e9ecef;
-    border-radius: 4px;
-    padding: 0.75rem;
-    min-width: 120px;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    min-width: 160px;
+    box-shadow: var(--shadow-sm)
 }
 
 .column-header {
-    font-weight: bold;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
+    font-weight: 600;
+    margin-bottom: .75rem;
+    padding-bottom: .5rem;
     border-bottom: 1px solid var(--border);
+    font-size: .9rem;
+    color: var(--text-primary)
 }
 
 .preview-card {
     background-color: var(--card-bg);
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    border-radius: 4px;
+    padding: .75rem;
+    margin-bottom: .5rem;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow-sm);
-    font-size: 0.9rem;
+    font-size: .9rem;
+    color: var(--text-primary);
+    border-left: 3px solid var(--primary)
 }
 
 .tech-stack-section, .features-section {
-    margin-bottom: 4rem;
+    margin-bottom: 4rem
 }
 
 .home-container h2 {
     color: var(--text-primary);
     margin-bottom: 2rem;
     text-align: center;
+    font-size: 2rem;
+    font-weight: 600
 }
 
 .tech-grid, .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
+    gap: 1.5rem
 }
 
-.tech-category, .feature-card {
-    background-color: var(--secondary);
+.tech-category {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm)
+}
+
+    .tech-category h3 {
+        color: var(--primary);
+        margin-bottom: 1rem;
+        font-size: 1.25rem
+    }
+
+    .tech-category ul {
+        padding-left: 1.25rem;
+        color: var(--text-secondary)
+    }
+
+    .tech-category li {
+        margin-bottom: .5rem;
+        line-height: 1.5
+    }
+
+.feature-card {
+    background-color: var(--card-bg);
     padding: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-sm);
+    text-align: center;
+    transition: var(--transition)
 }
 
-.home-container h3 {
-    color: var(--primary);
-    margin-bottom: 1rem;
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md)
+    }
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    background-color: #0c66e41a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem
 }
 
-.home-container ul {
-    padding-left: 1.5rem;
+    .feature-icon i {
+        font-size: 1.5rem;
+        color: var(--primary)
+    }
+
+.feature-card h3 {
+    color: var(--text-primary);
+    margin-bottom: .75rem;
+    font-size: 1.1rem
 }
 
-.home-container li {
-    margin-bottom: 0.5rem;
+.feature-card p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: .95rem
 }
 
 @media (max-width: 768px) {
-    .hero-section {
+    .home-container {
+        padding: 1rem
+    }
+
+    .hero-content {
         flex-direction: column;
+        gap: 2rem
+    }
+
+    .hero-text {
+        text-align: center
+    }
+
+    .hero-actions {
+        justify-content: center
     }
 
     .board-preview {
         flex-direction: column;
+        overflow-x: visible
+    }
+
+    .preview-column {
+        min-width: auto
+    }
+
+    .home-container h1 {
+        font-size: 2rem
+    }
+
+    .tech-grid, .features-grid {
+        grid-template-columns: 1fr
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-actions {
+        flex-direction: column
+    }
+
+    .btn {
+        width: 100%
     }
 }
