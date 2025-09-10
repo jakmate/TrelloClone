@@ -1,41 +1,108 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using TrelloClone.Shared.DTOs
+@inject IBoardService BoardService
 
 <div class="sidebar-content">
     <nav class="nav-menu">
         <div class="nav-section">
             <NavLink class="nav-item" href="" Match="NavLinkMatch.All">
                 <i class="bi bi-house"></i>
-                <span>Home</span>
+                <span class="nav-text">Home</span>
             </NavLink>
+
             <AuthorizeView>
                 <Authorized>
+                    <div class="nav-divider"></div>
                     <div class="workspace-header">Workspace</div>
                     <div class="workspace-items">
                         <NavLink class="nav-item" href="boards">
                             <i class="bi bi-columns-gap"></i>
-                            <span>Boards</span>
+                            <span class="nav-text">Boards</span>
                         </NavLink>
                         <NavLink class="nav-item" href="templates">
                             <i class="bi bi-grid"></i>
-                            <span>Templates</span>
+                            <span class="nav-text">Templates</span>
                         </NavLink>
+                    </div>
+
+                    <div class="nav-divider"></div>
+                    <div class="workspace-header">Your Boards</div>
+                    <div class="team-list">
+                        @if (boards.Any())
+                        {
+                            @foreach (var board in boards.Take(5))
+                            {
+                                <NavLink class="team-item nav-item" href="@($"board/{board.Id}")">
+                                    <div class="team-avatar">@GetInitials(board.Name)</div>
+                                </NavLink>
+                            }
+                            @if (boards.Count > 5)
+                            {
+                                <NavLink class="team-item nav-item view-all" href="boards">
+                                    <span class="nav-text">View All Boards</span>
+                                </NavLink>
+                            }
+                        }
+                        else
+                        {
+                            <div class="team-item disabled">
+                                <span class="nav-text">No boards yet</span>
+                            </div>
+                        }
                     </div>
                 </Authorized>
 
                 <NotAuthorized>
+                    <div class="nav-divider"></div>
                     <div class="workspace-header">Account</div>
                     <div class="workspace-items">
                         <NavLink class="nav-item" href="login">
                             <i class="bi bi-box-arrow-in-right"></i>
-                            <span>Log in</span>
+                            <span class="nav-text">Log in</span>
                         </NavLink>
                         <NavLink class="nav-item" href="register">
                             <i class="bi bi-person-plus"></i>
-                            <span>Sign up</span>
+                            <span class="nav-text">Sign up</span>
                         </NavLink>
                     </div>
                 </NotAuthorized>
             </AuthorizeView>
         </div>
+
+        <div class="nav-footer">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="user-status">
+                        <div class="status-indicator online"></div>
+                        <span>Online</span>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+        </div>
     </nav>
 </div>
+
+@code {
+    private List<BoardDto> boards = new();
+
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            boards = await BoardService.GetBoardsAsync();
+            boards = boards.OrderBy(b => b.Position).ToList();
+        }
+    }
+
+    private string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "??";
+        return string.Concat(name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(2)
+            .Select(word => word.Length > 0 ? word[0].ToString().ToUpper() : "")
+        ).Substring(0, Math.Min(2, name.Length));
+    }
+}

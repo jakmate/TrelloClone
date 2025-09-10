@@ -10,28 +10,46 @@
                 </button>
                 <a href="/" class="brand-logo">
                     <i class="bi bi-kanban"></i>
-                    <span>Trello</span>
+                    <span class="logo-text">Trello</span>
                 </a>
+            </div>
+            <div class="header-center">
+                <div class="search-container">
+                    <i class="bi bi-search"></i>
+                    <input type="text" placeholder="Search..." class="search-input" />
+                </div>
             </div>
             <div class="header-right">
                 <div class="header-actions">
-                    <Notifications />
+                    <button class="header-btn">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                    <button class="header-btn">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                    <button class="header-btn">
+                        <i class="bi bi-bell"></i>
+                    </button>
                 </div>
                 <AuthorizeView>
                     <Authorized>
-                        <div class="user-avatar">
-                            <i class="bi bi-person-circle"></i>
-                        </div>
-                        <div class="user-info">
-                            <div class="user-name">@context.User.Identity!.Name</div>
-                            <button class="logout-btn" @onclick="Logout">
-                                <i class="bi bi-box-arrow-right"></i> Sign out
-                            </button>
+                        <div class="user-menu">
+                            <div class="user-avatar">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">@context.User.Identity!.Name</div>
+                                <button class="logout-btn" @onclick="Logout">
+                                    <i class="bi bi-box-arrow-right"></i> Sign out
+                                </button>
+                            </div>
                         </div>
                     </Authorized>
                     <NotAuthorized>
-                        <a href="/login" class="auth-btn btn-light">Log in</a>
-                        <a href="/register" class="auth-btn btn-primary">Sign up</a>
+                        <div class="auth-buttons">
+                            <a href="/login" class="auth-btn btn-light">Log in</a>
+                            <a href="/register" class="auth-btn btn-primary">Sign up</a>
+                        </div>
                     </NotAuthorized>
                 </AuthorizeView>
             </div>
@@ -41,18 +59,22 @@
                 <NavMenu />
             </aside>
             <main class="main-content">
-                <div class="container-fluid">
+                <div class="content-container">
                     @Body
                 </div>
             </main>
         </div>
     </div>
 </CascadingAuthenticationState>
+
 @code {
-    private bool sidebarCollapsed = true;
+    private bool sidebarCollapsed = false;
+    
     [Inject] private IAuthService AuthService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    
     private void ToggleSidebar() => sidebarCollapsed = !sidebarCollapsed;
+    
     private async Task Logout()
     {
         await AuthService.LogoutAsync();

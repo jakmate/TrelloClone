@@ -367,7 +367,7 @@
     private string currentUserId = string.Empty;
     private string currentUserName = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         // Get current user info
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
