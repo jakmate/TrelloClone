@@ -34,6 +34,7 @@
                             {
                                 <NavLink class="team-item nav-item" href="@($"board/{board.Id}")">
                                     <div class="team-avatar">@GetInitials(board.Name)</div>
+                                    <span class="team-name">@board.Name</span>
                                 </NavLink>
                             }
                             @if (boards.Count > 5)
@@ -100,9 +101,12 @@
     private string GetInitials(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "??";
-        return string.Concat(name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+
+        var initials = string.Concat(name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Take(2)
             .Select(word => word.Length > 0 ? word[0].ToString().ToUpper() : "")
-        ).Substring(0, Math.Min(2, name.Length));
+        );
+
+        return initials.Length > 0 ? initials : "??";
     }
 }

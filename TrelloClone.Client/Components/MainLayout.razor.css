@@ -112,31 +112,6 @@
     color: var(--text-primary);
 }
 
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.header-btn {
-    background: none;
-    border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--border-radius);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    transition: var(--transition);
-    cursor: pointer;
-}
-
-.header-btn:hover {
-    background-color: var(--secondary);
-    color: var(--text-primary);
-}
-
 .user-menu {
     display: flex;
     align-items: center;
@@ -305,20 +280,5 @@
     
     .content-container {
         padding: 16px;
-    }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --secondary: #0f172a;
-        --text-primary: #f1f5f9;
-        --text-secondary: #94a3b8;
-        --border: #334155;
-        --card-bg: #1e293b;
-        --header-bg: #1e293b;
-        --sidebar-bg: #1e293b;
-        --glass-bg: rgba(30, 41, 59, 0.8);
-        --glass-border: rgba(255, 255, 255, 0.1);
     }
 }
