@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IBoardService BoardService
 @inject IAuthService AuthService
+@inject BoardStateService BoardState
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @attribute [Authorize]
@@ -41,9 +42,6 @@
             else if (boards.Any())
             {
                 <div class="boards-grid">
-                    @{
-                        var sortedBoards = boards.OrderBy(b => b.Position).ToList();
-                    }
                     @for (int i = 0; i < sortedBoards.Count; i++)
                     {
                         var board = sortedBoards[i];
@@ -214,23 +212,23 @@
         try
         {
             var createdBoard = await BoardService.CreateBoardAsync(newBoard);
-            createdBoard.Position = 0;
-
+            
+            // Reload all boards to get current state
+            await LoadBoards();
+            
+            // Now reorder with new board at position 0
             var positions = sortedBoards
-                .Select((b, i) => new BoardPositionDto { Id = b.Id, Position = i + 1 })
+                .Select((b, i) => new BoardPositionDto { 
+                    Id = b.Id, 
+                    Position = b.Id == createdBoard.Id ? 0 : i + 1 
+                })
                 .ToList();
-                
-            positions.Add(new BoardPositionDto { 
-                Id = createdBoard.Id, 
-                Position = 0 
-            });
 
             await BoardService.ReorderBoardsAsync(positions);
+            await LoadBoards(); // Refresh again after reorder
             
-            boards.Add(createdBoard);
-            boardPermissions[createdBoard.Id] = true;
-            boardOwnership[createdBoard.Id] = true;
             HideCreateModal();
+            BoardState.NotifyBoardsChanged();
         }
         catch (Exception ex)
         {
@@ -259,6 +257,7 @@
             }
             
             HideUpdateModal();
+            BoardState.NotifyBoardsChanged();
         }
         catch (Exception ex)
         {
@@ -281,6 +280,7 @@
             boards.RemoveAll(b => b.Id == board.Id);
             boardPermissions.Remove(board.Id);
             boardOwnership.Remove(board.Id);
+            BoardState.NotifyBoardsChanged();
         }
         catch (Exception ex)
         {

@@ -11,19 +11,19 @@
                 <div class="card-actions">
                     @if (CanEdit)
                     {
-                        <button class="action-btn edit-btn" @onclick="HandleUpdate" @onclick:stopPropagation="true">
+                        <button class="btn btn-sm btn-outline-primary" @onclick="HandleUpdate" @onclick:stopPropagation="true" title="Edit board">
                             <i class="bi bi-pencil"></i>
                         </button>
                     }
                     @if (IsOwner)
                     {
-                        <button class="action-btn delete-btn" @onclick="HandleDelete" @onclick:stopPropagation="true">
+                        <button class="btn btn-sm btn-outline-danger" @onclick="HandleDelete" @onclick:stopPropagation="true" title="Delete board">
                             <i class="bi bi-trash3"></i>
                         </button>
                     }
                     else
                     {
-                        <button class="action-btn leave-btn" @onclick="HandleLeave" @onclick:stopPropagation="true">
+                        <button class="btn btn-sm btn-outline-danger" @onclick="HandleLeave" @onclick:stopPropagation="true" title="Leave board">
                             <i class="bi bi-door-closed"></i>
                         </button>
                     }

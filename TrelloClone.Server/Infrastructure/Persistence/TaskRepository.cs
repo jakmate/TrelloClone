@@ -31,6 +31,11 @@ public class TaskRepository : ITaskRepository
             if (task != null)
             {
                 task.Position = pos.Position;
+
+                if (pos.ColumnId.HasValue && task.ColumnId != pos.ColumnId.Value)
+                {
+                    task.ColumnId = pos.ColumnId.Value;
+                }
             }
         }
     }

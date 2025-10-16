@@ -50,36 +50,6 @@
     opacity: 1
 }
 
-.action-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: none;
-    transition: var(--transition)
-}
-
-.edit-btn {
-    color: var(--text-secondary)
-}
-
-    .edit-btn:hover {
-        background-color: #0066ff1a;
-        color: var(--primary)
-    }
-
-.delete-btn {
-    color: var(--text-secondary)
-}
-
-    .delete-btn:hover {
-        background-color: #eb5a461a;
-        color: var(--danger)
-    }
-
 .card-footer {
     padding: .75rem 1.25rem;
     background-color: var(--secondary);

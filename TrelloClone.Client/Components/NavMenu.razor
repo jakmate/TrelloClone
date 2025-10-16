@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using TrelloClone.Shared.DTOs
 @inject IBoardService BoardService
+@inject BoardStateService BoardState
 
 <div class="sidebar-content">
     <nav class="nav-menu">
@@ -90,12 +91,21 @@
 
     protected override async Task OnInitializedAsync()
     {
+        BoardState.OnBoardsChanged += RefreshBoards;
+        
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (authState.User.Identity?.IsAuthenticated == true)
         {
             boards = await BoardService.GetBoardsAsync();
             boards = boards.OrderBy(b => b.Position).ToList();
         }
+    }
+
+    private async void RefreshBoards()
+    {
+        boards = await BoardService.GetBoardsAsync();
+        boards = boards.OrderBy(b => b.Position).ToList();
+        await InvokeAsync(StateHasChanged);
     }
 
     private string GetInitials(string name)

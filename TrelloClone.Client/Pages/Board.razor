@@ -71,7 +71,6 @@
                 var index = i;
                 <div class="col-md-4 col-lg-3 column-drop-zone @(columnDragOverIndex == index ? "drag-over" : "")"
                      @ondragover="@((e) => HandleColumnDragOver(e, index))"
-                     @ondragover:preventDefault="true"
                      @ondrop="@((e) => HandleColumnDrop(e, index))"
                      @ondragleave="HandleColumnDragLeave">
                     <div class="column-item @(draggedColumn?.Id == column.Id ? "dragging" : "")">
@@ -100,7 +99,7 @@
                                 }
                                 else if (editingColumnId == column.Id && canEdit)
                                 {
-                                    <input type="text" class="form-control form-control-sm" @bind="editColumnTitle" @onkeypress="(e) => OnEditColumnKeyPress(e, column.Id)" />
+                                    <input type="text" class="form-control form-control-sm flex-grow-1" @bind="editColumnTitle" @onkeypress="(e) => OnEditColumnKeyPress(e, column.Id)" />
                                 }
                                 else
                                 {
@@ -136,7 +135,6 @@
                                 }
                             </div>
                             <div class="card-body @GetDropZoneClass(column.Id) @(draggedTask != null ? "task-dragging-active" : "")"
-                                 @ondragover:preventDefault="true" 
                                  @ondragenter:preventDefault="true">
                                 @if (column.Tasks?.Any() == true)
                                 {
@@ -148,7 +146,6 @@
                                         <div class="task-drop-zone-before @(taskDragOverColumnId == column.Id && taskDragOverIndex == tIndex ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
                                              style="height: @(draggedTask != null ? "6px" : "4px"); margin: 2px 0;"
                                              @ondragover="@((e) => HandleTaskDragOver(e, column.Id, tIndex))"
-                                             @ondragover:preventDefault="true"
                                              @ondrop="@((e) => HandleTaskDrop(e, column.Id, tIndex))"
                                              @ondragleave="HandleTaskDragLeave">
                                         </div>
@@ -244,7 +241,7 @@
                                                                 </div>
                                                             }
                                                         </div>
-                                                        @if (canEdit && !IsBeingEditedByOther("task", task.Id)) 
+                                                        @if (canEdit) 
                                                         {
                                                             <div class="btn-group">
                                                                 <button class="btn btn-sm btn-outline-primary" @onclick="async () => await StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
@@ -270,7 +267,6 @@
                                     <div class="task-drop-zone-after @(taskDragOverColumnId == column.Id && taskDragOverIndex == column.Tasks.Count ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
                                          style="height: @(draggedTask != null ? "12px" : "8px"); margin: 6px 0;"
                                          @ondragover="@((e) => HandleTaskDragOver(e, column.Id, column.Tasks.Count))"
-                                         @ondragover:preventDefault="true"
                                          @ondrop="@((e) => HandleTaskDrop(e, column.Id, column.Tasks.Count))"
                                          @ondragleave="HandleTaskDragLeave">
                                     </div>
@@ -281,14 +277,13 @@
                                    <div class="empty-column-drop-zone @(taskDragOverColumnId == column.Id ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
                                             style="min-height: @(draggedTask != null ? "50px" : "40px"); margin: 8px 0;"
                                             @ondragover="@((e) => HandleTaskDragOver(e, column.Id, 0))"
-                                            @ondragover:preventDefault="true"
                                             @ondrop="@((e) => HandleTaskDrop(e, column.Id, 0))"
                                             @ondragleave="HandleTaskDragLeave">
                                         <p class="text-muted">@(draggedTask != null ? "Drop task here" : "No tasks yet")</p>
                                     </div>
                                 }
                                 @if (canEdit) {
-                                    <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="() => ShowCreateTask(column.Id)">
+                                    <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="async () => await ShowCreateTask(column.Id)">
                                         <i class="bi bi-plus"></i> Add Task
                                     </button>
                                 }
@@ -322,12 +317,10 @@
     private bool loading = true;
     private bool showCreateColumnModal = false;
     private bool creatingColumn = false;
-    private string newColumnTitle = string.Empty;
 
     // Task creation fields
     private bool showCreateTaskModal = false;
     private bool creatingTask = false;
-    private string newTaskName = string.Empty;
     private Guid selectedColumnId;
     private List<UserDto>? availableUsers;
 
@@ -342,7 +335,6 @@
     // Invite fields
     private bool showInviteModal = false;
     private bool sendingInvite = false;
-    private string inviteUsername = string.Empty;
 
     // Permissions
     private bool canEdit;
@@ -503,7 +495,7 @@
         Navigation.NavigateTo("/");
     }
 
-    private async void ShowCreateTask(Guid columnId)
+    private async Task ShowCreateTask(Guid columnId)
     {
         selectedColumnId = columnId;
         newTaskRequest = new CreateTaskRequest
@@ -572,7 +564,7 @@
         }
     }
 
-    private async void StartEditColumn(Guid columnId, string title)
+    private async Task StartEditColumn(Guid columnId, string title)
     {
         editingColumnId = columnId;
         editColumnTitle = title;
@@ -676,20 +668,13 @@
         if (string.IsNullOrWhiteSpace(editTaskName)) return;
         try
         {
-            Console.WriteLine($"Saving task edit - TaskId: {taskId}");
-            Console.WriteLine($"Edit assigned user IDs count: {editTaskAssignedUserIds.Count}");
-            Console.WriteLine($"Edit assigned user IDs: {string.Join(",", editTaskAssignedUserIds)}");
             var request = new UpdateTaskRequest
             {
                 Name = editTaskName.Trim(),
                 Priority = editTaskPriority,
                 AssignedUserIds = editTaskAssignedUserIds.ToList() 
             };
-            Console.WriteLine($"Request assigned user IDs count: {request.AssignedUserIds.Count}");
-            Console.WriteLine($"Request assigned user IDs: {string.Join(",", request.AssignedUserIds)}");
             var updatedTask = await TaskService.UpdateTaskAsync(columnId, taskId, request);
-            Console.WriteLine($"Updated task assigned users count: {updatedTask.AssignedUserIds?.Count ?? 0}");
-            Console.WriteLine($"Updated task assigned users: {string.Join(",", updatedTask.AssignedUserIds ?? new List<Guid>())}");
             var column = columns?.FirstOrDefault(c => c.Id == columnId);
             var task = column?.Tasks?.FirstOrDefault(t => t.Id == taskId);
             if (task != null)
@@ -697,7 +682,6 @@
                 task.Name = updatedTask.Name;
                 task.Priority = updatedTask.Priority;
                 task.AssignedUserIds = updatedTask.AssignedUserIds;
-                Console.WriteLine($"Local task now has {task.AssignedUserIds.Count} assigned users");
             }
             await BoardHub.NotifyTaskUpdatedAsync(updatedTask);
             await BoardHub.NotifyUserStoppedEditingAsync("task", taskId.ToString());
@@ -706,7 +690,6 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error updating task: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
 
@@ -756,7 +739,7 @@
         }
     }
 
-    private async void HandleTaskDragStart(DragEventArgs e, TaskDto task)
+    private async Task HandleTaskDragStart(DragEventArgs e, TaskDto task)
     {
         if (!canEdit) return;
         draggedTask = task;
@@ -783,7 +766,7 @@
         taskDragOverIndex = null;
     }
 
-    private async void HandleTaskDragEnd()
+    private async Task HandleTaskDragEnd()
     {
         if (draggedTask != null)
         {
@@ -792,6 +775,7 @@
         draggedTask = null;
         taskDragOverColumnId = null;
         taskDragOverIndex = null;
+        StateHasChanged();
     }
 
     private async Task HandleTaskDrop(DragEventArgs e, Guid targetColumnId, int dropIndex)

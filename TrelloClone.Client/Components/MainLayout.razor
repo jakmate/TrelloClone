@@ -13,12 +13,12 @@
                     <span class="logo-text">Trello</span>
                 </a>
             </div>
-            <div class="header-center">
+            <!--<div class="header-center">
                 <div class="search-container">
                     <i class="bi bi-search"></i>
                     <input type="text" placeholder="Search..." class="search-input" />
                 </div>
-            </div>
+            </div>-->
             <div class="header-right">
                 <Notifications />
                 <AuthorizeView>
@@ -58,7 +58,7 @@
 </CascadingAuthenticationState>
 
 @code {
-    private bool sidebarCollapsed = false;
+    private bool sidebarCollapsed = true;
     
     [Inject] private IAuthService AuthService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
