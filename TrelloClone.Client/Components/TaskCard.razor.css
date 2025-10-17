@@ -1,0 +1,118 @@
+.task-card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 8px;
+    transition: var(--transition);
+    border: 1px solid var(--border);
+}
+
+.task-card.dragging {
+    opacity: .5;
+    transform: scale(0.98);
+}
+
+.task-card:hover:not(.dragging) {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.task-content {
+    padding: 8px;
+}
+
+.task-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0 0 4px;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.assigned-users {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.user-avatar.more-users {
+    background-color: var(--secondary);
+    color: var(--text-secondary);
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 3px;
+    transition: var(--transition);
+}
+
+.drag-handle:hover {
+    background-color: #091e420f;
+    color: var(--text-primary);
+}
+
+.editing-indicator {
+    background-color: #f2d6001a;
+    border-left: 3px solid var(--warning);
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.priority-badge {
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.priority-low {
+    background-color: #61bd4f26;
+    color: #3f6e37;
+}
+
+.priority-medium {
+    background-color: #f2d60026;
+    color: #946f00;
+}
+
+.priority-high {
+    background-color: #eb5a4626;
+    color: #ae2e24;
+}
+
+/* Edit mode styles */
+.user-checkboxes-small {
+    max-height: 120px;
+    overflow-y: auto;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    background-color: var(--card-bg);
+}
+
+.form-check-input {
+    width: 16px;
+    height: 16px;
+    margin-top: .2rem;
+}
+
+.form-check-label {
+    font-size: 13px;
+}

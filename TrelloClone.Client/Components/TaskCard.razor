@@ -1,0 +1,222 @@
+@using TrelloClone.Shared.DTOs
+
+<div class="task-card @(IsDragging ? "dragging" : "")" data-task-id="@Task.Id">
+    <div class="task-content">
+        @if (IsBeingEditedByOther)
+        {
+            <div class="editing-indicator">
+                <small class="text-warning">
+                    <i class="bi bi-pencil-square"></i> 
+                    @EditingUserName is editing...
+                </small>
+            </div>
+        }
+        else if (IsEditing && CanEdit)
+        {
+            <div class="mb-2">
+                <input type="text" class="form-control form-control-sm mb-2" 
+                       @bind="editName" 
+                       @onkeypress="HandleKeyPress" />
+                <select class="form-select form-select-sm mb-2" @bind="editPriority">
+                    <option value="@PriorityLevel.Low">Low</option>
+                    <option value="@PriorityLevel.Medium">Medium</option>
+                    <option value="@PriorityLevel.High">High</option>
+                </select>
+                @if (AvailableUsers?.Any() == true)
+                {
+                    <div class="mb-2">
+                        <label class="form-label small">Assigned Users:</label>
+                        <div class="user-checkboxes-small">
+                            @foreach (var user in AvailableUsers)
+                            {
+                                <div class="form-check form-check-sm">
+                                    <input class="form-check-input form-check-input-sm" 
+                                           type="checkbox" 
+                                           id="edit_user_@user.Id" 
+                                           checked="@IsUserAssigned(user.Id)"
+                                           @onchange="@((e) => ToggleUserAssignment(user.Id, (bool)e.Value!))" />
+                                    <label class="form-check-label small" for="edit_user_@user.Id">
+                                        @user.UserName
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-sm btn-success me-1" @onclick="HandleSaveEdit">
+                    <i class="bi bi-check"></i>
+                </button>
+                <button class="btn btn-sm btn-secondary" @onclick="HandleCancelEdit">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex justify-content-between align-items-start">
+                @if (CanEdit)
+                {
+                    <div class="drag-handle me-2" 
+                         draggable="true" 
+                         @ondragstart="HandleDragStart"
+                         @ondragend="HandleDragEnd"
+                         @ondragstart:stopPropagation="true"
+                         title="Drag to move task">
+                        <i class="bi bi-grip-vertical"></i>
+                    </div>
+                }
+                <div class="flex-grow-1">
+                    <h6 class="task-title">@Task.Name</h6>
+                    <small class="priority-badge priority-@(Task.Priority.ToString().ToLower())">@Task.Priority</small>
+                    @if (Task.AssignedUserIds?.Any() == true)
+                    {
+                        <div class="mt-1 assigned-users">
+                            @foreach (var userId in Task.AssignedUserIds.Take(3))
+                            {
+                                var user = AvailableUsers?.FirstOrDefault(u => u.Id == userId);
+                                if (user != null)
+                                {
+                                    <span class="user-avatar" title="@user.UserName">
+                                        @user.UserName.Substring(0, Math.Min(2, user.UserName.Length)).ToUpper()
+                                    </span>
+                                }
+                            }
+                            @if (Task.AssignedUserIds.Count > 3)
+                            {
+                                <span class="user-avatar more-users" title="@(Task.AssignedUserIds.Count - 3) more users">
+                                    +@(Task.AssignedUserIds.Count - 3)
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+                @if (CanEdit) 
+                {
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" @onclick="HandleStartEdit" title="Edit task">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="HandleDelete">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </div>
+                }
+                else if (IsBeingEditedByOther)
+                {
+                    <div class="text-warning">
+                        <i class="bi bi-lock"></i>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public TaskDto Task { get; set; } = default!;
+    [Parameter] public bool IsDragging { get; set; }
+    [Parameter] public bool IsBeingEditedByOther { get; set; }
+    [Parameter] public string EditingUserName { get; set; } = "";
+    [Parameter] public bool IsEditing { get; set; }
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public List<UserDto>? AvailableUsers { get; set; }
+    
+    [Parameter] public EventCallback<(Guid taskId, string name, PriorityLevel priority)> OnStartEdit { get; set; }
+    [Parameter] public EventCallback<(Guid taskId, string name, PriorityLevel priority, List<Guid> assignedUsers)> OnSaveEdit { get; set; }
+    [Parameter] public EventCallback OnCancelEdit { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback<TaskDto> OnDragStart { get; set; }
+    [Parameter] public EventCallback OnDragEnd { get; set; }
+    [Parameter] public EventCallback<(Guid userId, bool isAssigned)> OnAssignmentChange { get; set; }
+    
+    private string editName = "";
+    private PriorityLevel editPriority = PriorityLevel.Medium;
+    private List<Guid> editAssignedUserIds = new();
+    private Guid currentEditingTaskId = Guid.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (IsEditing && Task.Id != currentEditingTaskId)
+        {
+            currentEditingTaskId = Task.Id;
+            editName = Task.Name;
+            editPriority = Task.Priority;
+            editAssignedUserIds = Task.AssignedUserIds?.ToList() ?? new List<Guid>();
+        }
+        else if (!IsEditing)
+        {
+            // Reset tracking when exiting edit mode
+            currentEditingTaskId = Guid.Empty;
+        }
+    }
+
+    private async Task HandleStartEdit()
+    {
+        await OnStartEdit.InvokeAsync((Task.Id, Task.Name, Task.Priority));
+    }
+
+    private async Task HandleSaveEdit()
+    {
+        if (!string.IsNullOrWhiteSpace(editName))
+        {
+            await OnSaveEdit.InvokeAsync((Task.Id, editName, editPriority, editAssignedUserIds));
+        }
+    }
+
+    private async Task HandleCancelEdit()
+    {
+        await OnCancelEdit.InvokeAsync();
+    }
+
+    private async Task HandleDelete()
+    {
+        await OnDelete.InvokeAsync();
+    }
+
+    private async Task HandleDragStart(DragEventArgs e)
+    {
+        await OnDragStart.InvokeAsync(Task);
+    }
+
+    private async Task HandleDragEnd()
+    {
+        await OnDragEnd.InvokeAsync();
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(editName))
+        {
+            await HandleSaveEdit();
+        }
+        else if (e.Key == "Escape")
+        {
+            await HandleCancelEdit();
+        }
+    }
+
+    private bool IsUserAssigned(Guid userId)
+    {
+        return editAssignedUserIds.Contains(userId);
+    }
+
+    private async Task ToggleUserAssignment(Guid userId, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!editAssignedUserIds.Contains(userId))
+            {
+                editAssignedUserIds.Add(userId);
+            }
+        }
+        else
+        {
+            editAssignedUserIds.Remove(userId);
+        }
+        
+        await OnAssignmentChange.InvokeAsync((userId, isChecked));
+        StateHasChanged();
+    }
+}

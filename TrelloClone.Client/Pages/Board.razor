@@ -62,239 +62,55 @@
             </div>
         </div>
         <div class="row g-3 columns-container @(draggedColumn != null || draggedTask != null ? "dragging-active" : "")" @ondragover:preventDefault="true">
-            @{
-                var sortedColumns = columns.OrderBy(c => c.Position).ToList();
-            }
-            @for (int i = 0; i < sortedColumns.Count; i++)
-            {
-                var column = sortedColumns[i];
-                var index = i;
-                <div class="col-md-4 col-lg-3 column-drop-zone @(columnDragOverIndex == index ? "drag-over" : "")"
-                     @ondragover="@((e) => HandleColumnDragOver(e, index))"
-                     @ondrop="@((e) => HandleColumnDrop(e, index))"
-                     @ondragleave="HandleColumnDragLeave">
-                    <div class="column-item @(draggedColumn?.Id == column.Id ? "dragging" : "")">
-                        <div class="card h-100">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                @if (canEdit)
-                                {
-                                    <div class="drag-handle me-2" 
-                                         draggable="true" 
-                                         @ondragstart="@((e) => HandleColumnDragStart(e, column))"
-                                         @ondragend="HandleColumnDragEnd"
-                                         @ondragstart:stopPropagation="true"
-                                         title="Drag to reorder column">
-                                        <i class="bi bi-grip-vertical"></i>
-                                    </div>
-                                }
-                                @if (IsBeingEditedByOther("column", column.Id))
-                                {
-                                    <div class="flex-grow-1">
-                                        <h5 class="mb-0">@column.Title</h5>
-                                        <small class="text-warning">
-                                            <i class="bi bi-pencil-square"></i> 
-                                            @GetEditingUserName("column", column.Id) is editing...
-                                        </small>
-                                    </div>
-                                }
-                                else if (editingColumnId == column.Id && canEdit)
-                                {
-                                    <input type="text" class="form-control form-control-sm flex-grow-1" @bind="editColumnTitle" @onkeypress="(e) => OnEditColumnKeyPress(e, column.Id)" />
-                                }
-                                else
-                                {
-                                    <h5 class="mb-0 flex-grow-1">@column.Title</h5>
-                                }
-                                @if (canEdit && !IsBeingEditedByOther("column", column.Id)) {
-                                    <div class="btn-group">
-                                        @if (editingColumnId == column.Id)
-                                        {
-                                            <button class="btn btn-sm btn-success" @onclick="async () => await SaveColumnEdit(column.Id)">
-                                                <i class="bi bi-check"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-secondary" @onclick="async () => await CancelEditColumn()">
-                                                <i class="bi bi-x"></i>
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditColumn(column.Id, column.Title)" title="Edit column">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        }
-                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteColumn(column.Id)">
-                                            <i class="bi bi-trash3"></i>
-                                        </button>
-                                    </div>
-                                }
-                                else if (IsBeingEditedByOther("column", column.Id))
-                                {
-                                    <div class="text-warning">
-                                        <i class="bi bi-lock"></i>
-                                    </div>
-                                }
-                            </div>
-                            <div class="card-body @GetDropZoneClass(column.Id) @(draggedTask != null ? "task-dragging-active" : "")"
-                                 @ondragenter:preventDefault="true">
-                                @if (column.Tasks?.Any() == true)
-                                {
-                                    @for (int taskIndex = 0; taskIndex < column.Tasks.Count; taskIndex++)
-                                    {
-                                        var task = column.Tasks[taskIndex];
-                                        var tIndex = taskIndex;
-                                        @* Drop zone BEFORE each task *@
-                                        <div class="task-drop-zone-before @(taskDragOverColumnId == column.Id && taskDragOverIndex == tIndex ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
-                                             style="height: @(draggedTask != null ? "6px" : "4px"); margin: 2px 0;"
-                                             @ondragover="@((e) => HandleTaskDragOver(e, column.Id, tIndex))"
-                                             @ondrop="@((e) => HandleTaskDrop(e, column.Id, tIndex))"
-                                             @ondragleave="HandleTaskDragLeave">
-                                        </div>
-                                       <div class="card mb-2 @(draggedTask?.Id == task.Id ? "dragging" : "")" data-task-id="@task.Id">
-                                            <div class="card-body p-2">
-                                                @if (IsBeingEditedByOther("task", task.Id))
-                                                {
-                                                    <div class="editing-indicator">
-                                                        <small class="text-warning">
-                                                            <i class="bi bi-pencil-square"></i> 
-                                                            @GetEditingUserName("task", task.Id) is editing...
-                                                        </small>
-                                                    </div>
-                                                }
-                                                else if (editingTaskId == task.Id && canEdit)
-                                                {
-                                                    <div class="mb-2">
-                                                        <input type="text" class="form-control form-control-sm mb-2" 
-                                                               @bind="editTaskName" 
-                                                               @onkeypress="(e) => OnEditTaskKeyPress(e, column.Id, task.Id)" />
-                                                        <select class="form-select form-select-sm mb-2" @bind="editTaskPriority">
-                                                            <option value="@PriorityLevel.Low">Low</option>
-                                                            <option value="@PriorityLevel.Medium">Medium</option>
-                                                            <option value="@PriorityLevel.High">High</option>
-                                                        </select>
-                                                        @if (availableUsers?.Any() == true)
-                                                        {
-                                                            <div class="mb-2">
-                                                                <label class="form-label small">Assigned Users:</label>
-                                                                <div class="user-checkboxes-small">
-                                                                    @foreach (var user in availableUsers)
-                                                                    {
-                                                                        <div class="form-check form-check-sm">
-                                                                            <input class="form-check-input form-check-input-sm" 
-                                                                                   type="checkbox" 
-                                                                                   id="edit_user_@user.Id" 
-                                                                                   checked="@IsUserAssignedInEdit(user.Id)"
-                                                                                   @onchange="@((e) => ToggleUserAssignmentInEdit(user.Id, (bool)e.Value!))" />
-                                                                            <label class="form-check-label small" for="edit_user_@user.Id">
-                                                                                @user.UserName
-                                                                            </label>
-                                                                        </div>
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                    <div class="d-flex justify-content-end">
-                                                        <button class="btn btn-sm btn-success me-1" @onclick="async () => await SaveTaskEdit(column.Id, task.Id)">
-                                                            <i class="bi bi-check"></i>
-                                                        </button>
-                                                        <button class="btn btn-sm btn-secondary" @onclick="async () => await CancelEditTask()">
-                                                            <i class="bi bi-x"></i>
-                                                        </button>
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    <div class="d-flex justify-content-between align-items-start">
-                                                        @if (canEdit)
-                                                        {
-                                                            <div class="drag-handle me-2" 
-                                                                 draggable="true" 
-                                                                 @ondragstart="@((e) => HandleTaskDragStart(e, task))"
-                                                                 @ondragend="HandleTaskDragEnd"
-                                                                 @ondragstart:stopPropagation="true"
-                                                                 title="Drag to move task">
-                                                                <i class="bi bi-grip-vertical"></i>
-                                                            </div>
-                                                        }
-                                                        <div class="flex-grow-1">
-                                                            <h6 class="card-title mb-1">@task.Name</h6>
-                                                            <small class="priority-badge priority-@(task.Priority.ToString().ToLower())">@task.Priority</small>
-                                                            @if (task.AssignedUserIds?.Any() == true)
-                                                            {
-                                                                <div class="mt-1 assigned-users">
-                                                                    @foreach (var userId in task.AssignedUserIds.Take(3))
-                                                                    {
-                                                                        var user = availableUsers?.FirstOrDefault(u => u.Id == userId);
-                                                                        if (user != null)
-                                                                        {
-                                                                            <span class="user-avatar" title="@user.UserName">
-                                                                                @user.UserName.Substring(0, Math.Min(2, user.UserName.Length)).ToUpper()
-                                                                            </span>
-                                                                        }
-                                                                    }
-                                                                    @if (task.AssignedUserIds.Count > 3)
-                                                                    {
-                                                                        <span class="user-avatar more-users" title="@(task.AssignedUserIds.Count - 3) more users">
-                                                                            +@(task.AssignedUserIds.Count - 3)
-                                                                        </span>
-                                                                    }
-                                                                </div>
-                                                            }
-                                                        </div>
-                                                        @if (canEdit) 
-                                                        {
-                                                            <div class="btn-group">
-                                                                <button class="btn btn-sm btn-outline-primary" @onclick="async () => await StartEditTask(task.Id, task.Name, task.Priority)" title="Edit task">
-                                                                    <i class="bi bi-pencil"></i>
-                                                                </button>
-                                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTask(column.Id, task.Id)">
-                                                                    <i class="bi bi-trash3"></i>
-                                                                </button>
-                                                            </div>
-                                                        }
-                                                        else if (IsBeingEditedByOther("task", task.Id))
-                                                        {
-                                                            <div class="text-warning">
-                                                                <i class="bi bi-lock"></i>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
-                                    @* Drop zone AFTER the last task *@
-                                    <div class="task-drop-zone-after @(taskDragOverColumnId == column.Id && taskDragOverIndex == column.Tasks.Count ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
-                                         style="height: @(draggedTask != null ? "12px" : "8px"); margin: 6px 0;"
-                                         @ondragover="@((e) => HandleTaskDragOver(e, column.Id, column.Tasks.Count))"
-                                         @ondrop="@((e) => HandleTaskDrop(e, column.Id, column.Tasks.Count))"
-                                         @ondragleave="HandleTaskDragLeave">
-                                    </div>
-                                }
-                                else
-                                {
-                                    @* Empty column drop zone *@
-                                   <div class="empty-column-drop-zone @(taskDragOverColumnId == column.Id ? "drag-over" : "") @(draggedTask != null ? "visible" : "")"
-                                            style="min-height: @(draggedTask != null ? "50px" : "40px"); margin: 8px 0;"
-                                            @ondragover="@((e) => HandleTaskDragOver(e, column.Id, 0))"
-                                            @ondrop="@((e) => HandleTaskDrop(e, column.Id, 0))"
-                                            @ondragleave="HandleTaskDragLeave">
-                                        <p class="text-muted">@(draggedTask != null ? "Drop task here" : "No tasks yet")</p>
-                                    </div>
-                                }
-                                @if (canEdit) {
-                                    <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="async () => await ShowCreateTask(column.Id)">
-                                        <i class="bi bi-plus"></i> Add Task
-                                    </button>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
+    @{
+        var sortedColumns = columns.OrderBy(c => c.Position).ToList();
+    }
+    @for (int i = 0; i < sortedColumns.Count; i++)
+    {
+        var column = sortedColumns[i];
+        var index = i;
+        <div class="col-md-4 col-lg-3 column-drop-zone @(columnDragOverIndex == index ? "drag-over" : "")"
+             @ondragover="@((e) => HandleColumnDragOver(e, index))"
+             @ondrop="@((e) => HandleColumnDrop(e, index))"
+             @ondragleave="HandleColumnDragLeave">
+            <ColumnCard Column="@column"
+                        IsDragging="@(draggedColumn?.Id == column.Id)"
+                        IsBeingEditedByOther="@(IsBeingEditedByOther("column", column.Id))"
+                        EditingUserName="@(GetEditingUserName("column", column.Id))"
+                        IsEditing="@(editingColumnId == column.Id)"
+                        CanEdit="@canEdit"
+                        DropZoneClass="@GetDropZoneClass(column.Id)"
+                        IsDraggingTask="@(draggedTask != null)"
+                        IsReceivingDrop="@(taskDragOverColumnId == column.Id)"
+                        TaskDragOverIndex="@(taskDragOverColumnId == column.Id ? taskDragOverIndex : null)"
+                        DraggedTaskId="@draggedTask?.Id"
+                        EditingTaskId="@editingTaskId"
+                        AvailableUsers="@availableUsers"
+                        OnStartEdit="@(() => StartEditColumn(column.Id, column.Title))"
+                        OnSaveEdit="@((title) => SaveColumnEdit(column.Id, title))"
+                        OnCancelEdit="@CancelEditColumn"
+                        OnDelete="@(() => DeleteColumn(column.Id))"
+                        OnDragStart="@((e) => HandleColumnDragStart(e, column))"
+                        OnDragEnd="@HandleColumnDragEnd"
+                        OnCreateTask="@(() => ShowCreateTask(column.Id))"
+                        OnTaskDragOver="@(EventCallback.Factory.Create<int>(this, index => HandleTaskDragOver(null, column.Id, index)))"
+                        OnTaskDrop="@(EventCallback.Factory.Create<int>(this, index => HandleTaskDrop(null, column.Id, index)))"
+                        OnTaskDragLeave="@HandleTaskDragLeave"
+                        OnTaskDragStart="@HandleTaskDragStart"
+                        OnTaskDragEnd="@HandleTaskDragEnd"
+                        OnStartEditTask="@((data) => StartEditTask(data.taskId, data.name, data.priority))"
+                        OnSaveEditTask="@((data) => SaveTaskEdit(column.Id, data.taskId, data.name, data.priority, data.assignedUsers))"
+                        OnCancelEditTask="@CancelEditTask"
+                        OnDeleteTask="@((taskId) => DeleteTask(column.Id, taskId))"
+                        OnTaskAssignmentChange="@((data) => HandleTaskAssignmentChange(data.userId, data.isAssigned))"
+                        IsTaskBeingEditedByOther="@((taskId) => IsBeingEditedByOther("task", taskId))"
+                        GetTaskEditingUserName="@((taskId) => GetEditingUserName("task", taskId))" />
         </div>
+        }
+    </div>
     }
 </div>
+
 <TaskModal Show="@showCreateTaskModal"
            TaskModel="@newTaskRequest" 
            OnCancel="@HideCreateTask"
@@ -581,47 +397,6 @@
         editColumnTitle = string.Empty;
     }
 
-    private async Task SaveColumnEdit(Guid columnId)
-    {
-        if (string.IsNullOrWhiteSpace(editColumnTitle)) 
-        {
-            return;
-        }
-        try
-        {
-            var request = new UpdateColumnRequest
-            {
-                Title = editColumnTitle.Trim()
-            };
-            var updatedColumn = await ColumnService.UpdateColumnAsync(BoardId, columnId, request);
-            var column = columns?.FirstOrDefault(c => c.Id == columnId);
-            if (column != null)
-            {
-                column.Title = updatedColumn.Title;
-            }
-            // Notify other users
-            await BoardHub.NotifyColumnUpdatedAsync(updatedColumn);
-            await BoardHub.NotifyUserStoppedEditingAsync("column", columnId.ToString());
-            await CancelEditColumn();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error updating column: {ex.Message}");
-        }
-    }
-
-    private async Task OnEditColumnKeyPress(KeyboardEventArgs e, Guid columnId)
-    {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(editColumnTitle))
-        {
-            await SaveColumnEdit(columnId);
-        }
-        else if (e.Key == "Escape")
-        {
-            await CancelEditColumn();
-        }
-    }
-
     private async Task StartEditTask(Guid taskId, string name, PriorityLevel priority)
     {
         editingTaskId = taskId;
@@ -663,48 +438,6 @@
         editTaskAssignedUserIds = new List<Guid>();
     }
 
-    private async Task SaveTaskEdit(Guid columnId, Guid taskId)
-    {
-        if (string.IsNullOrWhiteSpace(editTaskName)) return;
-        try
-        {
-            var request = new UpdateTaskRequest
-            {
-                Name = editTaskName.Trim(),
-                Priority = editTaskPriority,
-                AssignedUserIds = editTaskAssignedUserIds.ToList() 
-            };
-            var updatedTask = await TaskService.UpdateTaskAsync(columnId, taskId, request);
-            var column = columns?.FirstOrDefault(c => c.Id == columnId);
-            var task = column?.Tasks?.FirstOrDefault(t => t.Id == taskId);
-            if (task != null)
-            {
-                task.Name = updatedTask.Name;
-                task.Priority = updatedTask.Priority;
-                task.AssignedUserIds = updatedTask.AssignedUserIds;
-            }
-            await BoardHub.NotifyTaskUpdatedAsync(updatedTask);
-            await BoardHub.NotifyUserStoppedEditingAsync("task", taskId.ToString());
-            await CancelEditTask();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error updating task: {ex.Message}");
-        }
-    }
-
-    private async Task OnEditTaskKeyPress(KeyboardEventArgs e, Guid columnId, Guid taskId)
-    {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(editTaskName))
-        {
-            await SaveTaskEdit(columnId, taskId);
-        }
-        else if (e.Key == "Escape")
-        {
-            await CancelEditTask();
-        }
-    }
-
     private void ShowInviteUser()
     {
         inviteRequest = new CreateInvitationRequest();
@@ -737,18 +470,6 @@
         {
             sendingInvite = false;
         }
-    }
-
-    private async Task HandleTaskDragStart(DragEventArgs e, TaskDto task)
-    {
-        if (!canEdit) return;
-        draggedTask = task;
-        draggedColumn = null;
-        await BoardHub.NotifyTaskDragStartedAsync(
-            task.Id.ToString(), 
-            currentUserId, 
-            currentUserName
-        );
     }
 
     private void HandleTaskDragOver(DragEventArgs e, Guid columnId, int taskIndex)
@@ -1194,26 +915,78 @@
         }
     }
 
-    private bool IsUserAssignedInEdit(Guid userId)
+    private async Task SaveColumnEdit(Guid columnId, string title)
     {
-        return editTaskAssignedUserIds.Contains(userId);
+        if (string.IsNullOrWhiteSpace(title)) return;
+        
+        try
+        {
+            var request = new UpdateColumnRequest { Title = title.Trim() };
+            var updatedColumn = await ColumnService.UpdateColumnAsync(BoardId, columnId, request);
+            
+            var column = columns?.FirstOrDefault(c => c.Id == columnId);
+            if (column != null)
+            {
+                column.Title = updatedColumn.Title;
+            }
+            
+            await BoardHub.NotifyColumnUpdatedAsync(updatedColumn);
+            await BoardHub.NotifyUserStoppedEditingAsync("column", columnId.ToString());
+            
+            editingColumnId = Guid.Empty;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating column: {ex.Message}");
+        }
     }
 
-    private void ToggleUserAssignmentInEdit(Guid userId, bool isChecked)
+    private async Task SaveTaskEdit(Guid columnId, Guid taskId, string name, PriorityLevel priority, List<Guid> assignedUserIds)
     {
-        if (isChecked)
+        if (string.IsNullOrWhiteSpace(name)) return;
+        
+        try
         {
-            if (!editTaskAssignedUserIds.Contains(userId))
+            var request = new UpdateTaskRequest
             {
-                editTaskAssignedUserIds.Add(userId);
-                _ = BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, true);
+                Name = name.Trim(),
+                Priority = priority,
+                AssignedUserIds = assignedUserIds
+            };
+            
+            var updatedTask = await TaskService.UpdateTaskAsync(columnId, taskId, request);
+            
+            var column = columns?.FirstOrDefault(c => c.Id == columnId);
+            var task = column?.Tasks?.FirstOrDefault(t => t.Id == taskId);
+            if (task != null)
+            {
+                task.Name = updatedTask.Name;
+                task.Priority = updatedTask.Priority;
+                task.AssignedUserIds = updatedTask.AssignedUserIds;
             }
+            
+            await BoardHub.NotifyTaskUpdatedAsync(updatedTask);
+            await BoardHub.NotifyUserStoppedEditingAsync("task", taskId.ToString());
+            
+            editingTaskId = Guid.Empty;
+            editTaskAssignedUserIds = new List<Guid>();
         }
-        else
+        catch (Exception ex)
         {
-            editTaskAssignedUserIds.Remove(userId);
-            _ = BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, false);
+            Console.WriteLine($"Error updating task: {ex.Message}");
         }
-        StateHasChanged(); // Update UI immediately
+    }
+
+    private async Task HandleTaskAssignmentChange(Guid userId, bool isAssigned)
+    {
+        await BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, isAssigned);
+    }
+
+    private async Task HandleTaskDragStart(TaskDto task)
+    {
+        if (!canEdit) return;
+        draggedTask = task;
+        draggedColumn = null;
+        await BoardHub.NotifyTaskDragStartedAsync(task.Id.ToString(), currentUserId, currentUserName);
     }
 }

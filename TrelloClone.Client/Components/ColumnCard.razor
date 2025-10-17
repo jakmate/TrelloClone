@@ -1,0 +1,211 @@
+@using TrelloClone.Shared.DTOs
+@using TrelloClone.Shared.DTOs.SignalR
+
+<div class="column-item @(IsDragging ? "dragging" : "")">
+    <div class="column-card">
+        <div class="column-header d-flex justify-content-between align-items-center">
+            @if (CanEdit)
+            {
+                <div class="drag-handle me-2" 
+                     draggable="true" 
+                     @ondragstart="HandleDragStart"
+                     @ondragend="OnDragEnd"
+                     @ondragstart:stopPropagation="true"
+                     title="Drag to reorder column">
+                    <i class="bi bi-grip-vertical"></i>
+                </div>
+            }
+            @if (IsBeingEditedByOther)
+            {
+                <div class="flex-grow-1">
+                    <h5 class="mb-0 column-title">@Column.Title</h5>
+                    <small class="text-warning">
+                        <i class="bi bi-pencil-square"></i> 
+                        @EditingUserName is editing...
+                    </small>
+                </div>
+            }
+            else if (IsEditing)
+            {
+                <input type="text" class="form-control form-control-sm flex-grow-1" 
+                       @bind="editTitle" 
+                       @onkeypress="HandleKeyPress" />
+            }
+            else
+            {
+                <h5 class="mb-0 column-title flex-grow-1">@Column.Title</h5>
+            }
+            @if (CanEdit && !IsBeingEditedByOther) 
+            {
+                <div class="btn-group">
+                    @if (IsEditing)
+                    {
+                        <button class="btn btn-sm btn-success" @onclick="HandleSaveEdit">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        <button class="btn btn-sm btn-secondary" @onclick="OnCancelEdit">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-sm btn-outline-primary" @onclick="OnStartEdit" title="Edit column">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    }
+                    <button class="btn btn-sm btn-outline-danger" @onclick="OnDelete">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </div>
+            }
+            else if (IsBeingEditedByOther)
+            {
+                <div class="text-warning">
+                    <i class="bi bi-lock"></i>
+                </div>
+            }
+        </div>
+        <div class="column-body @(DropZoneClass) @(IsDraggingTask ? "task-dragging-active" : "")"
+             @ondragenter:preventDefault="true">
+            @if (Column.Tasks?.Any() == true)
+            {
+                @for (int taskIndex = 0; taskIndex < Column.Tasks.Count; taskIndex++)
+                {
+                    var task = Column.Tasks[taskIndex];
+                    var tIndex = taskIndex;
+                    
+                    <div class="task-drop-zone-before @(TaskDragOverIndex == tIndex ? "drag-over" : "") @(IsDraggingTask ? "visible" : "")"
+                         style="height: @(IsDraggingTask ? "6px" : "4px"); margin: 2px 0;"
+                         @ondragover="@((e) => HandleTaskDragOver(tIndex))"
+                         @ondrop="@((e) => HandleTaskDrop(tIndex))"
+                         @ondragleave="OnTaskDragLeave">
+                    </div>
+                    
+                    <TaskCard Task="@task"
+                              IsDragging="@(DraggedTaskId == task.Id)"
+                              IsBeingEditedByOther="@(IsTaskBeingEditedByOther(task.Id))"
+                              EditingUserName="@(GetTaskEditingUserName(task.Id))"
+                              IsEditing="@(EditingTaskId == task.Id)"
+                              CanEdit="@CanEdit"
+                              AvailableUsers="@AvailableUsers"
+                              OnStartEdit="@OnStartEditTask"
+                              OnSaveEdit="@OnSaveEditTask"
+                              OnCancelEdit="@OnCancelEditTask"
+                              OnDelete="@(async () => await HandleTaskDelete(task.Id))"
+                              OnDragStart="@OnTaskDragStart"
+                              OnDragEnd="@OnTaskDragEnd"
+                              OnAssignmentChange="@OnTaskAssignmentChange" />
+                }
+                
+                <div class="task-drop-zone-after @(TaskDragOverIndex == Column.Tasks.Count ? "drag-over" : "") @(IsDraggingTask ? "visible" : "")"
+                     style="height: @(IsDraggingTask ? "12px" : "8px"); margin: 6px 0;"
+                     @ondragover="@((e) => HandleTaskDragOver(Column.Tasks.Count))"
+                     @ondrop="@((e) => HandleTaskDrop(Column.Tasks.Count))"
+                     @ondragleave="OnTaskDragLeave">
+                </div>
+            }
+            else
+            {
+                <div class="empty-column-drop-zone @(IsReceivingDrop ? "drag-over" : "") @(IsDraggingTask ? "visible" : "")"
+                     style="min-height: @(IsDraggingTask ? "50px" : "40px"); margin: 8px 0;"
+                     @ondragover="@((e) => HandleTaskDragOver(0))"
+                     @ondrop="@((e) => HandleTaskDrop(0))"
+                     @ondragleave="OnTaskDragLeave">
+                    <p class="text-muted">@(IsDraggingTask ? "Drop task here" : "No tasks yet")</p>
+                </div>
+            }
+            @if (CanEdit) 
+            {
+                <button class="btn btn-sm btn-outline-primary mt-2 w-100" @onclick="OnCreateTask">
+                    <i class="bi bi-plus"></i> Add Task
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ColumnDto Column { get; set; } = default!;
+    [Parameter] public bool IsDragging { get; set; }
+    [Parameter] public bool IsBeingEditedByOther { get; set; }
+    [Parameter] public string EditingUserName { get; set; } = "";
+    [Parameter] public bool IsEditing { get; set; }
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public string DropZoneClass { get; set; } = "";
+    [Parameter] public bool IsDraggingTask { get; set; }
+    [Parameter] public bool IsReceivingDrop { get; set; }
+    [Parameter] public int? TaskDragOverIndex { get; set; }
+    [Parameter] public Guid? DraggedTaskId { get; set; }
+    [Parameter] public Guid EditingTaskId { get; set; }
+    [Parameter] public List<UserDto>? AvailableUsers { get; set; }
+    
+    [Parameter] public EventCallback OnStartEdit { get; set; }
+    [Parameter] public EventCallback<string> OnSaveEdit { get; set; }
+    [Parameter] public EventCallback OnCancelEdit { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback<DragEventArgs> OnDragStart { get; set; }
+    [Parameter] public EventCallback OnDragEnd { get; set; }
+    [Parameter] public EventCallback OnCreateTask { get; set; }
+    [Parameter] public EventCallback<int> OnTaskDragOver { get; set; }
+    [Parameter] public EventCallback<int> OnTaskDrop { get; set; }
+    [Parameter] public EventCallback OnTaskDragLeave { get; set; }
+    [Parameter] public EventCallback<TaskDto> OnTaskDragStart { get; set; }
+    [Parameter] public EventCallback OnTaskDragEnd { get; set; }
+    [Parameter] public EventCallback<(Guid taskId, string name, PriorityLevel priority)> OnStartEditTask { get; set; }
+    [Parameter] public EventCallback<(Guid taskId, string name, PriorityLevel priority, List<Guid> assignedUsers)> OnSaveEditTask { get; set; }
+    [Parameter] public EventCallback OnCancelEditTask { get; set; }
+    [Parameter] public EventCallback<Guid> OnDeleteTask { get; set; }
+    [Parameter] public EventCallback<(Guid userId, bool isAssigned)> OnTaskAssignmentChange { get; set; }
+    [Parameter] public Func<Guid, bool> IsTaskBeingEditedByOther { get; set; } = _ => false;
+    [Parameter] public Func<Guid, string> GetTaskEditingUserName { get; set; } = _ => "";
+    
+    private string editTitle = "";
+
+    protected override void OnParametersSet()
+    {
+        if (IsEditing && string.IsNullOrEmpty(editTitle))
+        {
+            editTitle = Column.Title;
+        }
+    }
+
+    private async Task HandleDragStart(DragEventArgs e)
+    {
+        await OnDragStart.InvokeAsync(e);
+    }
+
+    private async Task HandleSaveEdit()
+    {
+        if (!string.IsNullOrWhiteSpace(editTitle))
+        {
+            await OnSaveEdit.InvokeAsync(editTitle);
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(editTitle))
+        {
+            await OnSaveEdit.InvokeAsync(editTitle);
+        }
+        else if (e.Key == "Escape")
+        {
+            await OnCancelEdit.InvokeAsync();
+        }
+    }
+
+    private async Task HandleTaskDragOver(int index)
+    {
+        await OnTaskDragOver.InvokeAsync(index);
+    }
+
+    private async Task HandleTaskDrop(int index)
+    {
+        await OnTaskDrop.InvokeAsync(index);
+    }
+
+    private async Task HandleTaskDelete(Guid taskId)
+    {
+        await OnDeleteTask.InvokeAsync(taskId);
+    }
+}

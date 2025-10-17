@@ -1,3 +1,42 @@
+.btn {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    transition: var(--transition);
+    border: 1px solid var(--border);
+    background-color: transparent;
+    color: var(--text-secondary);
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.btn-outline-primary {
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--secondary);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+.btn-outline-danger {
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+.btn-outline-danger:hover {
+    background-color: #eb5a461a;
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
 .board-card {
     background-color: var(--card-bg);
     border-radius: var(--border-radius);
@@ -59,7 +98,6 @@
 .footer-content {
     display: flex;
     align-items: center;
-    gap: .5rem;
     font-size: .85rem;
     color: var(--text-secondary)
 }

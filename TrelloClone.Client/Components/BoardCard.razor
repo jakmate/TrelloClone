@@ -5,30 +5,35 @@
     <div class="card-content">
         <div class="card-header">
             <h3 class="card-title">@Board.Name</h3>
-            
-            @if (CanEdit || !IsOwner)
-            {
-                <div class="card-actions">
-                    @if (CanEdit)
-                    {
-                        <button class="btn btn-sm btn-outline-primary" @onclick="HandleUpdate" @onclick:stopPropagation="true" title="Edit board">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                    }
-                    @if (IsOwner)
-                    {
-                        <button class="btn btn-sm btn-outline-danger" @onclick="HandleDelete" @onclick:stopPropagation="true" title="Delete board">
-                            <i class="bi bi-trash3"></i>
-                        </button>
-                    }
-                    else
-                    {
-                        <button class="btn btn-sm btn-outline-danger" @onclick="HandleLeave" @onclick:stopPropagation="true" title="Leave board">
-                            <i class="bi bi-door-closed"></i>
-                        </button>
-                    }
-                </div>
-            }
+            <div class="card-actions">
+                @if (CanEdit)
+                {
+                    <button class="btn btn-sm btn-outline-primary" 
+                            @onclick="HandleUpdate" 
+                            @onclick:stopPropagation="true" 
+                            title="Edit board">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                }
+                @if (IsOwner)
+                {
+                    <button class="btn btn-sm btn-outline-danger" 
+                            @onclick="HandleDelete" 
+                            @onclick:stopPropagation="true" 
+                            title="Delete board">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-sm btn-outline-danger" 
+                            @onclick="HandleLeave" 
+                            @onclick:stopPropagation="true" 
+                            title="Leave board">
+                        <i class="bi bi-door-closed"></i>
+                    </button>
+                }
+            </div>
         </div>
         
         <div class="card-footer">
