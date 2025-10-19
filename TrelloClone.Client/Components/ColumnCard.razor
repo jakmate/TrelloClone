@@ -65,24 +65,31 @@
                 </div>
             }
         </div>
-        <div class="column-body @(DropZoneClass) @(IsDraggingTask ? "task-dragging-active" : "")"
-             @ondragenter:preventDefault="true">
+        <div class="column-body @(DropZoneClass) @(IsDraggingTask ? "task-dragging-active" : "")" @ondragenter:preventDefault="true">
             @if (Column.Tasks?.Any() == true)
             {
-                @for (int taskIndex = 0; taskIndex < Column.Tasks.Count; taskIndex++)
+                @foreach (var (task, index) in Column.Tasks.Select((t, i) => (t, i)))
                 {
-                    var task = Column.Tasks[taskIndex];
-                    var tIndex = taskIndex;
+                    var tIndex = index;
                     
-                    <div class="task-drop-zone-before @(TaskDragOverIndex == tIndex ? "drag-over" : "") @(IsDraggingTask ? "visible" : "")"
-                         style="height: @(IsDraggingTask ? "6px" : "4px"); margin: 2px 0;"
-                         @ondragover="@((e) => HandleTaskDragOver(tIndex))"
-                         @ondrop="@((e) => HandleTaskDrop(tIndex))"
-                         @ondragleave="OnTaskDragLeave">
-                    </div>
+                    var isDragged = DraggedTaskId == task.Id;
+
+                    if (!isDragged)
+                    {
+                        <div class="task-drop-zone-before @(TaskDragOverIndex == tIndex ? "drag-over" : "") @(IsDraggingTask ? "visible" : "")"
+                            @ondragover:preventDefault="true"
+                            @ondragover="@((e) => HandleTaskDragOver(tIndex))"
+                            @ondrop="@((e) => HandleTaskDrop(tIndex))"
+                            @ondragleave="OnTaskDragLeave">
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="task-drop-spacer"></div>
+                    }
                     
                     <TaskCard Task="@task"
-                              IsDragging="@(DraggedTaskId == task.Id)"
+                              IsDragging="@(isDragged)"
                               IsBeingEditedByOther="@(IsTaskBeingEditedByOther(task.Id))"
                               EditingUserName="@(GetTaskEditingUserName(task.Id))"
                               IsEditing="@(EditingTaskId == task.Id)"
@@ -98,7 +105,7 @@
                 }
                 
                 <div class="task-drop-zone-after @(TaskDragOverIndex == Column.Tasks.Count ? "drag-over" : "") @(IsDraggingTask ? "visible" : "")"
-                     style="height: @(IsDraggingTask ? "12px" : "8px"); margin: 6px 0;"
+                     @ondragover:preventDefault="true"
                      @ondragover="@((e) => HandleTaskDragOver(Column.Tasks.Count))"
                      @ondrop="@((e) => HandleTaskDrop(Column.Tasks.Count))"
                      @ondragleave="OnTaskDragLeave">
@@ -107,7 +114,7 @@
             else
             {
                 <div class="empty-column-drop-zone @(IsReceivingDrop ? "drag-over" : "") @(IsDraggingTask ? "visible" : "")"
-                     style="min-height: @(IsDraggingTask ? "50px" : "40px"); margin: 8px 0;"
+                     @ondragover:preventDefault="true"
                      @ondragover="@((e) => HandleTaskDragOver(0))"
                      @ondrop="@((e) => HandleTaskDrop(0))"
                      @ondragleave="OnTaskDragLeave">

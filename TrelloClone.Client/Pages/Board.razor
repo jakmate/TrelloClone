@@ -62,52 +62,49 @@
             </div>
         </div>
         <div class="row g-3 columns-container @(draggedColumn != null || draggedTask != null ? "dragging-active" : "")" @ondragover:preventDefault="true">
-    @{
-        var sortedColumns = columns.OrderBy(c => c.Position).ToList();
-    }
-    @for (int i = 0; i < sortedColumns.Count; i++)
-    {
-        var column = sortedColumns[i];
-        var index = i;
-        <div class="col-md-4 col-lg-3 column-drop-zone @(columnDragOverIndex == index ? "drag-over" : "")"
-             @ondragover="@((e) => HandleColumnDragOver(e, index))"
-             @ondrop="@((e) => HandleColumnDrop(e, index))"
-             @ondragleave="HandleColumnDragLeave">
-            <ColumnCard Column="@column"
-                        IsDragging="@(draggedColumn?.Id == column.Id)"
-                        IsBeingEditedByOther="@(IsBeingEditedByOther("column", column.Id))"
-                        EditingUserName="@(GetEditingUserName("column", column.Id))"
-                        IsEditing="@(editingColumnId == column.Id)"
-                        CanEdit="@canEdit"
-                        DropZoneClass="@GetDropZoneClass(column.Id)"
-                        IsDraggingTask="@(draggedTask != null)"
-                        IsReceivingDrop="@(taskDragOverColumnId == column.Id)"
-                        TaskDragOverIndex="@(taskDragOverColumnId == column.Id ? taskDragOverIndex : null)"
-                        DraggedTaskId="@draggedTask?.Id"
-                        EditingTaskId="@editingTaskId"
-                        AvailableUsers="@availableUsers"
-                        OnStartEdit="@(() => StartEditColumn(column.Id, column.Title))"
-                        OnSaveEdit="@((title) => SaveColumnEdit(column.Id, title))"
-                        OnCancelEdit="@CancelEditColumn"
-                        OnDelete="@(() => DeleteColumn(column.Id))"
-                        OnDragStart="@((e) => HandleColumnDragStart(e, column))"
-                        OnDragEnd="@HandleColumnDragEnd"
-                        OnCreateTask="@(() => ShowCreateTask(column.Id))"
-                        OnTaskDragOver="@(EventCallback.Factory.Create<int>(this, index => HandleTaskDragOver(null, column.Id, index)))"
-                        OnTaskDrop="@(EventCallback.Factory.Create<int>(this, index => HandleTaskDrop(null, column.Id, index)))"
-                        OnTaskDragLeave="@HandleTaskDragLeave"
-                        OnTaskDragStart="@HandleTaskDragStart"
-                        OnTaskDragEnd="@HandleTaskDragEnd"
-                        OnStartEditTask="@((data) => StartEditTask(data.taskId, data.name, data.priority))"
-                        OnSaveEditTask="@((data) => SaveTaskEdit(column.Id, data.taskId, data.name, data.priority, data.assignedUsers))"
-                        OnCancelEditTask="@CancelEditTask"
-                        OnDeleteTask="@((taskId) => DeleteTask(column.Id, taskId))"
-                        OnTaskAssignmentChange="@((data) => HandleTaskAssignmentChange(data.userId, data.isAssigned))"
-                        IsTaskBeingEditedByOther="@((taskId) => IsBeingEditedByOther("task", taskId))"
-                        GetTaskEditingUserName="@((taskId) => GetEditingUserName("task", taskId))" />
+            @for (int i = 0; i < sortedColumns.Count; i++)
+            {
+                var column = sortedColumns[i];
+                var index = i;
+                <div class="col-md-4 col-lg-3 column-drop-zone @(columnDragOverIndex == index ? "drag-over" : "")"
+                    @ondragover="@((e) => HandleColumnDragOver(e, index))"
+                    @ondrop="@((e) => HandleColumnDrop(e, index))"
+                    @ondragleave="HandleColumnDragLeave">
+                    <ColumnCard @key="column.Id" Column="@column"
+                                IsDragging="@(draggedColumn?.Id == column.Id)"
+                                IsBeingEditedByOther="@(IsBeingEditedByOther("column", column.Id))"
+                                EditingUserName="@(GetEditingUserName("column", column.Id))"
+                                IsEditing="@(editingColumnId == column.Id)"
+                                CanEdit="@canEdit"
+                                DropZoneClass="@GetDropZoneClass(column.Id)"
+                                IsDraggingTask="@(draggedTask != null)"
+                                IsReceivingDrop="@(taskDragOverColumnId == column.Id)"
+                                TaskDragOverIndex="@(taskDragOverColumnId == column.Id ? taskDragOverIndex : null)"
+                                DraggedTaskId="@draggedTask?.Id"
+                                EditingTaskId="@editingTaskId"
+                                AvailableUsers="@availableUsers"
+                                OnStartEdit="@(() => StartEditColumn(column.Id, column.Title))"
+                                OnSaveEdit="@((title) => SaveColumnEdit(column.Id, title))"
+                                OnCancelEdit="@CancelEditColumn"
+                                OnDelete="@(() => DeleteColumn(column.Id))"
+                                OnDragStart="@((e) => HandleColumnDragStart(e, column))"
+                                OnDragEnd="@HandleColumnDragEnd"
+                                OnCreateTask="@(() => ShowCreateTask(column.Id))"
+                                OnTaskDragOver="@(EventCallback.Factory.Create<int>(this, index => HandleTaskDragOver(null, column.Id, index)))"
+                                OnTaskDrop="@(EventCallback.Factory.Create<int>(this, index => HandleTaskDrop(null, column.Id, index)))"
+                                OnTaskDragLeave="@HandleTaskDragLeave"
+                                OnTaskDragStart="@HandleTaskDragStart"
+                                OnTaskDragEnd="@HandleTaskDragEnd"
+                                OnStartEditTask="@((data) => StartEditTask(data.taskId, data.name, data.priority))"
+                                OnSaveEditTask="@((data) => SaveTaskEdit(column.Id, data.taskId, data.name, data.priority, data.assignedUsers))"
+                                OnCancelEditTask="@CancelEditTask"
+                                OnDeleteTask="@((taskId) => DeleteTask(column.Id, taskId))"
+                                OnTaskAssignmentChange="@((data) => HandleTaskAssignmentChange(data.userId, data.isAssigned))"
+                                IsTaskBeingEditedByOther="@((taskId) => IsBeingEditedByOther("task", taskId))"
+                                GetTaskEditingUserName="@((taskId) => GetEditingUserName("task", taskId))" />
+                </div>
+            }
         </div>
-        }
-    </div>
     }
 </div>
 
@@ -175,6 +172,9 @@
     private string currentUserId = string.Empty;
     private string currentUserName = string.Empty;
 
+    private DateTime lastDragOverUpdate = DateTime.MinValue;
+    private List<ColumnDto> sortedColumns = new();
+
     protected override async Task OnParametersSetAsync()
     {
         // Get current user info
@@ -223,7 +223,13 @@
         finally
         {
             loading = false;
+            UpdateSortedColumns();
         }
+    }
+
+    private void UpdateSortedColumns()
+    {
+        sortedColumns = columns?.OrderBy(c => c.Position).ToList() ?? new();
     }
 
     private async Task SetupSignalR()
@@ -476,6 +482,10 @@
     {
         if (draggedTask != null && canEdit)
         {
+            var now = DateTime.UtcNow;
+            if ((now - lastDragOverUpdate).TotalMilliseconds < 50) return;
+            
+            lastDragOverUpdate = now;
             taskDragOverColumnId = columnId;
             taskDragOverIndex = taskIndex;
         }
@@ -507,27 +517,30 @@
             var sourceColumn = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id == draggedTask.Id) == true);
             var targetColumn = columns?.FirstOrDefault(c => c.Id == targetColumnId);
             if (sourceColumn == null || targetColumn == null) return;
-            if (sourceColumn.Id == targetColumnId)
-            {
-                if (sourceColumn.Tasks == null)
-                {
-                    return;
-                }
-                var currentIndex = sourceColumn.Tasks.FindIndex(t => t.Id == draggedTask.Id);
-                if (currentIndex == dropIndex || currentIndex == dropIndex - 1) return;
-            }
+            
+            var currentIndex = sourceColumn.Tasks?.FindIndex(t => t.Id == draggedTask.Id) ?? -1;
+            
+            // Skip if dropping in same position
+            if (sourceColumn.Id == targetColumnId && 
+                (currentIndex == dropIndex || currentIndex == dropIndex - 1)) return;
+            
             sourceColumn.Tasks?.Remove(draggedTask);
             targetColumn.Tasks ??= new List<TaskDto>();
             dropIndex = Math.Max(0, Math.Min(dropIndex, targetColumn.Tasks.Count));
             targetColumn.Tasks.Insert(dropIndex, draggedTask);
+            
             if (sourceColumn.Id != targetColumnId)
             {
                 draggedTask.ColumnId = targetColumnId;
             }
+            
+            // Only update positions for affected tasks
             var positions = new List<TaskPositionDto>();
+            
             if (sourceColumn.Id != targetColumnId && sourceColumn.Tasks != null)
             {
-                for (int i = 0; i < sourceColumn.Tasks.Count; i++)
+                // Only update from old position onwards
+                for (int i = Math.Max(0, currentIndex); i < sourceColumn.Tasks.Count; i++)
                 {
                     sourceColumn.Tasks[i].Position = i;
                     positions.Add(new TaskPositionDto 
@@ -538,9 +551,11 @@
                     });
                 }
             }
+            
             if (targetColumn.Tasks != null)
             {
-                for (int i = 0; i < targetColumn.Tasks.Count; i++)
+                // Only update from drop position onwards
+                for (int i = dropIndex; i < targetColumn.Tasks.Count; i++)
                 {
                     targetColumn.Tasks[i].Position = i;
                     targetColumn.Tasks[i].ColumnId = targetColumnId;
@@ -552,8 +567,8 @@
                     });
                 }
             }
+            
             await TaskService.ReorderTasksAsync(positions);
-            // Notify other users
             await BoardHub.NotifyTaskMovedAsync(new TaskMoveInfo
             {
                 TaskId = draggedTask.Id.ToString(),
@@ -643,6 +658,7 @@
         {
             draggedColumn = null;
             columnDragOverIndex = null;
+            UpdateSortedColumns();
         }
     }
 
@@ -723,6 +739,7 @@
                 if (column != null)
                 {
                     column.Position = moveInfo.NewPosition;
+                    UpdateSortedColumns();
                     StateHasChanged();
                 }
             }
