@@ -41,30 +41,18 @@
             }
             else if (boards.Any())
             {
-                <div class="boards-grid">
-                    @for (int i = 0; i < sortedBoards.Count; i++)
+                <div class="boards-grid" id="boardsGrid">
+                    @foreach (var board in sortedBoards)
                     {
-                        var board = sortedBoards[i];
-                        var index = i;
                         var isOwner = boardOwnership.GetValueOrDefault(board.Id, false);
 
-                        <div class="board-drop-zone @(dragOverIndex == index ? "drag-over" : "")"
-                             @ondragover="@((e) => HandleDragOver(e, index))"
-                             @ondragover:preventDefault="true"
-                             @ondrop="@((e) => HandleBoardDrop(e, index))"
-                             @ondragleave="HandleDragLeave">
-
-                            <div class="board-item @(draggedBoard?.Id == board.Id ? "dragging" : "")"
-                                 draggable="true"
-                                 @ondragstart="@((e) => HandleBoardDragStart(e, board))"
-                                 @ondragend="HandleBoardDragEnd">
-                                <BoardCard Board="board"
-                                           CanEdit="@(boardPermissions.ContainsKey(board.Id) && boardPermissions[board.Id])"
-                                           IsOwner="@isOwner"
-                                           OnUpdate="ShowUpdateModal"
-                                           OnDelete="DeleteBoard"
-                                           OnLeave="LeaveBoard" />
-                            </div>
+                        <div class="board-item" data-id="@board.Id" @key="board.Id">
+                            <BoardCard Board="board"
+                                       CanEdit="@(boardPermissions.ContainsKey(board.Id) && boardPermissions[board.Id])"
+                                       IsOwner="@isOwner"
+                                       OnUpdate="ShowUpdateModal"
+                                       OnDelete="DeleteBoard"
+                                       OnLeave="LeaveBoard" />
                         </div>
                     }
                 </div>
@@ -121,8 +109,8 @@
     private Guid? updatingBoardId;
     private Dictionary<Guid, bool> boardPermissions = new();
     private Dictionary<Guid, bool> boardOwnership = new();
-    private BoardDto? draggedBoard;
-    private int? dragOverIndex;
+    private DotNetObjectReference<Boards>? dotNetRef;
+    private bool isReordering = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -141,6 +129,62 @@
         catch
         {
             Navigation.NavigateTo("/login");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+        }
+
+        if (!isLoading && boards.Any())
+        {
+            await JSRuntime.InvokeVoidAsync("initBoardsSortable", "boardsGrid", dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnBoardReordered(string[] orderedIds)
+    {
+        try
+        {
+            var positions = orderedIds
+                .Select((id, index) => new BoardPositionDto
+                {
+                    Id = Guid.Parse(id),
+                    Position = index
+                })
+                .ToList();
+
+            await BoardService.ReorderBoardsAsync(positions);
+
+            // Create a new list to force Blazor to detect changes
+            var updatedBoards = new List<BoardDto>();
+            
+            foreach (var pos in positions)
+            {
+                var board = boards.FirstOrDefault(b => b.Id == pos.Id);
+                if (board != null)
+                {
+                    // Create a new instance with updated position
+                    updatedBoards.Add(new BoardDto 
+                    { 
+                        Id = board.Id,
+                        Name = board.Name,
+                        Position = pos.Position
+                    });
+                }
+            }
+            
+            boards = updatedBoards;
+            StateHasChanged();
+            BoardState.NotifyBoardsChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Reorder error: {ex.Message}");
         }
     }
 
@@ -213,10 +257,8 @@
         {
             var createdBoard = await BoardService.CreateBoardAsync(newBoard);
             
-            // Reload all boards to get current state
             await LoadBoards();
             
-            // Now reorder with new board at position 0
             var positions = sortedBoards
                 .Select((b, i) => new BoardPositionDto { 
                     Id = b.Id, 
@@ -225,7 +267,7 @@
                 .ToList();
 
             await BoardService.ReorderBoardsAsync(positions);
-            await LoadBoards(); // Refresh again after reorder
+            await LoadBoards();
             
             HideCreateModal();
             BoardState.NotifyBoardsChanged();
@@ -306,65 +348,8 @@
         }
     }
 
-    private void HandleBoardDragStart(DragEventArgs e, BoardDto board)
+    public void Dispose()
     {
-        draggedBoard = board;
-    }
-
-    private void HandleDragOver(DragEventArgs e, int index)
-    {
-        if (draggedBoard != null)
-        {
-            dragOverIndex = index;
-        }
-    }
-
-    private void HandleDragLeave()
-    {
-        dragOverIndex = null;
-    }
-
-    private void HandleBoardDragEnd()
-    {
-        draggedBoard = null;
-        dragOverIndex = null;
-    }
-
-    private async Task HandleBoardDrop(DragEventArgs e, int dropIndex)
-    {
-        if (draggedBoard is null) return;
-
-        try
-        {
-            var currentIndex = sortedBoards.FindIndex(b => b.Id == draggedBoard.Id);
-            if (currentIndex == dropIndex) return;
-
-            // Create new ordered list
-            var newOrder = sortedBoards.ToList();
-            newOrder.RemoveAt(currentIndex);
-            newOrder.Insert(dropIndex, draggedBoard);
-
-            // Generate position updates
-            var positions = newOrder
-                .Select((b, i) => new BoardPositionDto { Id = b.Id, Position = i })
-                .ToList();
-
-            await BoardService.ReorderBoardsAsync(positions);
-            
-            // Update local positions
-            for (int i = 0; i < newOrder.Count; i++)
-            {
-                newOrder[i].Position = i;
-            }
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("console.error", $"Reorder error: {ex.Message}");
-        }
-        finally
-        {
-            draggedBoard = null;
-            dragOverIndex = null;
-        }
+        dotNetRef?.Dispose();
     }
 }
