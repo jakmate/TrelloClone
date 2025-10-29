@@ -1,12 +1,7 @@
 @using TrelloClone.Shared.DTOs
 
-<FormModal Show="@Show" 
-           Title="Create New Column"
-           Model="@ColumnModel"
-           OnCancel="@OnCancel"
-           OnSubmit="@OnSubmit"
-           IsSubmitting="@IsSubmitting"
-           SubmitText="Create Column">
+<FormModal Show="@Show" Title="Create New Column" Model="@ColumnModel" OnCancel="@OnCancel" OnSubmit="@OnSubmit"
+    IsSubmitting="@IsSubmitting" SubmitText="Create Column">
     <div class="mb-3">
         <label for="columnTitle" class="form-label">Column Title</label>
         <InputText id="columnTitle" class="form-control" @bind-Value="ColumnModel.Title" />

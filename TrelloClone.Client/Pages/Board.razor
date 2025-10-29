@@ -8,6 +8,8 @@
 @inject TaskService TaskService
 @inject IInvitationService InvitationService
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
 <div class="container-fluid p-3">
     @if (loading)
     {
@@ -46,14 +48,16 @@
                         </div>
                     </div>
                 </div>
-            
+
                 <div class="board-actions">
-                    @if (canEdit) {
+                    @if (canEdit)
+                    {
                         <button class="btn btn-primary" @onclick="ShowCreateColumn">
                             <i class="bi bi-plus-lg"></i> Add Column
                         </button>
                     }
-                    @if (canInvite) {
+                    @if (canInvite)
+                    {
                         <button class="btn btn-outline-primary" @onclick="ShowInviteUser">
                             <i class="bi bi-person-plus"></i> Invite User
                         </button>
@@ -61,69 +65,35 @@
                 </div>
             </div>
         </div>
-        <div class="row g-3 columns-container @(draggedColumn != null || draggedTask != null ? "dragging-active" : "")" @ondragover:preventDefault="true">
-            @for (int i = 0; i < sortedColumns.Count; i++)
+
+        <div class="columns-container-sortable" id="columnsContainer">
+            @foreach (var column in sortedColumns)
             {
-                var column = sortedColumns[i];
-                var index = i;
-                <div class="col-md-4 col-lg-3 column-drop-zone @(columnDragOverIndex == index ? "drag-over" : "")"
-                    @ondragover="@((e) => HandleColumnDragOver(e, index))"
-                    @ondrop="@((e) => HandleColumnDrop(e, index))"
-                    @ondragleave="HandleColumnDragLeave">
-                    <ColumnCard @key="column.Id" Column="@column"
-                                IsDragging="@(draggedColumn?.Id == column.Id)"
-                                IsBeingEditedByOther="@(IsBeingEditedByOther("column", column.Id))"
-                                EditingUserName="@(GetEditingUserName("column", column.Id))"
-                                IsEditing="@(editingColumnId == column.Id)"
-                                CanEdit="@canEdit"
-                                DropZoneClass="@GetDropZoneClass(column.Id)"
-                                IsDraggingTask="@(draggedTask != null)"
-                                IsReceivingDrop="@(taskDragOverColumnId == column.Id)"
-                                TaskDragOverIndex="@(taskDragOverColumnId == column.Id ? taskDragOverIndex : null)"
-                                DraggedTaskId="@draggedTask?.Id"
-                                EditingTaskId="@editingTaskId"
-                                AvailableUsers="@availableUsers"
-                                OnStartEdit="@(() => StartEditColumn(column.Id, column.Title))"
-                                OnSaveEdit="@((title) => SaveColumnEdit(column.Id, title))"
-                                OnCancelEdit="@CancelEditColumn"
-                                OnDelete="@(() => DeleteColumn(column.Id))"
-                                OnDragStart="@((e) => HandleColumnDragStart(e, column))"
-                                OnDragEnd="@HandleColumnDragEnd"
-                                OnCreateTask="@(() => ShowCreateTask(column.Id))"
-                                OnTaskDragOver="@(EventCallback.Factory.Create<int>(this, index => HandleTaskDragOver(null, column.Id, index)))"
-                                OnTaskDrop="@(EventCallback.Factory.Create<int>(this, index => HandleTaskDrop(null, column.Id, index)))"
-                                OnTaskDragLeave="@HandleTaskDragLeave"
-                                OnTaskDragStart="@HandleTaskDragStart"
-                                OnTaskDragEnd="@HandleTaskDragEnd"
-                                OnStartEditTask="@((data) => StartEditTask(data.taskId, data.name, data.priority))"
-                                OnSaveEditTask="@((data) => SaveTaskEdit(column.Id, data.taskId, data.name, data.priority, data.assignedUsers))"
-                                OnCancelEditTask="@CancelEditTask"
-                                OnDeleteTask="@((taskId) => DeleteTask(column.Id, taskId))"
-                                OnTaskAssignmentChange="@((data) => HandleTaskAssignmentChange(data.userId, data.isAssigned))"
-                                IsTaskBeingEditedByOther="@((taskId) => IsBeingEditedByOther("task", taskId))"
-                                GetTaskEditingUserName="@((taskId) => GetEditingUserName("task", taskId))" />
+                <div class="column-sortable-item" data-column-id="@column.Id" @key="column.Id">
+                    <ColumnCard Column="@column" IsBeingEditedByOther="@(IsBeingEditedByOther("column", column.Id))"
+                        EditingUserName="@(GetEditingUserName("column", column.Id))" IsEditing="@(editingColumnId == column.Id)"
+                        EditingTaskId="@editingTaskId" CanEdit="@canEdit" AvailableUsers="@availableUsers"
+                        OnStartEdit="@(() => StartEditColumn(column.Id, column.Title))"
+                        OnSaveEdit="@((title) => SaveColumnEdit(column.Id, title))" OnCancelEdit="@CancelEditColumn"
+                        OnDelete="@(() => DeleteColumn(column.Id))" OnCreateTask="@(() => ShowCreateTask(column.Id))"
+                        OnStartEditTask="@((data) => StartEditTask(data.taskId, data.name, data.priority))"
+                        OnSaveEditTask="@((data) => SaveTaskEdit(column.Id, data.taskId, data.name, data.priority, data.assignedUsers))"
+                        OnCancelEditTask="@CancelEditTask" OnDeleteTask="@((taskId) => DeleteTask(column.Id, taskId))"
+                        OnTaskAssignmentChange="@((data) => HandleTaskAssignmentChange(data.userId, data.isAssigned))"
+                        IsTaskBeingEditedByOther="@((taskId) => IsBeingEditedByOther("task", taskId))"
+                        GetTaskEditingUserName="@((taskId) => GetEditingUserName("task", taskId))" />
                 </div>
             }
         </div>
     }
 </div>
 
-<TaskModal Show="@showCreateTaskModal"
-           TaskModel="@newTaskRequest" 
-           OnCancel="@HideCreateTask"
-           OnSubmit="@HandleCreateTask"
-           IsSubmitting="@creatingTask"
-           AvailableUsers="@availableUsers" />
-<ColumnModal Show="@showCreateColumnModal"
-             ColumnModel="@newColumnRequest"
-             OnCancel="@HideCreateColumn"
-             OnSubmit="@HandleCreateColumn"
-             IsSubmitting="@creatingColumn" />
-<InviteModal Show="@showInviteModal"
-             InviteModel="@inviteRequest"
-             OnCancel="@HideInviteUser"
-             OnSubmit="@HandleSendInvite"
-             IsSubmitting="@sendingInvite" />
+<TaskModal Show="@showCreateTaskModal" TaskModel="@newTaskRequest" OnCancel="@HideCreateTask"
+    OnSubmit="@HandleCreateTask" IsSubmitting="@creatingTask" AvailableUsers="@availableUsers" />
+<ColumnModal Show="@showCreateColumnModal" ColumnModel="@newColumnRequest" OnCancel="@HideCreateColumn"
+    OnSubmit="@HandleCreateColumn" IsSubmitting="@creatingColumn" />
+<InviteModal Show="@showInviteModal" InviteModel="@inviteRequest" OnCancel="@HideInviteUser"
+    OnSubmit="@HandleSendInvite" IsSubmitting="@sendingInvite" />
 @code {
     [Parameter] public Guid BoardId { get; set; }
     private List<ColumnDto>? columns;
@@ -153,13 +123,6 @@
     private bool canEdit;
     private bool canInvite;
 
-    // Drag and drop fields
-    private ColumnDto? draggedColumn;
-    private int? columnDragOverIndex;
-    private TaskDto? draggedTask;
-    private Guid? taskDragOverColumnId;
-    private int? taskDragOverIndex;
-
     private CreateTaskRequest newTaskRequest = new CreateTaskRequest();
     private CreateColumnRequest newColumnRequest = new CreateColumnRequest();
     private CreateInvitationRequest inviteRequest = new CreateInvitationRequest();
@@ -167,13 +130,12 @@
     [Inject] private ILogger<Board> Logger { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     private HashSet<string> onlineUsers = new();
-    private HashSet<string> draggingUsers = new();
     private Dictionary<string, string> editingUsers = new(); // itemId -> userName
     private string currentUserId = string.Empty;
     private string currentUserName = string.Empty;
 
-    private DateTime lastDragOverUpdate = DateTime.MinValue;
     private List<ColumnDto> sortedColumns = new();
+    private DotNetObjectReference<Board>? dotNetRef;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -185,6 +147,187 @@
         canInvite = await BoardService.CanInviteAsync(BoardId);
         await LoadColumns();
         await SetupSignalR();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+        }
+
+        if (!loading && columns?.Any() == true)
+        {
+            await JSRuntime.InvokeVoidAsync("initColumnsSortable", "columnsContainer", dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnColumnsReordered(string[] orderedColumnIds)
+    {
+        if (!canEdit) return;
+
+        try
+        {
+            var positions = orderedColumnIds
+            .Select((id, index) => new ColumnPositionDto
+            {
+                Id = Guid.Parse(id),
+                Position = index
+            })
+            .ToList();
+
+            await ColumnService.ReorderColumnsAsync(BoardId, positions);
+
+            // Update local positions
+            foreach (var pos in positions)
+            {
+                var column = columns?.FirstOrDefault(c => c.Id == pos.Id);
+                if (column != null)
+                {
+                    column.Position = pos.Position;
+                }
+            }
+
+            UpdateSortedColumns();
+            StateHasChanged();
+
+            await BoardHub.NotifyColumnMovedAsync(new ColumnMoveInfo
+            {
+                ColumnId = orderedColumnIds.Last(),
+                NewPosition = positions.Count - 1,
+                UserId = currentUserId,
+                UserName = currentUserName
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error reordering columns");
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnTasksReordered(string columnId, string[] orderedTaskIds)
+    {
+        if (!canEdit) return;
+
+        try
+        {
+            var columnGuid = Guid.Parse(columnId);
+            var positions = orderedTaskIds
+            .Select((id, index) => new TaskPositionDto
+            {
+                Id = Guid.Parse(id),
+                Position = index,
+                ColumnId = columnGuid
+            })
+            .ToList();
+
+            await TaskService.ReorderTasksAsync(positions);
+
+            // Update local positions
+            var column = columns?.FirstOrDefault(c => c.Id == columnGuid);
+            if (column?.Tasks != null)
+            {
+                foreach (var pos in positions)
+                {
+                    var task = column.Tasks.FirstOrDefault(t => t.Id == pos.Id);
+                    if (task != null)
+                    {
+                        task.Position = pos.Position;
+                    }
+                }
+
+                // Reorder tasks locally
+                column.Tasks = column.Tasks
+                .OrderBy(t => positions.FindIndex(p => p.Id == t.Id))
+                .ToList();
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error reordering tasks");
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnTaskMovedBetweenColumns(string taskId, string fromColumnId, string toColumnId, int newIndex)
+    {
+        if (!canEdit) return;
+
+        try
+        {
+            var taskGuid = Guid.Parse(taskId);
+            var fromColumnGuid = Guid.Parse(fromColumnId);
+            var toColumnGuid = Guid.Parse(toColumnId);
+
+            var sourceColumn = columns?.FirstOrDefault(c => c.Id == fromColumnGuid);
+            var targetColumn = columns?.FirstOrDefault(c => c.Id == toColumnGuid);
+            var task = sourceColumn?.Tasks?.FirstOrDefault(t => t.Id == taskGuid);
+
+            if (task == null || sourceColumn == null || targetColumn == null) return;
+
+            // Remove from source column
+            sourceColumn.Tasks?.Remove(task);
+
+            // Add to target column
+            targetColumn.Tasks ??= new List<TaskDto>();
+            var insertIndex = Math.Min(newIndex, targetColumn.Tasks.Count);
+            targetColumn.Tasks.Insert(insertIndex, task);
+            task.ColumnId = toColumnGuid;
+
+            // Update positions for both columns
+            var positions = new List<TaskPositionDto>();
+
+            if (sourceColumn.Tasks != null)
+            {
+                for (int i = 0; i < sourceColumn.Tasks.Count; i++)
+                {
+                    sourceColumn.Tasks[i].Position = i;
+                    positions.Add(new TaskPositionDto
+                    {
+                        Id = sourceColumn.Tasks[i].Id,
+                        Position = i,
+                        ColumnId = sourceColumn.Id
+                    });
+                }
+            }
+
+            if (targetColumn.Tasks != null)
+            {
+                for (int i = 0; i < targetColumn.Tasks.Count; i++)
+                {
+                    targetColumn.Tasks[i].Position = i;
+                    positions.Add(new TaskPositionDto
+                    {
+                        Id = targetColumn.Tasks[i].Id,
+                        Position = i,
+                        ColumnId = targetColumn.Id
+                    });
+                }
+            }
+
+            await TaskService.ReorderTasksAsync(positions);
+
+            await BoardHub.NotifyTaskMovedAsync(new TaskMoveInfo
+            {
+                TaskId = taskId,
+                FromColumnId = fromColumnId,
+                ToColumnId = toColumnId,
+                NewPosition = newIndex,
+                UserId = currentUserId,
+                UserName = currentUserName
+            });
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error moving task between columns");
+            await LoadColumns(); // Reload on error
+        }
     }
 
     private async Task LoadColumns()
@@ -199,7 +342,7 @@
                 {
                     column.Tasks = await TaskService.GetTasksForColumnAsync(column.Id);
                 }
-            
+
                 // Load available users for the board once
                 if (columns.Any())
                 {
@@ -239,11 +382,7 @@
             // Subscribe to events
             BoardHub.UserJoinedBoard += OnUserJoinedBoard;
             BoardHub.UserLeftBoard += OnUserLeftBoard;
-            BoardHub.TaskDragStarted += OnTaskDragStarted;
-            BoardHub.TaskDragEnded += OnTaskDragEnded;
             BoardHub.TaskMoved += OnTaskMoved;
-            BoardHub.ColumnDragStarted += OnColumnDragStarted;
-            BoardHub.ColumnDragEnded += OnColumnDragEnded;
             BoardHub.ColumnMoved += OnColumnMoved;
             BoardHub.TaskCreated += OnTaskCreated;
             BoardHub.TaskUpdated += OnTaskUpdated;
@@ -285,6 +424,7 @@
             creatingColumn = true;
             var newColumn = await ColumnService.CreateColumnAsync(newColumnRequest);
             columns?.Add(newColumn);
+            UpdateSortedColumns();
             await BoardHub.NotifyColumnCreatedAsync(newColumn);
             HideCreateColumn();
         }
@@ -304,6 +444,7 @@
         {
             await ColumnService.DeleteColumnAsync(BoardId, columnId);
             columns?.RemoveAll(c => c.Id == columnId);
+            UpdateSortedColumns();
             await BoardHub.NotifyColumnDeletedAsync(columnId.ToString());
         }
         catch (Exception ex)
@@ -325,7 +466,7 @@
             ColumnId = columnId,
             AssignedUserIds = new List<Guid>()
         };
-    
+
         // Load available users for this column's board
         try
         {
@@ -336,7 +477,7 @@
             Console.WriteLine($"Error loading available users: {ex.Message}");
             availableUsers = new List<UserDto>();
         }
-    
+
         showCreateTaskModal = true;
     }
 
@@ -462,9 +603,9 @@
         {
             sendingInvite = true;
             await InvitationService.SendInvitation(
-                BoardId, 
-                inviteRequest.Username.Trim(), 
-                inviteRequest.PermissionLevel
+            BoardId,
+            inviteRequest.Username.Trim(),
+            inviteRequest.PermissionLevel
             );
             HideInviteUser();
         }
@@ -475,190 +616,6 @@
         finally
         {
             sendingInvite = false;
-        }
-    }
-
-    private void HandleTaskDragOver(DragEventArgs e, Guid columnId, int taskIndex)
-    {
-        if (draggedTask != null && canEdit)
-        {
-            var now = DateTime.UtcNow;
-            if ((now - lastDragOverUpdate).TotalMilliseconds < 50) return;
-            
-            lastDragOverUpdate = now;
-            taskDragOverColumnId = columnId;
-            taskDragOverIndex = taskIndex;
-        }
-    }
-
-    private void HandleTaskDragLeave()
-    {
-        taskDragOverColumnId = null;
-        taskDragOverIndex = null;
-    }
-
-    private async Task HandleTaskDragEnd()
-    {
-        if (draggedTask != null)
-        {
-            await BoardHub.NotifyTaskDragEndedAsync(draggedTask.Id.ToString());
-        }
-        draggedTask = null;
-        taskDragOverColumnId = null;
-        taskDragOverIndex = null;
-        StateHasChanged();
-    }
-
-    private async Task HandleTaskDrop(DragEventArgs e, Guid targetColumnId, int dropIndex)
-    {
-        if (draggedTask == null || !canEdit) return;
-        try
-        {
-            var sourceColumn = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id == draggedTask.Id) == true);
-            var targetColumn = columns?.FirstOrDefault(c => c.Id == targetColumnId);
-            if (sourceColumn == null || targetColumn == null) return;
-            
-            var currentIndex = sourceColumn.Tasks?.FindIndex(t => t.Id == draggedTask.Id) ?? -1;
-            
-            // Skip if dropping in same position
-            if (sourceColumn.Id == targetColumnId && 
-                (currentIndex == dropIndex || currentIndex == dropIndex - 1)) return;
-            
-            sourceColumn.Tasks?.Remove(draggedTask);
-            targetColumn.Tasks ??= new List<TaskDto>();
-            dropIndex = Math.Max(0, Math.Min(dropIndex, targetColumn.Tasks.Count));
-            targetColumn.Tasks.Insert(dropIndex, draggedTask);
-            
-            if (sourceColumn.Id != targetColumnId)
-            {
-                draggedTask.ColumnId = targetColumnId;
-            }
-            
-            // Only update positions for affected tasks
-            var positions = new List<TaskPositionDto>();
-            
-            if (sourceColumn.Id != targetColumnId && sourceColumn.Tasks != null)
-            {
-                // Only update from old position onwards
-                for (int i = Math.Max(0, currentIndex); i < sourceColumn.Tasks.Count; i++)
-                {
-                    sourceColumn.Tasks[i].Position = i;
-                    positions.Add(new TaskPositionDto 
-                    { 
-                        Id = sourceColumn.Tasks[i].Id, 
-                        Position = i,
-                        ColumnId = sourceColumn.Id
-                    });
-                }
-            }
-            
-            if (targetColumn.Tasks != null)
-            {
-                // Only update from drop position onwards
-                for (int i = dropIndex; i < targetColumn.Tasks.Count; i++)
-                {
-                    targetColumn.Tasks[i].Position = i;
-                    targetColumn.Tasks[i].ColumnId = targetColumnId;
-                    positions.Add(new TaskPositionDto 
-                    { 
-                        Id = targetColumn.Tasks[i].Id, 
-                        Position = i,
-                        ColumnId = targetColumnId
-                    });
-                }
-            }
-            
-            await TaskService.ReorderTasksAsync(positions);
-            await BoardHub.NotifyTaskMovedAsync(new TaskMoveInfo
-            {
-                TaskId = draggedTask.Id.ToString(),
-                FromColumnId = sourceColumn.Id.ToString(),
-                ToColumnId = targetColumnId.ToString(),
-                NewPosition = dropIndex,
-                UserId = currentUserId,
-                UserName = currentUserName
-            });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error moving task: {ex.Message}");
-            await LoadColumns();
-        }
-        finally
-        {
-            draggedTask = null;
-            taskDragOverColumnId = null;
-            taskDragOverIndex = null;
-        }
-    }
-
-    private string GetDropZoneClass(Guid columnId)
-    {
-        return draggedTask != null ? "drop-zone-active" : "";
-    }
-
-    private void HandleColumnDragStart(DragEventArgs e, ColumnDto column)
-    {
-        if (!canEdit) return;
-        draggedColumn = column;
-    }
-
-    private void HandleColumnDragOver(DragEventArgs e, int index)
-    {
-        if (draggedColumn != null && canEdit)
-        {
-            columnDragOverIndex = index;
-        }
-    }
-
-    private void HandleColumnDragLeave()
-    {
-        columnDragOverIndex = null;
-    }
-
-    private void HandleColumnDragEnd()
-    {
-        draggedColumn = null;
-        columnDragOverIndex = null;
-    }
-
-    private async Task HandleColumnDrop(DragEventArgs e, int dropIndex)
-    {
-        if (draggedColumn == null || !canEdit) return;
-        try
-        {
-            var sortedColumns = columns!.OrderBy(c => c.Position).ToList();
-            var draggedIndex = sortedColumns.FindIndex(c => c.Id == draggedColumn.Id);
-            if (dropIndex >= sortedColumns.Count) 
-            {
-                dropIndex = sortedColumns.Count - 1;
-            }
-            if (draggedIndex == dropIndex) return;
-            sortedColumns.RemoveAt(draggedIndex);
-            sortedColumns.Insert(dropIndex, draggedColumn);
-            var positions = new List<ColumnPositionDto>();
-            for (int i = 0; i < sortedColumns.Count; i++)
-            {
-                sortedColumns[i].Position = i;
-                positions.Add(new ColumnPositionDto 
-                { 
-                    Id = sortedColumns[i].Id, 
-                    Position = i 
-                });
-            }
-            await ColumnService.ReorderColumnsAsync(BoardId, positions);
-            columns = sortedColumns;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error reordering columns: {ex.Message}");
-            await LoadColumns();
-        }
-        finally
-        {
-            draggedColumn = null;
-            columnDragOverIndex = null;
-            UpdateSortedColumns();
         }
     }
 
@@ -675,22 +632,6 @@
     private void OnUserLeftBoard(string userId, string userName)
     {
         onlineUsers.Remove(userName);
-        draggingUsers.Remove(userId);
-        InvokeAsync(StateHasChanged);
-    }
-
-    private void OnTaskDragStarted(TaskDragInfo dragInfo)
-    {
-        if (dragInfo.UserId != currentUserId)
-        {
-            draggingUsers.Add($"{dragInfo.UserName} is dragging task");
-            InvokeAsync(StateHasChanged);
-        }
-    }
-
-    private void OnTaskDragEnded(string taskId)
-    {
-        draggingUsers.Clear();
         InvokeAsync(StateHasChanged);
     }
 
@@ -795,6 +736,7 @@
         InvokeAsync(() =>
         {
             columns?.Add(column);
+            UpdateSortedColumns();
             StateHasChanged();
         });
     }
@@ -817,6 +759,7 @@
         InvokeAsync(() =>
         {
             columns?.RemoveAll(c => c.Id.ToString() == columnId);
+            UpdateSortedColumns();
             StateHasChanged();
         });
     }
@@ -836,10 +779,11 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnTaskAssignmentUpdating(string taskId, string userId, bool isAssigned, string updatedByUserId, string updatedByUserName)
+    private void OnTaskAssignmentUpdating(string taskId, string userId, bool isAssigned, string updatedByUserId, string
+    updatedByUserName)
     {
         if (updatedByUserId == currentUserId) return; // Don't process our own updates
-    
+
         InvokeAsync(() =>
         {
             try
@@ -847,7 +791,7 @@
                 // Find the task being edited by someone else
                 var column = columns?.FirstOrDefault(c => c.Tasks?.Any(t => t.Id.ToString() == taskId) == true);
                 var task = column?.Tasks?.FirstOrDefault(t => t.Id.ToString() == taskId);
-            
+
                 if (task != null && Guid.TryParse(userId, out var userGuid))
                 {
                     if (isAssigned)
@@ -891,11 +835,7 @@
             // Unsubscribe from events
             BoardHub.UserJoinedBoard -= OnUserJoinedBoard;
             BoardHub.UserLeftBoard -= OnUserLeftBoard;
-            BoardHub.TaskDragStarted -= OnTaskDragStarted;
-            BoardHub.TaskDragEnded -= OnTaskDragEnded;
             BoardHub.TaskMoved -= OnTaskMoved;
-            BoardHub.ColumnDragStarted -= OnColumnDragStarted;
-            BoardHub.ColumnDragEnded -= OnColumnDragEnded;
             BoardHub.ColumnMoved -= OnColumnMoved;
             BoardHub.TaskCreated -= OnTaskCreated;
             BoardHub.TaskUpdated -= OnTaskUpdated;
@@ -906,7 +846,9 @@
             BoardHub.UserStartedEditing -= OnUserStartedEditing;
             BoardHub.UserStoppedEditing -= OnUserStoppedEditing;
             BoardHub.TaskAssignmentUpdating -= OnTaskAssignmentUpdating;
+
             await BoardHub.LeaveBoardAsync(BoardId.ToString());
+            dotNetRef?.Dispose();
         }
         catch (Exception ex)
         {
@@ -914,42 +856,24 @@
         }
     }
 
-    private void OnColumnDragStarted(ColumnDragInfo dragInfo)
-    {
-        if (dragInfo.UserId != currentUserId)
-        {
-            draggingUsers.Add($"{dragInfo.UserName} is dragging column");
-            InvokeAsync(StateHasChanged);
-        }
-    }
-
-    private void OnColumnDragEnded(string columnId)
-    {
-        if (draggingUsers.Count > 0)
-        {
-            draggingUsers.Clear();
-            InvokeAsync(StateHasChanged);
-        }
-    }
-
     private async Task SaveColumnEdit(Guid columnId, string title)
     {
         if (string.IsNullOrWhiteSpace(title)) return;
-        
+
         try
         {
             var request = new UpdateColumnRequest { Title = title.Trim() };
             var updatedColumn = await ColumnService.UpdateColumnAsync(BoardId, columnId, request);
-            
+
             var column = columns?.FirstOrDefault(c => c.Id == columnId);
             if (column != null)
             {
                 column.Title = updatedColumn.Title;
             }
-            
+
             await BoardHub.NotifyColumnUpdatedAsync(updatedColumn);
             await BoardHub.NotifyUserStoppedEditingAsync("column", columnId.ToString());
-            
+
             editingColumnId = Guid.Empty;
         }
         catch (Exception ex)
@@ -958,10 +882,11 @@
         }
     }
 
-    private async Task SaveTaskEdit(Guid columnId, Guid taskId, string name, PriorityLevel priority, List<Guid> assignedUserIds)
+    private async Task SaveTaskEdit(Guid columnId, Guid taskId, string name, PriorityLevel priority, List<Guid>
+    assignedUserIds)
     {
         if (string.IsNullOrWhiteSpace(name)) return;
-        
+
         try
         {
             var request = new UpdateTaskRequest
@@ -970,9 +895,9 @@
                 Priority = priority,
                 AssignedUserIds = assignedUserIds
             };
-            
+
             var updatedTask = await TaskService.UpdateTaskAsync(columnId, taskId, request);
-            
+
             var column = columns?.FirstOrDefault(c => c.Id == columnId);
             var task = column?.Tasks?.FirstOrDefault(t => t.Id == taskId);
             if (task != null)
@@ -981,10 +906,10 @@
                 task.Priority = updatedTask.Priority;
                 task.AssignedUserIds = updatedTask.AssignedUserIds;
             }
-            
+
             await BoardHub.NotifyTaskUpdatedAsync(updatedTask);
             await BoardHub.NotifyUserStoppedEditingAsync("task", taskId.ToString());
-            
+
             editingTaskId = Guid.Empty;
             editTaskAssignedUserIds = new List<Guid>();
         }
@@ -997,13 +922,5 @@
     private async Task HandleTaskAssignmentChange(Guid userId, bool isAssigned)
     {
         await BoardHub.NotifyTaskAssignmentUpdatingAsync(editingTaskId.ToString(), userId, isAssigned);
-    }
-
-    private async Task HandleTaskDragStart(TaskDto task)
-    {
-        if (!canEdit) return;
-        draggedTask = task;
-        draggedColumn = null;
-        await BoardHub.NotifyTaskDragStartedAsync(task.Id.ToString(), currentUserId, currentUserName);
     }
 }

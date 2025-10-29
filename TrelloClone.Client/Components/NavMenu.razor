@@ -92,7 +92,7 @@
     protected override async Task OnInitializedAsync()
     {
         BoardState.OnBoardsChanged += RefreshBoards;
-        
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (authState.User.Identity?.IsAuthenticated == true)
         {
@@ -113,8 +113,8 @@
         if (string.IsNullOrWhiteSpace(name)) return "??";
 
         var initials = string.Concat(name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Take(2)
-            .Select(word => word.Length > 0 ? word[0].ToString().ToUpper() : "")
+        .Take(2)
+        .Select(word => word.Length > 0 ? word[0].ToString().ToUpper() : "")
         );
 
         return initials.Length > 0 ? initials : "??";
