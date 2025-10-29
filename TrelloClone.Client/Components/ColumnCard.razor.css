@@ -1,3 +1,12 @@
+.tasks-container-sortable {
+    min-height: 100px;
+    margin: 0.5rem 0;
+}
+
+.task-sortable-item {
+    margin-bottom: 0.5rem;
+}
+
 .column-item {
     transition: var(--transition);
     border-radius: var(--border-radius);

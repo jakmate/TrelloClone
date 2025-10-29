@@ -136,12 +136,20 @@
     gap: 8px;
 }
 
-.columns-container {
+.columns-container-sortable {
     display: flex;
-    gap: 16px;
     overflow-x: auto;
-    padding-bottom: 1rem;
-    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.5rem;
+    min-height: 400px;
+}
+
+.column-sortable-item {
+    min-width: 300px;
+    max-width: 300px;
+    background: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 1rem;
 }
 
 .column-drop-zone {

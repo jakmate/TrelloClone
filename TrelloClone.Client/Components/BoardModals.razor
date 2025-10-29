@@ -1,12 +1,7 @@
 @using TrelloClone.Shared.DTOs
 
-<FormModal Show="@ShowCreateModal" 
-           Title="Create New Board"
-           Model="@NewBoard"
-           OnCancel="@OnHideCreate"
-           OnSubmit="@OnCreateBoard"
-           IsSubmitting="@IsCreating"
-           SubmitText="Create Board">
+<FormModal Show="@ShowCreateModal" Title="Create New Board" Model="@NewBoard" OnCancel="@OnHideCreate"
+    OnSubmit="@OnCreateBoard" IsSubmitting="@IsCreating" SubmitText="Create Board">
     <div class="form-group">
         <label for="boardName">Board Name</label>
         <InputText id="boardName" class="form-control" @bind-Value="NewBoard.Name" placeholder="Enter board name" />
@@ -14,13 +9,8 @@
     </div>
 </FormModal>
 
-<FormModal Show="@ShowUpdateModal" 
-           Title="Update Board"
-           Model="@UpdateRequest"
-           OnCancel="@OnHideUpdate"
-           OnSubmit="@OnUpdateBoard"
-           IsSubmitting="@IsUpdating"
-           SubmitText="Update Board">
+<FormModal Show="@ShowUpdateModal" Title="Update Board" Model="@UpdateRequest" OnCancel="@OnHideUpdate"
+    OnSubmit="@OnUpdateBoard" IsSubmitting="@IsUpdating" SubmitText="Update Board">
     <div class="form-group">
         <label for="updateBoardName">Board Name</label>
         <InputText id="updateBoardName" class="form-control" @bind-Value="UpdateRequest.Name" />

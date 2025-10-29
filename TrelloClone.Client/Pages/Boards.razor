@@ -110,7 +110,6 @@
     private Dictionary<Guid, bool> boardPermissions = new();
     private Dictionary<Guid, bool> boardOwnership = new();
     private DotNetObjectReference<Boards>? dotNetRef;
-    private bool isReordering = false;
 
     protected override async Task OnInitializedAsync()
     {

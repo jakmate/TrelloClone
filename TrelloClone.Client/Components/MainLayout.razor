@@ -59,12 +59,12 @@
 
 @code {
     private bool sidebarCollapsed = true;
-    
+
     [Inject] private IAuthService AuthService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    
+
     private void ToggleSidebar() => sidebarCollapsed = !sidebarCollapsed;
-    
+
     private async Task Logout()
     {
         await AuthService.LogoutAsync();

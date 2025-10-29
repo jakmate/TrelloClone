@@ -1,12 +1,7 @@
 @using TrelloClone.Shared.DTOs
 
-<FormModal Show="@Show" 
-           Title="Invite User to Board"
-           Model="@InviteModel"
-           OnCancel="@OnCancel"
-           OnSubmit="@OnSubmit"
-           IsSubmitting="@IsSubmitting"
-           SubmitText="Send Invite">
+<FormModal Show="@Show" Title="Invite User to Board" Model="@InviteModel" OnCancel="@OnCancel" OnSubmit="@OnSubmit"
+    IsSubmitting="@IsSubmitting" SubmitText="Send Invite">
     <div class="mb-3">
         <label for="username" class="form-label">Username</label>
         <InputText id="username" class="form-control" @bind-Value="InviteModel.Username" />
