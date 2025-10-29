@@ -103,4 +103,89 @@ public class AuthController : ControllerBase
         // If we get here, the token is valid (passed through [Authorize])
         return Ok(new { valid = true });
     }
+
+    [HttpPut("update-user")]
+    [Authorize]
+    public async Task<ActionResult<UserDto>> UpdateUser([FromBody] UpdateUserRequest request)
+    {
+        var userId = GetUserIdFromClaims();
+        try
+        {
+            var updatedUser = await _authService.UpdateUserAsync(userId, request);
+            return Ok(updatedUser);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating user {UserId}", userId);
+            return StatusCode(500, new { message = "Failed to update profile" });
+        }
+    }
+
+    [HttpPut("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var userId = GetUserIdFromClaims();
+        try
+        {
+            await _authService.ChangePasswordAsync(userId, request);
+            return Ok();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error changing password for user {UserId}", userId);
+            return StatusCode(500, new { message = "Failed to change password" });
+        }
+    }
+
+    [HttpDelete("delete-account")]
+    [Authorize]
+    public async Task<IActionResult> DeleteAccount()
+    {
+        var userId = GetUserIdFromClaims();
+        try
+        {
+            await _authService.DeleteAccountAsync(userId);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting account for user {UserId}", userId);
+            return StatusCode(500, new { message = "Failed to delete account" });
+        }
+    }
+
+    private Guid GetUserIdFromClaims()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            throw new UnauthorizedAccessException("Invalid user identity");
+        return userId;
+    }
+
+    [HttpGet("check-username/{username}")]
+    public async Task<ActionResult> CheckUsername(string username)
+    {
+        var exists = await _authService.CheckUsernameExistsAsync(username);
+        return Ok(new { isAvailable = !exists });
+    }
+
+    [HttpGet("check-email/{email}")]
+    public async Task<ActionResult> CheckEmail(string email)
+    {
+        var exists = await _authService.CheckEmailExistsAsync(email);
+        return Ok(new { isAvailable = !exists });
+    }
 }

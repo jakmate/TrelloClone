@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
-using System.Security.Claims;
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services;
@@ -13,6 +12,11 @@ public interface IAuthService
     Task<bool> IsAuthenticatedAsync();
     Task<UserDto?> GetCurrentUserAsync();
     Task<bool> ValidateTokenAsync();
+    Task<UserDto> UpdateUserAsync(UpdateUserRequest request);
+    Task ChangePasswordAsync(ChangePasswordRequest request);
+    Task DeleteAccountAsync();
+    Task<AvailabilityResponse> CheckUsernameAvailabilityAsync(string username);
+    Task<AvailabilityResponse> CheckEmailAvailabilityAsync(string email);
 }
 
 public class AuthService : IAuthService
@@ -75,24 +79,20 @@ public class AuthService : IAuthService
 
     public async Task<UserDto?> GetCurrentUserAsync()
     {
-        var authState = await _authStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated == true)
+        try
         {
-            var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var userName = authState.User.FindFirst(ClaimTypes.Name)?.Value;
-            var email = authState.User.FindFirst(ClaimTypes.Email)?.Value;
-
-            if (Guid.TryParse(userId, out var id))
+            var response = await _httpClient.GetAsync("/api/auth/me");
+            if (response.IsSuccessStatusCode)
             {
-                return new UserDto
-                {
-                    Id = id,
-                    UserName = userName ?? "",
-                    Email = email ?? ""
-                };
+                var result = await response.Content.ReadFromJsonAsync<CurrentUserResponse>();
+                return result?.User;
             }
+            return null;
         }
-        return null;
+        catch
+        {
+            return null;
+        }
     }
 
     public async Task<bool> ValidateTokenAsync()
@@ -106,5 +106,71 @@ public class AuthService : IAuthService
         {
             return false;
         }
+    }
+
+    public async Task<UserDto> UpdateUserAsync(UpdateUserRequest request)
+    {
+        var response = await _httpClient.PutAsJsonAsync("/api/auth/update-user", request);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            // Try to parse JSON error message
+            try
+            {
+                var errorObj = System.Text.Json.JsonDocument.Parse(errorContent);
+                if (errorObj.RootElement.TryGetProperty("message", out var message))
+                {
+                    throw new HttpRequestException(message.GetString());
+                }
+            }
+            catch (System.Text.Json.JsonException) { }
+            
+            throw new HttpRequestException(errorContent);
+        }
+        
+        var updatedUser = await response.Content.ReadFromJsonAsync<UserDto>();
+        return updatedUser ?? throw new Exception("Failed to update user");
+    }
+
+    public async Task ChangePasswordAsync(ChangePasswordRequest request)
+    {
+        var response = await _httpClient.PutAsJsonAsync("/api/auth/change-password", request);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var errorObj = System.Text.Json.JsonDocument.Parse(errorContent);
+                if (errorObj.RootElement.TryGetProperty("message", out var message))
+                {
+                    throw new HttpRequestException(message.GetString());
+                }
+            }
+            catch (System.Text.Json.JsonException) { }
+            
+            throw new HttpRequestException(errorContent);
+        }
+    }
+
+    public async Task DeleteAccountAsync()
+    {
+        var response = await _httpClient.DeleteAsync("api/auth/delete-account");
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<AvailabilityResponse> CheckUsernameAvailabilityAsync(string username)
+    {
+        var response = await _httpClient.GetFromJsonAsync<AvailabilityResponse>(
+            $"/api/auth/check-username/{Uri.EscapeDataString(username)}");
+        return response ?? new AvailabilityResponse { IsAvailable = false };
+    }
+
+    public async Task<AvailabilityResponse> CheckEmailAvailabilityAsync(string email)
+    {
+        var response = await _httpClient.GetFromJsonAsync<AvailabilityResponse>(
+            $"/api/auth/check-email/{Uri.EscapeDataString(email)}");
+        return response ?? new AvailabilityResponse { IsAvailable = false };
     }
 }

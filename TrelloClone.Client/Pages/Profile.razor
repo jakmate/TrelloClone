@@ -1,0 +1,497 @@
+@page "/profile"
+@using TrelloClone.Shared.DTOs
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@attribute [Authorize]
+
+<PageTitle>Profile Settings</PageTitle>
+
+<div class="profile-page">
+    <div class="profile-header">
+        <h1>Profile Settings</h1>
+        <p class="profile-subtitle">Manage your account information</p>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (currentUser != null)
+    {
+        <div class="profile-content">
+            <!-- Profile Info Section -->
+            <div class="profile-section">
+                <div class="section-header">
+                    <h2>Account Information</h2>
+                    <div class="user-avatar-large">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control @GetValidationClass(usernameValidationMessage)" 
+                               value="@updateUserRequest.UserName"
+                               @oninput="OnUsernameChanged" 
+                               placeholder="Enter username" 
+                               disabled="@isUpdatingUser" />
+                    </div>
+                    @if (!string.IsNullOrEmpty(usernameValidationMessage))
+                    {
+                        <small class="text-danger"><i class="bi bi-exclamation-circle"></i> @usernameValidationMessage</small>
+                    }
+                    else if (isValidatingUsername)
+                    {
+                        <small class="text-muted">Checking availability...</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <div class="input-group">
+                        <input type="email" class="form-control @GetValidationClass(emailValidationMessage)" 
+                               value="@updateUserRequest.Email"
+                               @oninput="OnEmailChanged" 
+                               placeholder="Enter email" 
+                               disabled="@isUpdatingUser" />
+                    </div>
+                    @if (!string.IsNullOrEmpty(emailValidationMessage))
+                    {
+                        <small class="text-danger"><i class="bi bi-exclamation-circle"></i> @emailValidationMessage</small>
+                    }
+                    else if (isValidatingEmail)
+                    {
+                        <small class="text-muted">Checking availability...</small>
+                    }
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-primary" @onclick="UpdateUserInfo" 
+                            disabled="@(!CanSaveUserInfo())">
+                        @if (isUpdatingUser)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Save Changes
+                    </button>
+                    <button class="btn btn-secondary" @onclick="ResetUserInfo" 
+                            disabled="@(isUpdatingUser || !HasUserInfoChanged())">
+                        Cancel
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(userUpdateMessage))
+                {
+                    <div class="alert @(userUpdateSuccess ? "alert-success" : "alert-danger")">
+                        @userUpdateMessage
+                    </div>
+                }
+            </div>
+
+            <!-- Password Change Section -->
+            <div class="profile-section">
+                <div class="section-header">
+                    <h2>Change Password</h2>
+                </div>
+
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" class="form-control" @bind="changePasswordRequest.CurrentPassword" 
+                           placeholder="Enter current password" disabled="@isChangingPassword" />
+                </div>
+
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" class="form-control" 
+                           value="@changePasswordRequest.NewPassword"
+                           @oninput="@(e => { changePasswordRequest.NewPassword = e.Value?.ToString() ?? string.Empty; })"
+                           placeholder="Enter new password" 
+                           disabled="@isChangingPassword" />
+                    @if (!string.IsNullOrEmpty(changePasswordRequest.NewPassword))
+                    {
+                        <div class="password-requirements mt-2">
+                            <small class="@(changePasswordRequest.NewPassword.Length >= 6 ? "text-success" : "text-danger")">
+                                <i class="bi bi-@(changePasswordRequest.NewPassword.Length >= 6 ? "check" : "x")-circle"></i>
+                                At least 6 characters
+                            </small><br/>
+                            <small class="@(HasLetter(changePasswordRequest.NewPassword) ? "text-success" : "text-danger")">
+                                <i class="bi bi-@(HasLetter(changePasswordRequest.NewPassword) ? "check" : "x")-circle"></i>
+                                Contains a letter
+                            </small><br/>
+                            <small class="@(HasNumber(changePasswordRequest.NewPassword) ? "text-success" : "text-danger")">
+                                <i class="bi bi-@(HasNumber(changePasswordRequest.NewPassword) ? "check" : "x")-circle"></i>
+                                Contains a number
+                            </small>
+                        </div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" class="form-control @GetPasswordMatchClass()" 
+                           value="@confirmPassword"
+                           @oninput="@(e => { confirmPassword = e.Value?.ToString() ?? string.Empty; })"
+                           placeholder="Confirm new password" 
+                           disabled="@isChangingPassword" />
+                    @if (!string.IsNullOrEmpty(confirmPassword))
+                    {
+                        @if (changePasswordRequest.NewPassword == confirmPassword)
+                        {
+                            <small class="text-success"><i class="bi bi-check-circle"></i> Passwords match</small>
+                        }
+                        else
+                        {
+                            <small class="text-danger"><i class="bi bi-x-circle"></i> Passwords do not match</small>
+                        }
+                    }
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-primary" @onclick="ChangePassword" 
+                            disabled="@(!IsPasswordFormValid() || isChangingPassword)">
+                        @if (isChangingPassword)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Change Password
+                    </button>
+                    <button class="btn btn-secondary" @onclick="ResetPasswordForm" 
+                            disabled="@isChangingPassword">
+                        Cancel
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(passwordChangeMessage))
+                {
+                    <div class="alert @(passwordChangeSuccess ? "alert-success" : "alert-danger")">
+                        @passwordChangeMessage
+                    </div>
+                }
+            </div>
+
+            <!-- Delete Account -->
+            <div class="profile-section danger-zone">
+                <div class="section-header">
+                    <h2>Danger Zone</h2>
+                </div>
+                <p class="danger-text">Once you delete your account, there is no going back. Please be certain.</p>
+                <button class="btn btn-danger" @onclick="DeleteAccount">
+                    Delete Account
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private UserDto? currentUser;
+    private UpdateUserRequest updateUserRequest = new();
+    private ChangePasswordRequest changePasswordRequest = new();
+    private string confirmPassword = string.Empty;
+    private bool isLoading = true;
+    private bool isUpdatingUser = false;
+    private bool isChangingPassword = false;
+    private string userUpdateMessage = string.Empty;
+    private bool userUpdateSuccess = false;
+    private string passwordChangeMessage = string.Empty;
+    private bool passwordChangeSuccess = false;
+    
+    // Validation states
+    private string usernameValidationMessage = string.Empty;
+    private string emailValidationMessage = string.Empty;
+    private bool isValidatingUsername = false;
+    private bool isValidatingEmail = false;
+    private CancellationTokenSource? _usernameValidationCts;
+    private CancellationTokenSource? _emailValidationCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            currentUser = await AuthService.GetCurrentUserAsync();
+            if (currentUser != null)
+            {
+                updateUserRequest = new UpdateUserRequest
+                {
+                    UserName = currentUser.UserName,
+                    Email = currentUser.Email
+                };
+            }
+            else
+            {
+                Navigation.NavigateTo("/login");
+            }
+        }
+        catch
+        {
+            Navigation.NavigateTo("/login");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async void OnUsernameChanged(ChangeEventArgs e)
+    {
+        updateUserRequest.UserName = e.Value?.ToString() ?? string.Empty;
+        
+        // Cancel previous validation
+        _usernameValidationCts?.Cancel();
+        _usernameValidationCts = new CancellationTokenSource();
+        
+        if (updateUserRequest.UserName == currentUser?.UserName)
+        {
+            usernameValidationMessage = string.Empty;
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(updateUserRequest.UserName))
+        {
+            usernameValidationMessage = "Username is required";
+            StateHasChanged();
+            return;
+        }
+
+        if (updateUserRequest.UserName.Length < 3)
+        {
+            usernameValidationMessage = "Username must be at least 3 characters";
+            StateHasChanged();
+            return;
+        }
+
+        isValidatingUsername = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(500, _usernameValidationCts.Token);
+            var response = await AuthService.CheckUsernameAvailabilityAsync(updateUserRequest.UserName);
+            usernameValidationMessage = response.IsAvailable ? string.Empty : "Username already taken";
+        }
+        catch (TaskCanceledException) { }
+        catch { }
+        finally
+        {
+            isValidatingUsername = false;
+            StateHasChanged();
+        }
+    }
+
+    private async void OnEmailChanged(ChangeEventArgs e)
+    {
+        updateUserRequest.Email = e.Value?.ToString() ?? string.Empty;
+        
+        // Cancel previous validation
+        _emailValidationCts?.Cancel();
+        _emailValidationCts = new CancellationTokenSource();
+        
+        if (updateUserRequest.Email == currentUser?.Email)
+        {
+            emailValidationMessage = string.Empty;
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(updateUserRequest.Email))
+        {
+            emailValidationMessage = "Email is required";
+            StateHasChanged();
+            return;
+        }
+
+        isValidatingEmail = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(500, _emailValidationCts.Token);
+            var response = await AuthService.CheckEmailAvailabilityAsync(updateUserRequest.Email);
+            emailValidationMessage = response.IsAvailable ? string.Empty : "Email already in use";
+        }
+        catch (TaskCanceledException) { }
+        catch { }
+        finally
+        {
+            isValidatingEmail = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool HasUserInfoChanged()
+    {
+        if (currentUser == null) return false;
+        return updateUserRequest.UserName != currentUser.UserName || 
+               updateUserRequest.Email != currentUser.Email;
+    }
+
+    private bool CanSaveUserInfo()
+    {
+        return !isUpdatingUser && 
+               !isValidatingUsername && 
+               !isValidatingEmail &&
+               HasUserInfoChanged() && 
+               string.IsNullOrEmpty(usernameValidationMessage) && 
+               string.IsNullOrEmpty(emailValidationMessage);
+    }
+
+    private bool HasLetter(string password) => password.Any(char.IsLetter);
+    private bool HasNumber(string password) => password.Any(char.IsDigit);
+    private bool IsPasswordStrong(string password) =>
+        password.Length >= 6 && HasLetter(password) && HasNumber(password);
+
+    private bool IsPasswordFormValid()
+    {
+        return !string.IsNullOrWhiteSpace(changePasswordRequest.CurrentPassword) &&
+               !string.IsNullOrWhiteSpace(changePasswordRequest.NewPassword) &&
+               changePasswordRequest.NewPassword == confirmPassword &&
+               IsPasswordStrong(changePasswordRequest.NewPassword);
+    }
+
+    private string GetValidationClass(string validationMessage)
+    {
+        if (string.IsNullOrEmpty(validationMessage)) return string.Empty;
+        return "is-invalid";
+    }
+
+    private string GetPasswordMatchClass()
+    {
+        if (string.IsNullOrEmpty(confirmPassword)) return string.Empty;
+        return changePasswordRequest.NewPassword == confirmPassword ? "is-valid" : "is-invalid";
+    }
+
+    private async Task UpdateUserInfo()
+    {
+        if (!CanSaveUserInfo()) return;
+
+        isUpdatingUser = true;
+        userUpdateMessage = string.Empty;
+
+        try
+        {
+            var updatedUser = await AuthService.UpdateUserAsync(updateUserRequest);
+            currentUser = updatedUser;
+            userUpdateMessage = "Profile updated successfully!";
+            userUpdateSuccess = true;
+            usernameValidationMessage = string.Empty;
+            emailValidationMessage = string.Empty;
+        }
+        catch (HttpRequestException ex)
+        {
+            // Parse backend error message
+            userUpdateMessage = ex.Message.Contains("Username already taken") 
+                ? "Username is already taken" 
+                : ex.Message.Contains("Email already registered")
+                ? "Email is already in use"
+                : $"Error updating profile: {ex.Message}";
+            userUpdateSuccess = false;
+        }
+        catch (Exception ex)
+        {
+            userUpdateMessage = $"Error updating profile: {ex.Message}";
+            userUpdateSuccess = false;
+        }
+        finally
+        {
+            isUpdatingUser = false;
+        }
+    }
+
+    private void ResetUserInfo()
+    {
+        if (currentUser != null)
+        {
+            updateUserRequest = new UpdateUserRequest
+            {
+                UserName = currentUser.UserName,
+                Email = currentUser.Email
+            };
+        }
+        userUpdateMessage = string.Empty;
+        usernameValidationMessage = string.Empty;
+        emailValidationMessage = string.Empty;
+    }
+
+    private async Task ChangePassword()
+    {
+        if (!IsPasswordFormValid()) return;
+
+        isChangingPassword = true;
+        passwordChangeMessage = string.Empty;
+
+        try
+        {
+            await AuthService.ChangePasswordAsync(changePasswordRequest);
+            passwordChangeMessage = "Password changed successfully!";
+            passwordChangeSuccess = true;
+            ResetPasswordForm();
+        }
+        catch (HttpRequestException ex)
+        {
+            // Parse backend error message
+            passwordChangeMessage = ex.Message.Contains("Current password is incorrect")
+                ? "Current password is incorrect"
+                : ex.Message.Contains("must be at least 6 characters")
+                ? "New password must be at least 6 characters and contain letters and numbers"
+                : $"Error changing password: {ex.Message}";
+            passwordChangeSuccess = false;
+        }
+        catch (Exception ex)
+        {
+            passwordChangeMessage = $"Error changing password: {ex.Message}";
+            passwordChangeSuccess = false;
+        }
+        finally
+        {
+            isChangingPassword = false;
+        }
+    }
+
+    private void ResetPasswordForm()
+    {
+        changePasswordRequest = new();
+        confirmPassword = string.Empty;
+        if (passwordChangeSuccess)
+        {
+            passwordChangeMessage = string.Empty;
+        }
+    }
+
+    private async Task DeleteAccount()
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "Are you sure you want to delete your account? This action cannot be undone and all your boards will be deleted.");
+        
+        if (!confirm) return;
+
+        bool doubleConfirm = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "This is your last chance. Are you absolutely sure?");
+        
+        if (!doubleConfirm) return;
+
+        try
+        {
+            await AuthService.DeleteAccountAsync();
+            await AuthService.LogoutAsync();
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting account: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        _usernameValidationCts?.Cancel();
+        _emailValidationCts?.Cancel();
+    }
+}

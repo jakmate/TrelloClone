@@ -1,6 +1,7 @@
 @page "/templates"
 @using TrelloClone.Shared.DTOs
 @inject IBoardService BoardService
+@inject BoardStateService BoardState
 @inject NavigationManager Navigation
 
 <div class="templates-container">
@@ -243,6 +244,9 @@ SampleTasks = new[] { "Book venue", "Set date" }
                     }).ToList()
                 }).ToList()
             });
+
+            // Notify that boards have changed so NavMenu refreshes
+            BoardState.NotifyBoardsChanged();
 
             // Navigate to the new board
             Navigation.NavigateTo($"/board/{newBoard.Id}");

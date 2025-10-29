@@ -160,4 +160,72 @@ public class AuthService
         // Must contain at least one letter and one number
         return Regex.IsMatch(password, @"^(?=.*[A-Za-z])(?=.*\d).{6,}$");
     }
+
+    public async Task<bool> CheckUsernameExistsAsync(string username)
+    {
+        return await _users.GetByUsernameAsync(username) != null;
+    }
+
+    public async Task<bool> CheckEmailExistsAsync(string email)
+    {
+        return await _users.GetByEmailAsync(email) != null;
+    }
+
+    public async Task<UserDto> UpdateUserAsync(Guid userId, UpdateUserRequest request)
+    {
+        var user = await _users.GetByIdAsync(userId);
+        if (user == null)
+            throw new KeyNotFoundException("User not found");
+
+        // Prevent duplicate username/email
+        if (request.UserName != user.UserName)
+        {
+            if (await _users.GetByUsernameAsync(request.UserName) != null)
+                throw new InvalidOperationException("Username already taken");
+        }
+
+        if (request.Email != user.Email)
+        {
+            if (await _users.GetByEmailAsync(request.Email) != null)
+                throw new InvalidOperationException("Email already registered");
+        }
+
+        user.UserName = request.UserName.Trim();
+        user.Email = request.Email.ToLowerInvariant();
+
+        await _uow.SaveChangesAsync();
+
+        return new UserDto
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            Email = user.Email
+        };
+    }
+
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
+    {
+        var user = await _users.GetByIdAsync(userId);
+        if (user == null)
+            throw new KeyNotFoundException("User not found");
+
+        if (!VerifyPassword(request.CurrentPassword, user.PasswordHash))
+            throw new UnauthorizedAccessException("Current password is incorrect");
+
+        if (!IsPasswordValid(request.NewPassword))
+            throw new InvalidOperationException("New password must be at least 6 characters and contain letters and numbers");
+
+        user.PasswordHash = HashPassword(request.NewPassword);
+        await _uow.SaveChangesAsync();
+    }
+
+    public async Task DeleteAccountAsync(Guid userId)
+    {
+        var user = await _users.GetByIdAsync(userId);
+        if (user == null)
+            throw new KeyNotFoundException("User not found");
+
+        _users.Remove(user);
+        await _uow.SaveChangesAsync();
+    }
 }

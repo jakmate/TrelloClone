@@ -32,37 +32,101 @@
 
                 <div class="form-group">
                     <label for="username" class="form-label">Username</label>
-                    <InputText id="username" class="form-control" @bind-Value="registerRequest.UserName"
-                        placeholder="Enter your username" />
+                    <input type="text" id="username" 
+                           class="form-control @GetValidationClass(usernameValidationMessage)"
+                           value="@registerRequest.UserName"
+                           @oninput="OnUsernameChanged"
+                           placeholder="Enter your username" />
+                    @if (!string.IsNullOrEmpty(usernameValidationMessage))
+                    {
+                        <div class="validation-message text-danger">
+                            <i class="bi bi-exclamation-circle"></i> @usernameValidationMessage
+                        </div>
+                    }
+                    else if (isValidatingUsername)
+                    {
+                        <small class="text-muted">Checking availability...</small>
+                    }
                     <ValidationMessage For="@(() => registerRequest.UserName)" />
                 </div>
 
                 <div class="form-group">
                     <label for="email" class="form-label">Email</label>
-                    <InputText id="email" class="form-control" @bind-Value="registerRequest.Email"
-                        placeholder="Enter your email" />
+                    <input type="email" id="email" 
+                           class="form-control @GetValidationClass(emailValidationMessage)"
+                           value="@registerRequest.Email"
+                           @oninput="OnEmailChanged"
+                           placeholder="Enter your email" />
+                    @if (!string.IsNullOrEmpty(emailValidationMessage))
+                    {
+                        <div class="validation-message text-danger">
+                            <i class="bi bi-exclamation-circle"></i> @emailValidationMessage
+                        </div>
+                    }
+                    else if (isValidatingEmail)
+                    {
+                        <small class="text-muted">Checking availability...</small>
+                    }
                     <ValidationMessage For="@(() => registerRequest.Email)" />
                 </div>
 
                 <div class="form-group">
                     <label for="password" class="form-label">Password</label>
-                    <InputText id="password" type="password" class="form-control" @bind-Value="registerRequest.Password"
-                        placeholder="Enter your password" />
+                    <input type="password" id="password" 
+                           class="form-control"
+                           value="@registerRequest.Password"
+                           @oninput="OnPasswordChanged"
+                           placeholder="Enter your password" />
+                    @if (!string.IsNullOrEmpty(registerRequest.Password))
+                    {
+                        <div class="password-requirements mt-2">
+                            <small class="@(registerRequest.Password.Length >= 6 ? "text-success" : "text-danger")">
+                                <i class="bi bi-@(registerRequest.Password.Length >= 6 ? "check" : "x")-circle"></i>
+                                At least 6 characters
+                            </small><br/>
+                            <small class="@(HasLetter(registerRequest.Password) ? "text-success" : "text-danger")">
+                                <i class="bi bi-@(HasLetter(registerRequest.Password) ? "check" : "x")-circle"></i>
+                                Contains a letter
+                            </small><br/>
+                            <small class="@(HasNumber(registerRequest.Password) ? "text-success" : "text-danger")">
+                                <i class="bi bi-@(HasNumber(registerRequest.Password) ? "check" : "x")-circle"></i>
+                                Contains a number
+                            </small>
+                        </div>
+                    }
                     <ValidationMessage For="@(() => registerRequest.Password)" />
                 </div>
 
                 <div class="form-group">
                     <label for="confirmPassword" class="form-label">Confirm Password</label>
-                    <input type="password" id="confirmPassword" class="form-control" @bind="confirmPassword"
-                        placeholder="Confirm your password" @onpaste="HandlePaste"
-                        @oninput="HandleConfirmPasswordInput" />
+                    <input type="password" id="confirmPassword" 
+                           class="form-control @GetPasswordMatchClass()"
+                           value="@confirmPassword"
+                           @oninput="HandleConfirmPasswordInput"
+                           @onpaste="HandlePaste"
+                           placeholder="Confirm your password" />
+                    @if (!string.IsNullOrEmpty(confirmPassword))
+                    {
+                        @if (registerRequest.Password == confirmPassword)
+                        {
+                            <small class="text-success">
+                                <i class="bi bi-check-circle"></i> Passwords match
+                            </small>
+                        }
+                        else
+                        {
+                            <small class="text-danger">
+                                <i class="bi bi-x-circle"></i> Passwords do not match
+                            </small>
+                        }
+                    }
                     @if (!string.IsNullOrEmpty(confirmPasswordError))
                     {
-                        <div class="validation-message">@confirmPasswordError</div>
+                        <div class="validation-message text-danger">@confirmPasswordError</div>
                     }
                 </div>
 
-                <button type="submit" class="auth-button" disabled="@isLoading">
+                <button type="submit" class="auth-button" disabled="@(!CanRegister())">
                     @if (isLoading)
                     {
                         <span class="spinner"></span>
@@ -84,6 +148,91 @@
     private string confirmPasswordError = string.Empty;
     private bool isLoading = false;
     private string errorMessage = string.Empty;
+
+    // Validation states
+    private string usernameValidationMessage = string.Empty;
+    private string emailValidationMessage = string.Empty;
+    private bool isValidatingUsername = false;
+    private bool isValidatingEmail = false;
+    private CancellationTokenSource? _usernameValidationCts;
+    private CancellationTokenSource? _emailValidationCts;
+
+    private async void OnUsernameChanged(ChangeEventArgs e)
+    {
+        registerRequest.UserName = e.Value?.ToString() ?? string.Empty;
+        
+        _usernameValidationCts?.Cancel();
+        _usernameValidationCts = new CancellationTokenSource();
+
+        if (string.IsNullOrWhiteSpace(registerRequest.UserName))
+        {
+            usernameValidationMessage = string.Empty;
+            StateHasChanged();
+            return;
+        }
+
+        if (registerRequest.UserName.Length < 3)
+        {
+            usernameValidationMessage = "Username must be at least 3 characters";
+            StateHasChanged();
+            return;
+        }
+
+        isValidatingUsername = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(500, _usernameValidationCts.Token);
+            var response = await AuthService.CheckUsernameAvailabilityAsync(registerRequest.UserName);
+            usernameValidationMessage = response.IsAvailable ? string.Empty : "Username already taken";
+        }
+        catch (TaskCanceledException) { }
+        catch { }
+        finally
+        {
+            isValidatingUsername = false;
+            StateHasChanged();
+        }
+    }
+
+    private async void OnEmailChanged(ChangeEventArgs e)
+    {
+        registerRequest.Email = e.Value?.ToString() ?? string.Empty;
+        
+        _emailValidationCts?.Cancel();
+        _emailValidationCts = new CancellationTokenSource();
+
+        if (string.IsNullOrWhiteSpace(registerRequest.Email))
+        {
+            emailValidationMessage = string.Empty;
+            StateHasChanged();
+            return;
+        }
+
+        isValidatingEmail = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(500, _emailValidationCts.Token);
+            var response = await AuthService.CheckEmailAvailabilityAsync(registerRequest.Email);
+            emailValidationMessage = response.IsAvailable ? string.Empty : "Email already in use";
+        }
+        catch (TaskCanceledException) { }
+        catch { }
+        finally
+        {
+            isValidatingEmail = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OnPasswordChanged(ChangeEventArgs e)
+    {
+        registerRequest.Password = e.Value?.ToString() ?? string.Empty;
+        ValidatePasswords();
+    }
 
     private void HandlePaste(ClipboardEventArgs e)
     {
@@ -115,13 +264,13 @@
 
         if (string.IsNullOrEmpty(registerRequest.Password) || string.IsNullOrEmpty(confirmPassword))
         {
-            confirmPasswordError = "Both password fields are required.";
+            confirmPasswordError = "";
             return false;
         }
 
         if (registerRequest.Password != confirmPassword)
         {
-            confirmPasswordError = "Passwords do not match.";
+            confirmPasswordError = "";
             return false;
         }
 
@@ -129,9 +278,41 @@
         return true;
     }
 
+    private bool HasLetter(string password) => password.Any(char.IsLetter);
+    private bool HasNumber(string password) => password.Any(char.IsDigit);
+    private bool IsPasswordStrong(string password) =>
+        password.Length >= 6 && HasLetter(password) && HasNumber(password);
+
+    private string GetValidationClass(string validationMessage)
+    {
+        if (string.IsNullOrEmpty(validationMessage)) return string.Empty;
+        return "is-invalid";
+    }
+
+    private string GetPasswordMatchClass()
+    {
+        if (string.IsNullOrEmpty(confirmPassword)) return string.Empty;
+        return registerRequest.Password == confirmPassword ? "is-valid" : "is-invalid";
+    }
+
+    private bool CanRegister()
+    {
+        return !isLoading &&
+               !isValidatingUsername &&
+               !isValidatingEmail &&
+               !string.IsNullOrWhiteSpace(registerRequest.UserName) &&
+               !string.IsNullOrWhiteSpace(registerRequest.Email) &&
+               !string.IsNullOrWhiteSpace(registerRequest.Password) &&
+               !string.IsNullOrWhiteSpace(confirmPassword) &&
+               string.IsNullOrEmpty(usernameValidationMessage) &&
+               string.IsNullOrEmpty(emailValidationMessage) &&
+               registerRequest.Password == confirmPassword &&
+               IsPasswordStrong(registerRequest.Password);
+    }
+
     private async Task HandleRegister()
     {
-        if (!ValidatePasswords())
+        if (!CanRegister())
         {
             return;
         }
@@ -144,6 +325,16 @@
             await AuthService.RegisterAsync(registerRequest);
             Navigation.NavigateTo("/boards");
         }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = ex.Message.Contains("Email already registered")
+                ? "This email is already registered"
+                : ex.Message.Contains("Username")
+                ? "This username is already taken"
+                : ex.Message.Contains("Password must be")
+                ? "Password must be at least 6 characters and contain letters and numbers"
+                : $"Registration failed: {ex.Message}";
+        }
         catch (Exception ex)
         {
             errorMessage = $"Registration failed: {ex.Message}";
@@ -152,5 +343,11 @@
         {
             isLoading = false;
         }
+    }
+
+    public void Dispose()
+    {
+        _usernameValidationCts?.Cancel();
+        _emailValidationCts?.Cancel();
     }
 }
