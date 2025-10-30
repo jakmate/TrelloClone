@@ -3,88 +3,106 @@
 @inject IBoardService BoardService
 @inject BoardStateService BoardState
 
-<div class="sidebar-content">
-    <nav class="nav-menu">
-        <div class="nav-section">
-            <NavLink class="nav-item" href="" Match="NavLinkMatch.All">
+<div class="sidebar-content d-flex flex-column h-100 py-3">
+    <nav class="nav-menu d-flex flex-column flex-grow-1 px-2">
+        <div class="nav-section mb-2">
+            <NavLink class="nav-item d-flex align-items-center gap-2 px-2 py-2 rounded text-decoration-none mb-1" href="" Match="NavLinkMatch.All">
                 <i class="bi bi-house"></i>
-                <span class="nav-text">Home</span>
+                <span class="nav-text flex-grow-1">Home</span>
             </NavLink>
 
             <AuthorizeView>
                 <Authorized>
-                    <div class="nav-divider"></div>
-                    <div class="workspace-header">Workspace</div>
-                    <div class="workspace-items">
-                        <NavLink class="nav-item" href="boards">
+                    <hr class="nav-divider my-2 border-top" />
+                    
+                    <div class="workspace-header px-2 py-2 small fw-semibold text-uppercase text-muted">
+                        Workspace
+                    </div>
+                    
+                    <div class="workspace-items d-flex flex-column">
+                        <NavLink class="nav-item d-flex align-items-center gap-2 px-2 py-1 rounded text-decoration-none mb-1" href="boards">
                             <i class="bi bi-columns-gap"></i>
-                            <span class="nav-text">Boards</span>
+                            <span class="nav-text flex-grow-1">Boards</span>
                         </NavLink>
-                        <NavLink class="nav-item" href="templates">
+                        <NavLink class="nav-item d-flex align-items-center gap-2 px-2 py-1 rounded text-decoration-none mb-1" href="templates">
                             <i class="bi bi-grid"></i>
-                            <span class="nav-text">Templates</span>
+                            <span class="nav-text flex-grow-1">Templates</span>
                         </NavLink>
                     </div>
 
-                    <div class="nav-divider"></div>
-                    <div class="workspace-header">Your Boards</div>
-                    <div class="team-list">
+                    <hr class="nav-divider my-2 border-top" />
+                    
+                    <div class="workspace-header px-2 py-2 small fw-semibold text-uppercase text-muted">
+                        Your Boards
+                    </div>
+                    
+                    <div class="team-list d-flex flex-column mt-2">
                         @if (boards.Any())
                         {
                             @foreach (var board in boards.Take(5))
                             {
-                                <NavLink class="team-item nav-item" href="@($"board/{board.Id}")">
-                                    <div class="team-avatar">@GetInitials(board.Name)</div>
-                                    <span class="team-name">@board.Name</span>
+                                <NavLink class="team-item nav-item d-flex align-items-center gap-2 px-2 py-2 rounded text-decoration-none mb-1" href="@($"board/{board.Id}")">
+                                    <div class="team-avatar rounded d-inline-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0">
+                                        @GetInitials(board.Name)
+                                    </div>
+                                    <span class="team-name small fw-medium text-truncate">@board.Name</span>
                                 </NavLink>
                             }
                             @if (boards.Count > 5)
                             {
-                                <NavLink class="team-item nav-item view-all" href="boards">
+                                <NavLink class="team-item nav-item view-all d-flex align-items-center gap-2 px-2 py-2 rounded text-decoration-none mb-1" href="boards">
                                     <span class="nav-text">View All Boards</span>
                                 </NavLink>
                             }
                         }
                         else
                         {
-                            <div class="team-item disabled">
-                                <span class="nav-text">No boards yet</span>
+                            <div class="team-item disabled px-2 py-2">
+                                <span class="nav-text text-muted small">No boards yet</span>
                             </div>
                         }
                     </div>
 
-                    <div class="nav-divider"></div>
-                    <div class="workspace-header">Account</div>
-                    <div class="workspace-items">
-                        <NavLink class="nav-item" href="profile">
+                    <hr class="nav-divider my-2 border-top" />
+                    
+                    <div class="workspace-header px-2 py-2 small fw-semibold text-uppercase text-muted">
+                        Account
+                    </div>
+                    
+                    <div class="workspace-items d-flex flex-column">
+                        <NavLink class="nav-item d-flex align-items-center gap-2 px-2 py-2 rounded text-decoration-none mb-1" href="profile">
                             <i class="bi bi-person"></i>
-                            <span class="nav-text">Profile Settings</span>
+                            <span class="nav-text flex-grow-1">Profile Settings</span>
                         </NavLink>
                     </div>
                 </Authorized>
 
                 <NotAuthorized>
-                    <div class="nav-divider"></div>
-                    <div class="workspace-header">Account</div>
-                    <div class="workspace-items">
-                        <NavLink class="nav-item" href="login">
+                    <hr class="nav-divider my-2 border-top" />
+                    
+                    <div class="workspace-header px-2 py-2 small fw-semibold text-uppercase text-muted">
+                        Account
+                    </div>
+                    
+                    <div class="workspace-items d-flex flex-column">
+                        <NavLink class="nav-item d-flex align-items-center gap-2 px-2 py-2 rounded text-decoration-none mb-1" href="login">
                             <i class="bi bi-box-arrow-in-right"></i>
-                            <span class="nav-text">Log in</span>
+                            <span class="nav-text flex-grow-1">Log in</span>
                         </NavLink>
-                        <NavLink class="nav-item" href="register">
+                        <NavLink class="nav-item d-flex align-items-center gap-2 px-2 py-2 rounded text-decoration-none mb-1" href="register">
                             <i class="bi bi-person-plus"></i>
-                            <span class="nav-text">Sign up</span>
+                            <span class="nav-text flex-grow-1">Sign up</span>
                         </NavLink>
                     </div>
                 </NotAuthorized>
             </AuthorizeView>
         </div>
 
-        <div class="nav-footer">
+        <div class="nav-footer mt-auto px-2 py-3 border-top">
             <AuthorizeView>
                 <Authorized>
-                    <div class="user-status">
-                        <div class="status-indicator online"></div>
+                    <div class="user-status d-flex align-items-center gap-2 small text-muted">
+                        <div class="status-indicator online rounded-circle bg-success"></div>
                         <span>Online</span>
                     </div>
                 </Authorized>
@@ -127,5 +145,10 @@
         );
 
         return initials.Length > 0 ? initials : "??";
+    }
+
+    public void Dispose()
+    {
+        BoardState.OnBoardsChanged -= RefreshBoards;
     }
 }

@@ -1,38 +1,75 @@
-.task-card {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: 8px;
-    transition: var(--transition);
+/* TaskCard Styles */
+.task-card-sortable {
+    background: var(--card-bg);
     border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    cursor: pointer;
 }
 
-.task-card.dragging {
-    opacity: .5;
-    transform: scale(0.98);
-}
-
-.task-card:hover:not(.dragging) {
+.task-card-sortable:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-1px);
+    border-color: var(--primary);
 }
 
 .task-content {
-    padding: 8px;
+    width: 100%;
+}
+
+.editing-indicator {
+    background-color: #fffbf0;
+    border: 1px solid #fef3c7;
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .task-title {
-    font-size: 14px;
     font-weight: 500;
-    margin: 0 0 4px;
     color: var(--text-primary);
-    word-break: break-word;
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
 }
 
+/* Priority Badges */
+.priority-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.priority-low {
+    background-color: #f0f9ff;
+    color: #0369a1;
+    border: 1px solid #e0f2fe;
+}
+
+.priority-medium {
+    background-color: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fef3c7;
+}
+
+.priority-high {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+/* User Avatars */
 .assigned-users {
     display: flex;
-    gap: 4px;
+    gap: 0.25rem;
     flex-wrap: wrap;
+    margin-top: 0.5rem;
 }
 
 .user-avatar {
@@ -40,79 +77,111 @@
     height: 24px;
     border-radius: 50%;
     background-color: var(--primary);
-    color: #fff;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 0.6rem;
     font-weight: 600;
+    border: 2px solid var(--card-bg);
+    box-shadow: var(--shadow-sm);
 }
 
 .user-avatar.more-users {
-    background-color: var(--secondary);
-    color: var(--text-secondary);
+    background-color: var(--text-tertiary);
+    font-size: 0.5rem;
 }
 
-.drag-handle {
-    cursor: grab;
-    color: var(--text-secondary);
-    padding: 4px;
-    border-radius: 3px;
-    transition: var(--transition);
-}
-
-.drag-handle:hover {
-    background-color: #091e420f;
-    color: var(--text-primary);
-}
-
-.editing-indicator {
-    background-color: #f2d6001a;
-    border-left: 3px solid var(--warning);
-    padding: 6px 8px;
-    margin-bottom: 8px;
-    border-radius: 3px;
-    font-size: 12px;
-}
-
-.priority-badge {
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.priority-low {
-    background-color: #61bd4f26;
-    color: #3f6e37;
-}
-
-.priority-medium {
-    background-color: #f2d60026;
-    color: #946f00;
-}
-
-.priority-high {
-    background-color: #eb5a4626;
-    color: #ae2e24;
-}
-
-/* Edit mode styles */
+/* User Checkboxes for Editing */
 .user-checkboxes-small {
     max-height: 120px;
     overflow-y: auto;
-    padding: 4px;
     border: 1px solid var(--border);
     border-radius: var(--border-radius);
-    background-color: var(--card-bg);
+    padding: 0.5rem;
+    background-color: var(--secondary);
 }
 
-.form-check-input {
-    width: 16px;
-    height: 16px;
-    margin-top: .2rem;
+.user-checkboxes-small::-webkit-scrollbar {
+    width: 3px;
 }
 
-.form-check-label {
-    font-size: 13px;
+.user-checkboxes-small::-webkit-scrollbar-track {
+    background: var(--secondary);
+}
+
+.user-checkboxes-small::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+.form-check-sm .form-check-input {
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-top: 0.15rem;
+}
+
+.form-check-sm .form-check-label {
+    font-size: 0.8rem;
+    margin-left: 0.25rem;
+}
+
+/* Sortable states for tasks */
+.task-sortable-item.sortable-ghost .task-card-sortable {
+    opacity: 0.4;
+    background-color: var(--primary-light);
+    border: 2px dashed var(--primary);
+}
+
+.task-sortable-item.sortable-chosen .task-card-sortable {
+    box-shadow: var(--shadow-lg);
+}
+
+.task-sortable-item.sortable-drag .task-card-sortable {
+    opacity: 0.5;
+}
+
+/* Editing state */
+.task-card-sortable.editing {
+    background-color: #f8fafc;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(0, 101, 255, 0.1);
+}
+
+/* Locked/Being edited state */
+.task-card-sortable.locked {
+    background-color: #fffbeb;
+    border-color: #fef3c7;
+}
+
+/* Button overrides for small screens */
+@media (max-width: 576px) {
+    .task-card-sortable {
+        padding: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .assigned-users {
+        gap: 0.125rem;
+    }
+    
+    .user-avatar {
+        width: 20px;
+        height: 20px;
+        font-size: 0.5rem;
+    }
+}
+
+/* Focus states for accessibility */
+.task-card-sortable:focus-within {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.drag-handle:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
