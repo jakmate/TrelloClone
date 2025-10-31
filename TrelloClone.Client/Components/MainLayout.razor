@@ -2,50 +2,49 @@
 @using Microsoft.AspNetCore.Components.Authorization
 
 <CascadingAuthenticationState>
-    <div class="app-container">
-        <header class="app-header">
-            <div class="header-left">
-                <button class="sidebar-toggle" @onclick="ToggleSidebar">
-                    <i class="bi bi-list"></i>
-                </button>
-                <a href="/" class="brand-logo">
-                    <i class="bi bi-kanban"></i>
-                    <span class="logo-text">Trello</span>
-                </a>
-            </div>
-            <div class="header-right">
-                <Notifications />
-                <AuthorizeView>
-                    <Authorized>
-                        <div class="user-menu">
-                            <div class="user-avatar">
-                                <a href="/profile">
-                                    <i class="bi bi-person"></i>
+    <div class="d-flex flex-column vh-100 overflow-hidden app-container">
+        <header class="navbar navbar-expand-lg navbar-light bg-white z-1 app-header">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center gap-4">
+                    <button class="sidebar-toggle" @onclick="ToggleSidebar">
+                        <i class="navbar-toggler-icon"></i>
+                    </button>
+                    <a href="/" class="navbar-brand fs-4 brand-logo p-2">
+                        <i class="bi bi-kanban"></i>
+                        <span class="d-none d-sm-inline fw-bold">Trello</span>
+                    </a>
+                </div>
+                <div class="d-flex align-items-center gap-4">
+                    <AuthorizeView>
+                        <Authorized>
+                            <Notifications />
+                            <div class="d-flex p-2 gap-1 align-items-center justify-content-center fs-4">
+                                <a href="/profile" class="d-flex align-items-center p-2 gap-2 user-menu">
+                                    <i class="bi bi-person-circle user-avatar"></i>
+                                    <div class="fs-6 fw-medium user-name">@context.User.Identity!.Name</div>
                                 </a>
-                            </div>
-                            <div class="user-info">
-                                <div class="user-name">@context.User.Identity!.Name</div>
-                                <button class="logout-btn" @onclick="Logout">
-                                    <i class="bi bi-box-arrow-right"></i> Sign out
+                                <button class="fs-6 p-2 p-sm-3 gap-2 logout-btn" @onclick="Logout">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    <span class="d-none d-sm-inline">Sign out</span>
                                 </button>
                             </div>
-                        </div>
-                    </Authorized>
-                    <NotAuthorized>
-                        <div class="auth-buttons">
-                            <a href="/login" class="auth-btn btn-light">Log in</a>
-                            <a href="/register" class="auth-btn btn-primary">Sign up</a>
-                        </div>
-                    </NotAuthorized>
-                </AuthorizeView>
+                        </Authorized>
+                        <NotAuthorized>
+                            <div class="auth-buttons">
+                                <a href="/login" class="auth-btn btn-light">Log in</a>
+                                <a href="/register" class="auth-btn btn-primary">Sign up</a>
+                            </div>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </div>
             </div>
         </header>
-        <div class="app-body">
-            <aside class="app-sidebar @(sidebarCollapsed ? "collapsed" : "")">
+        <div class="d-flex flex-fill overflow-hidden">
+            <aside class="overflow-y-auto app-sidebar @(sidebarCollapsed ? "collapsed" : "")">
                 <NavMenu />
             </aside>
             <main class="main-content">
-                <div class="content-container">
+                <div class="p-4">
                     @Body
                 </div>
             </main>

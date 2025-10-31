@@ -3,7 +3,7 @@
 @inject NotificationHubClient NotificationHub
 @implements IDisposable
 
-<div class="notifications-container">
+<div class="position-relative">
     <button class="notifications-toggle" @onclick="ToggleDropdown">
         <i class="bi bi-bell"></i>
         @if (UnreadCount > 0)
