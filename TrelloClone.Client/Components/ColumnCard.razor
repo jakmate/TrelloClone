@@ -1,10 +1,10 @@
 @using TrelloClone.Shared.DTOs
 
-<div class="column-card-sortable" data-column-id="@Column.Id">
-    <div class="column-header d-flex justify-content-between align-items-center">
+<div class="p-3 me-2 column-card-sortable" data-column-id="@Column.Id">
+    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 column-header">
         @if (CanEdit)
         {
-            <div class="drag-handle me-2" title="Drag to reorder column">
+            <div class="me-2 p-1 drag-handle" title="Drag to reorder column">
                 <i class="bi bi-grip-vertical"></i>
             </div>
         }
@@ -12,10 +12,8 @@
         {
             <div class="flex-grow-1">
                 <h5 class="mb-0 column-title">@Column.Title</h5>
-                <small class="text-warning">
-                    <i class="bi bi-pencil-square"></i>
-                    @EditingUserName is editing...
-                </small>
+                <i class="bi bi-pencil-square"></i>
+                @EditingUserName is editing...
             </div>
         }
         else if (IsEditing)
@@ -29,7 +27,7 @@
         }
         @if (CanEdit && !IsBeingEditedByOther)
         {
-            <div class="btn-group">
+            <div class="align-self-end">
                 @if (IsEditing)
                 {
                     <button class="btn btn-sm btn-success" @onclick="HandleSaveEdit">
@@ -58,7 +56,7 @@
         }
     </div>
 
-    <div class="tasks-container-sortable" id="tasks-container-@Column.Id" data-column-id="@Column.Id">
+    <div class="overflow-y-auto p-2" id="tasks-container-@Column.Id" data-column-id="@Column.Id">
         @if (Column.Tasks?.Any() == true)
         {
             @foreach (var task in Column.Tasks.OrderBy(t => t.Position))
@@ -75,8 +73,8 @@
         }
         else
         {
-            <div class="empty-tasks">
-                <p class="text-muted">No tasks yet</p>
+            <div class="fst-italic empty-tasks">
+                <p class="m-0 text-muted">No tasks yet</p>
             </div>
         }
     </div>

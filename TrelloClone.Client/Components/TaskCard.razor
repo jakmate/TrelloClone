@@ -1,7 +1,7 @@
 @using TrelloClone.Shared.DTOs
 
 <div class="task-card-sortable" data-task-id="@Task.Id">
-    <div class="task-content">
+    <div class="w-100">
         @if (IsBeingEditedByOther)
         {
             <div class="editing-indicator">
@@ -28,10 +28,11 @@
                         <div class="user-checkboxes-small">
                             @foreach (var user in AvailableUsers)
                             {
-                                <div class="form-check form-check-sm">
+                                var isAssigned = IsUserAssigned(user.Id); // capture in variable
+
+                                <div class="form-check form-check-sm" @key="@($"{user.Id}_{isAssigned}")">
                                     <input class="form-check-input form-check-input-sm" type="checkbox" id="edit_user_@user.Id"
-                                        checked="@IsUserAssigned(user.Id)"
-                                        @onchange="@((e) => ToggleUserAssignment(user.Id, (bool)e.Value!))" />
+                                        checked="@isAssigned" @onchange="@((e) => ToggleUserAssignment(user.Id, (bool)e.Value!))" />
                                     <label class="form-check-label small" for="edit_user_@user.Id">
                                         @user.UserName
                                     </label>
@@ -198,6 +199,6 @@
         }
 
         await OnAssignmentChange.InvokeAsync((userId, isChecked));
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 }

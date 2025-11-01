@@ -5,25 +5,26 @@
     <div class="d-flex flex-column vh-100 overflow-hidden app-container">
         <header class="navbar navbar-expand-lg navbar-light bg-white z-1 app-header">
             <div class="container-fluid">
-                <div class="d-flex align-items-center gap-4">
-                    <button class="sidebar-toggle" @onclick="ToggleSidebar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="sidebar-toggle d-flex align-items-center justify-content-center"
+                        @onclick="ToggleSidebar">
                         <i class="navbar-toggler-icon"></i>
                     </button>
-                    <a href="/" class="navbar-brand fs-4 brand-logo p-2">
+                    <a href="/" class="navbar-brand fs-4 brand-logo d-flex align-items-center gap-2 mb-0">
                         <i class="bi bi-kanban"></i>
                         <span class="d-none d-sm-inline fw-bold">Trello</span>
                     </a>
                 </div>
-                <div class="d-flex align-items-center gap-4">
+                <div class="d-flex align-items-center gap-3">
                     <AuthorizeView>
                         <Authorized>
                             <Notifications />
-                            <div class="d-flex p-2 gap-1 align-items-center justify-content-center fs-4">
-                                <a href="/profile" class="d-flex align-items-center p-2 gap-2 user-menu">
-                                    <i class="bi bi-person-circle user-avatar"></i>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="/profile" class="d-flex align-items-center gap-2 user-menu">
+                                    <i class="bi bi-person-circle user-avatar fs-4"></i>
                                     <div class="fs-6 fw-medium user-name">@context.User.Identity!.Name</div>
                                 </a>
-                                <button class="fs-6 p-2 p-sm-3 gap-2 logout-btn" @onclick="Logout">
+                                <button class="fs-6 d-flex align-items-center gap-2 logout-btn" @onclick="Logout">
                                     <i class="bi bi-box-arrow-right"></i>
                                     <span class="d-none d-sm-inline">Sign out</span>
                                 </button>

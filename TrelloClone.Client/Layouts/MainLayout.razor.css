@@ -15,6 +15,9 @@
     color: var(--primary);
     border-radius: var(--border-radius);
     transition: var(--transition);
+    height: 36px;
+    padding: 0 8px;
+    text-decoration: none;
 }
 
 .brand-logo i {
@@ -22,8 +25,12 @@
 }
 
 .brand-logo:hover {
-    background-color: var(--primary-light);
-    color: var(--primary);
+    background-color: var(--secondary);
+    color: var(--primary-dark);
+}
+
+.brand-logo:hover i {
+    color: var(--primary-dark);
 }
 
 .sidebar-toggle {
@@ -48,18 +55,27 @@
 .user-menu {
     border-radius: var(--border-radius);
     transition: var(--transition);
+    height: 36px;
+    padding: 0 8px;
+    color: var(--text-primary);
+    text-decoration: none;
 }
 
 .user-menu:hover {
     background-color: var(--secondary);
+    color: var(--text-primary);
 }
 
 .user-avatar {
     color: var(--primary);
 }
 
+.user-menu:hover .user-avatar {
+    color: var(--primary-dark);
+}
+
 .user-name {
-    color: var(--text-primary);
+    color: inherit;
 }
 
 .logout-btn {
@@ -68,10 +84,16 @@
     color: var(--text-secondary);
     border-radius: var(--border-radius);
     transition: var(--transition);
+    height: 36px;
+    padding: 0 8px;
 }
 
 .logout-btn:hover {
     background-color: var(--secondary);
+    color: var(--text-primary);
+}
+
+.logout-btn:hover i {
     color: var(--text-primary);
 }
 
@@ -87,6 +109,10 @@
     font-size: 14px;
     font-weight: 500;
     transition: var(--transition);
+    height: 36px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
 }
 
 .auth-btn.btn-light {
