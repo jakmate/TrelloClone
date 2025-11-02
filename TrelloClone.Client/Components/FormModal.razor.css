@@ -6,7 +6,6 @@
     height: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
     z-index: 1050;
     padding: 1rem
 }
@@ -14,7 +13,6 @@
 .modal-dialog {
     max-width: 500px;
     width: 100%;
-    margin: 0 auto;
     z-index: 1051
 }
 
@@ -30,16 +28,13 @@
     padding: 1rem 1.5rem;
     background-color: var(--card-bg);
     border-bottom: 1px solid var(--border);
-    display: flex;
     justify-content: space-between;
-    align-items: center
 }
 
     .modal-header h3 {
         margin: 0;
         color: var(--text-primary);
         font-size: 1.25rem;
-        font-weight: 600
     }
 
 .modal-body {
@@ -52,7 +47,6 @@
     padding: 1rem 1.5rem;
     background-color: var(--secondary);
     border-top: 1px solid var(--border);
-    display: flex;
     justify-content: flex-end;
     gap: .75rem
 }
@@ -71,13 +65,8 @@
     background: none;
     border: none;
     font-size: 1.25rem;
-    cursor: pointer;
     color: var(--text-secondary);
-    padding: .25rem;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 50%;
     transition: var(--transition)
 }
 
@@ -108,33 +97,17 @@
     padding: .5rem 1rem;
     border-radius: var(--border-radius);
     font-size: .875rem;
-    font-weight: 500;
-    cursor: pointer;
     transition: var(--transition);
-    border: 1px solid transparent;
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem
 }
 
 .btn-primary {
     background-color: var(--primary);
-    color: #fff;
     border-color: var(--primary)
 }
 
     .btn-primary:hover:not(:disabled) {
         background-color: var(--primary-dark);
-        border-color: var(--primary-dark);
-        transform: translateY(-1px);
         box-shadow: var(--shadow-sm)
-    }
-
-    .btn-primary:disabled {
-        opacity: .7;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none
     }
 
 .btn-secondary {
@@ -164,18 +137,6 @@
 }
 
 @media (max-width: 576px) {
-    .modal-wrapper {
-        padding: .5rem
-    }
-
-    .modal-dialog {
-        max-width: 100%
-    }
-
-    .modal-header, .modal-body, .modal-footer {
-        padding: 1rem
-    }
-
     .modal-footer {
         flex-direction: column-reverse
     }

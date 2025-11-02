@@ -1,25 +1,16 @@
-﻿.notifications-container {
-    position: relative;
-    display: inline-block
-}
-
-.notifications-toggle {
+﻿.notifications-toggle {
     position: relative;
     background: none;
     border: none;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     color: var(--text-secondary);
     transition: var(--transition);
-    cursor: pointer
 }
 
     .notifications-toggle:hover {
-        background-color: #091e4214;
+        background-color: var(--secondary);
         color: var(--text-primary)
     }
 
@@ -36,19 +27,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600
 }
 
 .notifications-dropdown {
     position: absolute;
-    top: 100%;
-    right: 0;
+    right: -120px;
     margin-top: 8px;
     background-color: var(--card-bg);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-md);
-    width: 320px;
-    z-index: 1000;
+    width: 300px;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
@@ -71,7 +59,6 @@
 
     .notifications-header h6 {
         margin: 0;
-        font-weight: 600;
         color: var(--text-primary)
     }
 
@@ -81,7 +68,6 @@
     border-radius: 10px;
     padding: 2px 8px;
     font-size: .8rem;
-    font-weight: 500
 }
 
 .notifications-content {
@@ -112,20 +98,17 @@
 
 .notification-item {
     display: flex;
-    align-items: flex-start;
     padding: 12px;
     border-radius: var(--border-radius);
-    margin-bottom: 4px;
     transition: var(--transition)
 }
 
     .notification-item:hover {
-        background-color: #091e420a
+        background-color: var(--secondary)
     }
 
 .notification-content {
     flex: 1;
-    margin-right: 8px
 }
 
 .notification-title {
@@ -189,9 +172,9 @@
         color: #fff
     }
 
-@media (max-width: 480px) {
+@media (max-width: 500px) {
     .notifications-dropdown {
-        width: 280px;
-        right: -20px
+        width: 200px;
+        right: -160px
     }
 }
