@@ -14,9 +14,9 @@
 
 <AuthorizeView>
     <Authorized Context="authContext">
-        <div class="boards-page">
-            <div class="page-header">
-                <div class="header-content">
+        <div class="p-4 m-auto boards-page">
+            <div class="page-header mb-4 pb-4">
+                <div class="d-flex flex-wrap gap-4 justify-content-between align-items-center">
                     <div class="header-text">
                         <h1>My Boards</h1>
                         @if (currentUser != null)
@@ -24,7 +24,7 @@
                             <p class="welcome-text">Welcome back, <strong>@currentUser.UserName</strong>!</p>
                         }
                     </div>
-                    <button class="create-btn" @onclick="ShowCreateModal">
+                    <button class="btn btn-primary" @onclick="ShowCreateModal">
                         <i class="bi bi-plus-lg"></i> Create Board
                     </button>
                 </div>
@@ -32,12 +32,7 @@
 
             @if (isLoading)
             {
-                <div class="loading-container">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p>Loading your boards...</p>
-                </div>
+                <LoadingSpinner></LoadingSpinner>
             }
             else if (boards.Any())
             {

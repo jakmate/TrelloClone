@@ -18,6 +18,7 @@
 
 .column-title {
     color: var(--text-primary);
+    font-size: 1.1rem;
 }
 
 .drag-handle {

@@ -87,14 +87,12 @@
                 </div>
                 @if (CanEdit)
                 {
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-primary" @onclick="HandleStartEdit" title="Edit task">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" @onclick="HandleDelete">
-                            <i class="bi bi-trash3"></i>
-                        </button>
-                    </div>
+                    <button class="btn btn-link text-primary p-2" @onclick="HandleStartEdit" title="Edit task">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-link text-danger p-2" @onclick="HandleDelete">
+                        <i class="bi bi-trash3"></i>
+                    </button>
                 }
                 else if (IsBeingEditedByOther)
                 {

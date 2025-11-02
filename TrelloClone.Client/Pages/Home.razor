@@ -5,27 +5,27 @@
 
 <PageTitle>TrelloClone</PageTitle>
 
-<div class="home-container">
-    <div class="hero-section">
-        <div class="hero-content">
-            <div class="hero-text">
-                <h1>Trello Clone</h1>
-                <p class="hero-subtitle">A modern, collaborative project management application</p>
-                <p class="hero-description">Organize your projects into boards, manage tasks with drag-and-drop
+<div class="home-container p-4 mx-auto">
+    <div class="hero-section mb-5 mt-1 py-4">
+        <div class="d-flex flex-wrap justify-content-center gap-5">
+            <div class="p-4">
+                <h1 class="mb-3 fw-bold">Trello Clone</h1>
+                <p class="hero-subtitle mb-3 fs-4">A modern, collaborative project management application</p>
+                <p class="hero-description mb-4">Organize your projects into boards, manage tasks with drag-and-drop
                     functionality, and collaborate with your team in real-time.</p>
-                <div class="hero-actions">
+                <div class="d-flex gap-3 align-items-center">
                     @if (!isAuthenticated)
                     {
-                        <a href="/register" class="btn btn-primary btn-large">Get Started</a>
-                        <a href="/login" class="btn btn-outline">Sign In</a>
+                        <a href="/register" class="btn btn-primary px-4 py-2">Get Started</a>
+                        <a href="/login" class="btn btn-outline px-4 py-2">Sign In</a>
                     }
                     else
                     {
-                        <a href="/boards" class="btn btn-primary btn-large">Go to Your Boards</a>
+                        <a href="/boards" class="btn btn-primary px-4 py-2">Go to Your Boards</a>
                     }
                 </div>
             </div>
-            <div class="hero-visual">
+            <div class="p-3 overflow-hidden w-100">
                 <div class="board-preview">
                     <div class="preview-column">
                         <div class="column-header">To Do</div>

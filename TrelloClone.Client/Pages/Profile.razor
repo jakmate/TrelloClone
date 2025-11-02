@@ -8,27 +8,23 @@
 
 <PageTitle>Profile Settings</PageTitle>
 
-<div class="profile-page">
-    <div class="profile-header">
-        <h1>Profile Settings</h1>
+<div class="p-5 m-auto profile-page">
+    <div class="mb-4 profile-header">
+        <h1 class="fw-bold">Profile Settings</h1>
         <p class="profile-subtitle">Manage your account information</p>
     </div>
 
     @if (isLoading)
     {
-        <div class="loading-container">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
+        <LoadingSpinner></LoadingSpinner>
     }
     else if (currentUser != null)
     {
-        <div class="profile-content">
+        <div class="d-flex flex-column gap-4">
             <!-- Profile Info Section -->
-            <div class="profile-section">
-                <div class="section-header">
-                    <h2>Account Information</h2>
+            <div class="profile-section p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fs-5 m-0">Account Information</h2>
                     <div class="user-avatar-large">
                         <i class="bi bi-person-circle"></i>
                     </div>
@@ -96,9 +92,9 @@
             </div>
 
             <!-- Password Change Section -->
-            <div class="profile-section">
-                <div class="section-header">
-                    <h2>Change Password</h2>
+            <div class="profile-section p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fs-5 m-0">Change Password</h2>
                 </div>
 
                 <div class="form-group">
@@ -177,9 +173,9 @@
             </div>
 
             <!-- Delete Account -->
-            <div class="profile-section danger-zone">
-                <div class="section-header">
-                    <h2>Danger Zone</h2>
+            <div class="profile-section p-4 danger-zone">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fs-5 m-0">Danger Zone</h2>
                 </div>
                 <p class="danger-text">Once you delete your account, there is no going back. Please be certain.</p>
                 <button class="btn btn-danger" @onclick="DeleteAccount">
