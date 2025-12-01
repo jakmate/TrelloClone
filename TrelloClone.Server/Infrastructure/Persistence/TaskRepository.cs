@@ -1,5 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Domain.Interfaces;
+using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Infrastructure.Persistance;
+
 public class TaskRepository : ITaskRepository
 {
     private readonly AppDbContext _ctx;
@@ -51,13 +57,15 @@ public class TaskRepository : ITaskRepository
         // Clear existing navigation items
         task.AssignedUsers.Clear();
 
-        if (userIds != null && userIds.Any())
+        if (userIds != null && userIds.Count != 0)
         {
             // load users and add them to the navigation collection
             var users = await _ctx.Users.Where(u => userIds.Contains(u.Id)).ToListAsync();
 
             foreach (var u in users)
+            {
                 task.AssignedUsers.Add(u);
+            }
         }
     }
 

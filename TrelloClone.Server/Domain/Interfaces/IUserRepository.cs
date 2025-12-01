@@ -1,3 +1,7 @@
+using TrelloClone.Server.Domain.Entities;
+
+namespace TrelloClone.Server.Domain.Interfaces;
+
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(Guid userId);

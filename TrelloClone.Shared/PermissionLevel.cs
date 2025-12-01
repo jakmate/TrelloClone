@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public enum PermissionLevel
 {
     Viewer,  // Can view only

@@ -1,180 +1,181 @@
-﻿.notifications-toggle {
-    position: relative;
-    background: none;
-    border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    color: var(--text-secondary);
-    transition: var(--transition);
+.notifications-toggle {
+  position: relative;
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  transition: var(--transition);
 }
 
-    .notifications-toggle:hover {
-        background-color: var(--secondary);
-        color: var(--text-primary)
-    }
+.notifications-toggle:hover {
+  background-color: var(--secondary);
+  color: var(--text-primary);
+}
 
 .notifications-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background-color: var(--danger);
-    color: #fff;
-    border-radius: 10px;
-    min-width: 18px;
-    height: 18px;
-    font-size: .7rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: var(--danger);
+  color: #fff;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .notifications-dropdown {
-    position: absolute;
-    right: -120px;
-    margin-top: 8px;
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-md);
-    width: 300px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: var(--transition)
+  position: absolute;
+  right: -120px;
+  margin-top: 8px;
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  width: 300px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: var(--transition);
 }
 
-    .notifications-dropdown.show {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0)
-    }
+.notifications-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
 
 .notifications-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid var(--border)
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
-    .notifications-header h6 {
-        margin: 0;
-        color: var(--text-primary)
-    }
+.notifications-header h6 {
+  margin: 0;
+  color: var(--text-primary);
+}
 
 .notifications-count {
-    background-color: var(--secondary);
-    color: var(--text-secondary);
-    border-radius: 10px;
-    padding: 2px 8px;
-    font-size: .8rem;
+  background-color: var(--secondary);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
 }
 
 .notifications-content {
-    max-height: 300px;
-    overflow-y: auto
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .notifications-empty {
-    padding: 32px 16px;
-    text-align: center;
-    color: var(--text-secondary)
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-secondary);
 }
 
-    .notifications-empty i {
-        font-size: 2rem;
-        margin-bottom: 8px;
-        opacity: .5
-    }
+.notifications-empty i {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
 
-    .notifications-empty p {
-        margin: 0;
-        font-size: .9rem
-    }
+.notifications-empty p {
+  margin: 0;
+  font-size: 0.9rem;
+}
 
 .notifications-list {
-    padding: 8px
+  padding: 8px;
 }
 
 .notification-item {
-    display: flex;
-    padding: 12px;
-    border-radius: var(--border-radius);
-    transition: var(--transition)
+  display: flex;
+  padding: 12px;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
 }
 
-    .notification-item:hover {
-        background-color: var(--secondary)
-    }
+.notification-item:hover {
+  background-color: var(--secondary);
+}
 
 .notification-content {
-    flex: 1;
+  flex: 1;
 }
 
 .notification-title {
-    font-weight: 600;
-    font-size: .9rem;
-    color: var(--text-primary);
-    margin-bottom: 4px
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
 .notification-details {
-    display: flex;
-    flex-direction: column;
-    gap: 2px
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-    .notification-details span {
-        font-size: .8rem;
-        color: var(--text-secondary)
-    }
+.notification-details span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
 
 .notification-time {
-    font-size: .75rem;
-    color: var(--text-secondary);
-    opacity: .7
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .notification-actions {
-    display: flex;
-    gap: 4px
+  display: flex;
+  gap: 4px;
 }
 
-.btn-accept, .btn-decline {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    cursor: pointer;
-    transition: var(--transition)
+.btn-accept,
+.btn-decline {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
 }
 
 .btn-accept {
-    background-color: #61bd4f1a;
-    color: var(--success)
+  background-color: #61bd4f1a;
+  color: var(--success);
 }
 
-    .btn-accept:hover {
-        background-color: var(--success);
-        color: #fff
-    }
+.btn-accept:hover {
+  background-color: var(--success);
+  color: #fff;
+}
 
 .btn-decline {
-    background-color: #eb5a461a;
-    color: var(--danger)
+  background-color: #eb5a461a;
+  color: var(--danger);
 }
 
-    .btn-decline:hover {
-        background-color: var(--danger);
-        color: #fff
-    }
+.btn-decline:hover {
+  background-color: var(--danger);
+  color: #fff;
+}
 
-@media (max-width: 500px) {
-    .notifications-dropdown {
-        width: 200px;
-        right: -160px
-    }
+@media (width <= 500px) {
+  .notifications-dropdown {
+    width: 200px;
+    right: -160px;
+  }
 }

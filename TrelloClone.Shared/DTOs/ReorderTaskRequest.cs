@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public class ReorderTasksRequest
 {
     public List<TaskPositionDto> Tasks { get; set; } = new();

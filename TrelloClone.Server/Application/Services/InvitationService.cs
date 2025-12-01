@@ -1,6 +1,11 @@
 using Microsoft.AspNetCore.SignalR;
+
 using TrelloClone.Server.Application.Hubs;
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Application.Services;
 
 public class InvitationService
 {
@@ -30,13 +35,22 @@ public class InvitationService
     public async Task SendInvitation(Guid boardId, Guid inviterId, string invitedUsername, PermissionLevel permission)
     {
         var invitedUser = await _users.GetByUsernameAsync(invitedUsername);
-        if (invitedUser == null) throw new KeyNotFoundException($"User '{invitedUsername}' not found");
+        if (invitedUser == null)
+        {
+            throw new KeyNotFoundException($"User '{invitedUsername}' not found");
+        }
 
         var existingMember = await _boardUsers.ExistsAsync(boardId, invitedUser.Id);
-        if (existingMember == true) throw new Exception("User is already a member of this board");
+        if (existingMember == true)
+        {
+            throw new InvalidOperationException("User is already a member of this board");
+        }
 
         var existingInvitation = await _boardInvitations.GetPendingInvitationAsync(boardId, invitedUser.Id);
-        if (existingInvitation != null) throw new Exception("User already has a pending invitation for this board");
+        if (existingInvitation != null)
+        {
+            throw new InvalidOperationException("User already has a pending invitation for this board");
+        }
 
         var invitation = new BoardInvitation
         {
@@ -75,10 +89,14 @@ public class InvitationService
     {
         var invitation = await _boardInvitations.GetByIdAsync(invitationId);
         if (invitation == null || invitation.InvitedUserId != userId)
+        {
             throw new UnauthorizedAccessException();
+        }
 
         if (invitation.Status != InvitationStatus.Pending)
-            throw new Exception("Invitation is no longer pending");
+        {
+            throw new InvalidOperationException("Invitation is no longer pending");
+        }
 
         var boardUser = new BoardUser
         {
@@ -99,10 +117,14 @@ public class InvitationService
     {
         var invitation = await _boardInvitations.GetByIdAsync(invitationId);
         if (invitation == null || invitation.InvitedUserId != userId)
+        {
             throw new UnauthorizedAccessException();
+        }
 
         if (invitation.Status != InvitationStatus.Pending)
-            throw new Exception("Invitation is no longer pending");
+        {
+            throw new InvalidOperationException("Invitation is no longer pending");
+        }
 
         invitation.Status = InvitationStatus.Rejected;
         await _uow.SaveChangesAsync();

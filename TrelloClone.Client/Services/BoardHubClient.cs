@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.SignalR.Client;
+
 using TrelloClone.Shared.DTOs;
 using TrelloClone.Shared.DTOs.SignalR;
 
 namespace TrelloClone.Client.Services
 {
-    public class BoardHubClient
+    public partial class BoardHubClient
     {
         private readonly HubConnection _hubConnection;
         private readonly ILogger<BoardHubClient> _logger;
@@ -118,7 +119,7 @@ namespace TrelloClone.Client.Services
             catch (Exception ex)
             {
                 _currentBoardId = null;
-                _logger.LogError(ex, "Error joining board {BoardId}", boardId);
+                Log.JoinBoardError(_logger, ex, boardId);
                 throw;
             }
         }
@@ -136,14 +137,17 @@ namespace TrelloClone.Client.Services
             catch (Exception ex)
             {
                 _currentBoardId = boardId;
-                _logger.LogError(ex, "Error leaving board {BoardId}", boardId);
+                Log.LeaveBoardError(_logger, ex, boardId);
             }
         }
 
         // Drag and drop methods
         public async Task NotifyTaskDragStartedAsync(string taskId, string userId, string userName)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -156,13 +160,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying task drag started");
+                Log.TaskDragStartedError(_logger, ex);
             }
         }
 
         public async Task NotifyTaskDragEndedAsync(string taskId)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -170,13 +177,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying task drag ended");
+                Log.TaskDragEndedError(_logger, ex);
             }
         }
 
         public async Task NotifyTaskMovedAsync(TaskMoveInfo moveInfo)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -184,13 +194,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying task moved");
+                Log.TaskMovedError(_logger, ex);
             }
         }
 
         public async Task NotifyColumnDragStartedAsync(string columnId, string userId, string userName)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -203,13 +216,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying column drag started");
+                Log.ColumnDragStartedError(_logger, ex);
             }
         }
 
         public async Task NotifyColumnDragEndedAsync(string columnId)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -217,13 +233,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying column drag ended");
+                Log.ColumnDragEndedError(_logger, ex);
             }
         }
 
         public async Task NotifyColumnMovedAsync(ColumnMoveInfo moveInfo)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -231,14 +250,17 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying column moved");
+                Log.ColumnMovedError(_logger, ex);
             }
         }
 
         // CRUD notifications
         public async Task NotifyTaskCreatedAsync(TaskDto task)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -246,13 +268,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying task created");
+                Log.TaskCreatedError(_logger, ex);
             }
         }
 
         public async Task NotifyTaskUpdatedAsync(TaskDto task)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -260,13 +285,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying task updated");
+                Log.TaskUpdatedError(_logger, ex);
             }
         }
 
         public async Task NotifyTaskDeletedAsync(string taskId, string columnId)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -274,13 +302,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying task deleted");
+                Log.TaskDeletedError(_logger, ex);
             }
         }
 
         public async Task NotifyColumnCreatedAsync(ColumnDto column)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -288,13 +319,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying column created");
+                Log.ColumnCreatedError(_logger, ex);
             }
         }
 
         public async Task NotifyColumnUpdatedAsync(ColumnDto column)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -302,13 +336,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying column updated");
+                Log.ColumnUpdatedError(_logger, ex);
             }
         }
 
         public async Task NotifyColumnDeletedAsync(string columnId)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -316,14 +353,17 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying column deleted");
+                Log.ColumnDeletedError(_logger, ex);
             }
         }
 
         // Editing state notifications
         public async Task NotifyUserStartedEditingAsync(string itemType, string itemId)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -331,13 +371,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying user started editing");
+                Log.UserStartedEditingError(_logger, ex);
             }
         }
 
         public async Task NotifyUserStoppedEditingAsync(string itemType, string itemId)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -345,13 +388,16 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying user stopped editing");
+                Log.UserStoppedEditingError(_logger, ex);
             }
         }
 
         public async Task NotifyTaskAssignmentUpdatingAsync(string taskId, Guid userId, bool isAssigned)
         {
-            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected) return;
+            if (_currentBoardId == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
 
             try
             {
@@ -360,7 +406,7 @@ namespace TrelloClone.Client.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error notifying task assignment update");
+                Log.TaskAssignmentUpdatingError(_logger, ex);
             }
         }
 
@@ -372,6 +418,60 @@ namespace TrelloClone.Client.Services
             }
 
             await _hubConnection.DisposeAsync();
+        }
+
+        private static partial class Log
+        {
+            [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Error joining board {BoardId}")]
+            public static partial void JoinBoardError(ILogger logger, Exception exception, string boardId);
+
+            [LoggerMessage(EventId = 2, Level = LogLevel.Error, Message = "Error leaving board {BoardId}")]
+            public static partial void LeaveBoardError(ILogger logger, Exception exception, string boardId);
+
+            [LoggerMessage(EventId = 3, Level = LogLevel.Error, Message = "Error notifying task drag started")]
+            public static partial void TaskDragStartedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "Error notifying task drag ended")]
+            public static partial void TaskDragEndedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 5, Level = LogLevel.Error, Message = "Error notifying task moved")]
+            public static partial void TaskMovedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 6, Level = LogLevel.Error, Message = "Error notifying column drag started")]
+            public static partial void ColumnDragStartedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 7, Level = LogLevel.Error, Message = "Error notifying column drag ended")]
+            public static partial void ColumnDragEndedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 8, Level = LogLevel.Error, Message = "Error notifying column moved")]
+            public static partial void ColumnMovedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 9, Level = LogLevel.Error, Message = "Error notifying task created")]
+            public static partial void TaskCreatedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 10, Level = LogLevel.Error, Message = "Error notifying task updated")]
+            public static partial void TaskUpdatedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 11, Level = LogLevel.Error, Message = "Error notifying task deleted")]
+            public static partial void TaskDeletedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 12, Level = LogLevel.Error, Message = "Error notifying column created")]
+            public static partial void ColumnCreatedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 13, Level = LogLevel.Error, Message = "Error notifying column updated")]
+            public static partial void ColumnUpdatedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 14, Level = LogLevel.Error, Message = "Error notifying column deleted")]
+            public static partial void ColumnDeletedError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 15, Level = LogLevel.Error, Message = "Error notifying user started editing")]
+            public static partial void UserStartedEditingError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 16, Level = LogLevel.Error, Message = "Error notifying user stopped editing")]
+            public static partial void UserStoppedEditingError(ILogger logger, Exception exception);
+
+            [LoggerMessage(EventId = 17, Level = LogLevel.Error, Message = "Error notifying task assignment update")]
+            public static partial void TaskAssignmentUpdatingError(ILogger logger, Exception exception);
         }
     }
 }

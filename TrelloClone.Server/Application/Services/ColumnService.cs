@@ -1,4 +1,8 @@
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Application.Services;
 
 public class ColumnService
 {
@@ -43,11 +47,13 @@ public class ColumnService
         var board = await _boards.GetByIdAsync(req.BoardId)
                     ?? throw new KeyNotFoundException("Board not found.");
         if (await _columns.ExistsWithTitleAsync(req.BoardId, req.Title))
+        {
             throw new InvalidOperationException("Column title already in use.");
+        }
 
         // Get next position
         var existingColumns = await _columns.ListByBoardAsync(req.BoardId);
-        var nextPosition = existingColumns.Any() ? existingColumns.Max(c => c.Position) + 1 : 0;
+        var nextPosition = existingColumns.Count != 0 ? existingColumns.Max(c => c.Position) + 1 : 0;
 
         var column = new Column
         {
@@ -69,15 +75,24 @@ public class ColumnService
 
     public async Task<ColumnDto> UpdateColumnAsync(Guid boardId, Guid columnId, UpdateColumnRequest req)
     {
+        if (string.IsNullOrWhiteSpace(req.Title))
+        {
+            throw new InvalidOperationException("Column title cannot be empty.");
+        }
+
         var column = await _columns.GetByIdAsync(columnId);
         if (column == null)
+        {
             throw new InvalidOperationException("Column not found.");
+        }
 
         if (column.Title != req.Title)
         {
             bool nameExists = await _columns.ExistsWithTitleAsync(boardId, req.Title);
             if (nameExists)
+            {
                 throw new InvalidOperationException("You already have a column with that name.");
+            }
         }
 
         column.Title = req.Title;

@@ -1,114 +1,114 @@
 .boards-page {
-    max-width: 1400px;
+  max-width: 1400px;
 }
 
 .page-header {
-    border-bottom: 1px solid var(--border)
+  border-bottom: 1px solid var(--border);
 }
 
 .welcome-text {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 14px
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .boards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
-    gap: 16px
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
 }
 
 .board-item.dragging {
-    opacity: .5;
-    transform: scale(0.95)
+  opacity: 0.5;
+  transform: scale(0.95);
 }
 
 .board-item {
-    min-width: 280px;
-    flex: 0 0 auto;
-    height: 100%;
-    border-radius: 8px;
-    padding: 8px
+  min-width: 280px;
+  flex: 0 0 auto;
+  height: 100%;
+  border-radius: 8px;
+  padding: 8px;
 }
 
 .empty-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 50vh
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
 }
 
 .empty-content {
-    text-align: center;
-    max-width: 400px;
-    padding: 2rem
+  text-align: center;
+  max-width: 400px;
+  padding: 2rem;
 }
 
-    .empty-content i {
-        font-size: 48px;
-        color: var(--text-secondary);
-        margin-bottom: 1rem;
-        opacity: .7
-    }
+.empty-content i {
+  font-size: 48px;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
 
-    .empty-content h3 {
-        margin-bottom: 8px;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-primary)
-    }
+.empty-content h3 {
+  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
 
-    .empty-content p {
-        color: var(--text-secondary);
-        margin-bottom: 1.5rem;
-        font-size: 14px
-    }
+.empty-content p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 14px;
+}
 
-    .empty-content .btn-primary {
-        padding: 8px 16px;
-        font-size: 14px
-    }
+.empty-content .btn-primary {
+  padding: 8px 16px;
+  font-size: 14px;
+}
 
 .access-denied {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 70vh
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
 }
 
 .denied-content {
-    text-align: center;
-    max-width: 400px;
-    padding: 2rem
+  text-align: center;
+  max-width: 400px;
+  padding: 2rem;
 }
 
-    .denied-content i {
-        font-size: 48px;
-        color: var(--danger);
-        margin-bottom: 1rem
-    }
+.denied-content i {
+  font-size: 48px;
+  color: var(--danger);
+  margin-bottom: 1rem;
+}
 
-    .denied-content h3 {
-        margin-bottom: 8px;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-primary)
-    }
+.denied-content h3 {
+  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
 
-    .denied-content p {
-        color: var(--text-secondary);
-        margin-bottom: 1.5rem;
-        font-size: 14px
-    }
+.denied-content p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 14px;
+}
 
-    .denied-content .btn-primary {
-        padding: 8px 16px;
-        font-size: 14px
-    }
+.denied-content .btn-primary {
+  padding: 8px 16px;
+  font-size: 14px;
+}
 
-@media (max-width: 768px) {
-    .boards-grid {
-        grid-template-columns: 1fr;
-        gap: 10px
-    }
+@media (width <= 768px) {
+  .boards-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 }

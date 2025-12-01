@@ -1,3 +1,5 @@
+namespace TrelloClone.Server.Domain.Entities;
+
 public class TaskAssignment
 {
     public Guid TaskId { get; set; }

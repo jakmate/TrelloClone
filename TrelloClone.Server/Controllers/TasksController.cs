@@ -1,7 +1,12 @@
+using System.Security.Claims;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+
+using TrelloClone.Server.Application.Services;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Controllers;
 
 [ApiController]
 [Route("api/columns/{columnId:guid}/tasks")]
@@ -16,7 +21,9 @@ public class TasksController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
         var list = await _svc.GetTasksForColumnAsync(columnId);
         return Ok(list);
@@ -27,7 +34,9 @@ public class TasksController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
         var users = await _svc.GetAvailableUsersForTaskAsync(columnId);
         return Ok(users);
@@ -40,9 +49,14 @@ public class TasksController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
-        if (req.ColumnId != columnId) return BadRequest();
+        if (req.ColumnId != columnId)
+        {
+            return BadRequest();
+        }
 
         var dto = await _svc.CreateTaskAsync(req);
         return CreatedAtAction(
@@ -60,7 +74,9 @@ public class TasksController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
         var dto = await _svc.UpdateTaskAsync(taskId, req);
         return Ok(dto);
@@ -71,7 +87,9 @@ public class TasksController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
         await _svc.DeleteTaskAsync(taskId);
         return NoContent();
@@ -82,7 +100,9 @@ public class TasksController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
         await _svc.ReorderTasksAsync(request.Tasks);
         return Ok();

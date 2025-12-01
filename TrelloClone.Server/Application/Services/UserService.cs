@@ -1,4 +1,8 @@
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Application.Services;
 
 public class UserService
 {
@@ -28,7 +32,9 @@ public class UserService
                     ?? throw new KeyNotFoundException("User not found.");
 
         if (await _boardUsers.ExistsAsync(boardId, userId))
+        {
             throw new InvalidOperationException("User already on board.");
+        }
 
         _boardUsers.Add(new BoardUser { BoardId = boardId, UserId = userId });
         await _uow.SaveChangesAsync();
@@ -37,7 +43,10 @@ public class UserService
     public async Task<UserDto?> GetUserAsync(Guid userId)
     {
         var user = await _users.GetByIdWithBoardsAsync(userId);
-        if (user == null) return null;
+        if (user == null)
+        {
+            return null;
+        }
 
         return new UserDto
         {

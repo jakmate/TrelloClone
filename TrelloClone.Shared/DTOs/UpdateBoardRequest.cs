@@ -5,5 +5,5 @@ namespace TrelloClone.Shared.DTOs;
 public class UpdateBoardRequest
 {
     [Required]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 }

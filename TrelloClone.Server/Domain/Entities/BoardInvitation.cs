@@ -1,3 +1,7 @@
+using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Domain.Entities;
+
 public enum InvitationStatus { Pending, Accepted, Rejected }
 
 public class BoardInvitation

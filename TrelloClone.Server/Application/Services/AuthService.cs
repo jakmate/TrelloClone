@@ -1,18 +1,29 @@
-using Microsoft.IdentityModel.Tokens;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
+
+using Microsoft.IdentityModel.Tokens;
+
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs;
 
-public class AuthService
+namespace TrelloClone.Server.Application.Services;
+
+public partial class AuthService
 {
     private readonly IUserRepository _users;
     private readonly IUnitOfWork _uow;
     private readonly IConfiguration _config;
     private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IUserRepository users, IUnitOfWork uow, IConfiguration config, ILogger<AuthService> logger)
+    public AuthService(
+        IUserRepository users,
+        IUnitOfWork uow,
+        IConfiguration config,
+        ILogger<AuthService> logger)
     {
         _users = users;
         _uow = uow;
@@ -108,7 +119,9 @@ public class AuthService
     private string GenerateJwtToken(User user)
     {
         var jwtSettings = _config.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is required");
+        var secretKey = jwtSettings["SecretKey"]
+            ?? throw new InvalidOperationException("JWT SecretKey is required");
+
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -118,8 +131,9 @@ public class AuthService
             new Claim(ClaimTypes.Name, user.UserName),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Iat,
-                new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(),
+            new Claim(
+                JwtRegisteredClaimNames.Iat,
+                new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
                 ClaimValueTypes.Integer64)
         };
 
@@ -134,7 +148,7 @@ public class AuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private string HashPassword(string password)
+    private static string HashPassword(string password)
     {
         return BCrypt.Net.BCrypt.HashPassword(password, BCrypt.Net.BCrypt.GenerateSalt(12));
     }
@@ -147,15 +161,17 @@ public class AuthService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Password verification failed");
+            Log.PasswordVerificationFailed(_logger, ex);
             return false;
         }
     }
 
-    private bool IsPasswordValid(string password)
+    private static bool IsPasswordValid(string password)
     {
         if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
+        {
             return false;
+        }
 
         // Must contain at least one letter and one number
         return Regex.IsMatch(password, @"^(?=.*[A-Za-z])(?=.*\d).{6,}$");
@@ -175,19 +191,25 @@ public class AuthService
     {
         var user = await _users.GetByIdAsync(userId);
         if (user == null)
+        {
             throw new KeyNotFoundException("User not found");
+        }
 
         // Prevent duplicate username/email
         if (request.UserName != user.UserName)
         {
             if (await _users.GetByUsernameAsync(request.UserName) != null)
+            {
                 throw new InvalidOperationException("Username already taken");
+            }
         }
 
         if (request.Email != user.Email)
         {
             if (await _users.GetByEmailAsync(request.Email) != null)
+            {
                 throw new InvalidOperationException("Email already registered");
+            }
         }
 
         user.UserName = request.UserName.Trim();
@@ -207,13 +229,19 @@ public class AuthService
     {
         var user = await _users.GetByIdAsync(userId);
         if (user == null)
+        {
             throw new KeyNotFoundException("User not found");
+        }
 
         if (!VerifyPassword(request.CurrentPassword, user.PasswordHash))
+        {
             throw new UnauthorizedAccessException("Current password is incorrect");
+        }
 
         if (!IsPasswordValid(request.NewPassword))
+        {
             throw new InvalidOperationException("New password must be at least 6 characters and contain letters and numbers");
+        }
 
         user.PasswordHash = HashPassword(request.NewPassword);
         await _uow.SaveChangesAsync();
@@ -223,9 +251,22 @@ public class AuthService
     {
         var user = await _users.GetByIdAsync(userId);
         if (user == null)
+        {
             throw new KeyNotFoundException("User not found");
+        }
 
         _users.Remove(user);
         await _uow.SaveChangesAsync();
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(
+            EventId = 1,
+            Level = LogLevel.Warning,
+            Message = "Password verification failed")]
+        public static partial void PasswordVerificationFailed(
+            ILogger logger,
+            Exception exception);
     }
 }

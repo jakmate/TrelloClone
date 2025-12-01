@@ -1,5 +1,7 @@
-using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
+
+using Microsoft.AspNetCore.Components.Authorization;
+
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services;
@@ -111,7 +113,7 @@ public class AuthService : IAuthService
     public async Task<UserDto> UpdateUserAsync(UpdateUserRequest request)
     {
         var response = await _httpClient.PutAsJsonAsync("/api/auth/update-user", request);
-        
+
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
@@ -125,18 +127,18 @@ public class AuthService : IAuthService
                 }
             }
             catch (System.Text.Json.JsonException) { }
-            
+
             throw new HttpRequestException(errorContent);
         }
-        
+
         var updatedUser = await response.Content.ReadFromJsonAsync<UserDto>();
-        return updatedUser ?? throw new Exception("Failed to update user");
+        return updatedUser ?? throw new InvalidOperationException("Failed to update user");
     }
 
     public async Task ChangePasswordAsync(ChangePasswordRequest request)
     {
         var response = await _httpClient.PutAsJsonAsync("/api/auth/change-password", request);
-        
+
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
@@ -149,7 +151,7 @@ public class AuthService : IAuthService
                 }
             }
             catch (System.Text.Json.JsonException) { }
-            
+
             throw new HttpRequestException(errorContent);
         }
     }

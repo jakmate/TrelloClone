@@ -1,6 +1,8 @@
-using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
 using System.Security.Claims;
+
+using Microsoft.AspNetCore.Components.Authorization;
+
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services
@@ -10,7 +12,7 @@ namespace TrelloClone.Client.Services
         Task<List<BoardInvitationDto>> GetPendingInvitations();
         Task AcceptInvitation(Guid invitationId);
         Task DeclineInvitation(Guid invitationId);
-        Task SendInvitation(Guid boardId, string invitedEmail, PermissionLevel permission = PermissionLevel.Editor);
+        Task SendInvitation(Guid boardId, string invitedUsername, PermissionLevel permission = PermissionLevel.Editor);
     }
 
     public class InvitationService : IInvitationService
@@ -27,7 +29,10 @@ namespace TrelloClone.Client.Services
         public async Task<List<BoardInvitationDto>> GetPendingInvitations()
         {
             var userId = await GetCurrentUserId();
-            if (userId == Guid.Empty) return new List<BoardInvitationDto>();
+            if (userId == Guid.Empty)
+            {
+                return new List<BoardInvitationDto>();
+            }
 
             return await _http.GetFromJsonAsync<List<BoardInvitationDto>>($"api/invitations?userId={userId}")
                    ?? new List<BoardInvitationDto>();
@@ -39,7 +44,7 @@ namespace TrelloClone.Client.Services
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Failed to accept invitation: {error}");
+                throw new HttpRequestException($"Failed to accept invitation: {error}");
             }
         }
 
@@ -49,7 +54,7 @@ namespace TrelloClone.Client.Services
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Failed to decline invitation: {error}");
+                throw new HttpRequestException($"Failed to decline invitation: {error}");
             }
         }
 
@@ -73,7 +78,7 @@ namespace TrelloClone.Client.Services
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Failed to send invitation: {error}");
+                throw new HttpRequestException($"Failed to send invitation: {error}");
             }
         }
     }
