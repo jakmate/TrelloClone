@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public class ReorderColumnsRequest
 {
     public List<ColumnPositionDto> Columns { get; set; } = new();

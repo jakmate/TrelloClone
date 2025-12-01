@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+using TrelloClone.Server.Domain.Entities;
+
+namespace TrelloClone.Server.Infrastructure.Configurations;
+
 public class BoardInvitationConfiguration : IEntityTypeConfiguration<BoardInvitation>
 {
     public void Configure(EntityTypeBuilder<BoardInvitation> builder)

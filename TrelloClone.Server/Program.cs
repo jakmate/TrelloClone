@@ -1,8 +1,13 @@
+using System.Text;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+
 using TrelloClone.Server.Application.Hubs;
+using TrelloClone.Server.Application.Services;
+using TrelloClone.Server.Domain.Interfaces;
+using TrelloClone.Server.Infrastructure.Persistance;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,12 +70,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 {
                     context.Token = accessToken;
                 }
+
                 return Task.CompletedTask;
             },
             OnAuthenticationFailed = context =>
             {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogWarning("Authentication failed: {Message}", context.Exception.Message);
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILogger<Program>>();
+
+                Log.AuthenticationFailed(logger, context.Exception);
+
                 return Task.CompletedTask;
             },
             OnTokenValidated = context =>
@@ -158,6 +167,7 @@ app.Use(async (context, next) =>
         context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
         context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; connect-src 'self' wss:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'";
     }
+
     await next();
 });
 
@@ -169,3 +179,17 @@ app.MapControllers();
 app.MapHub<BoardHub>("/boardhub");
 
 app.Run();
+
+public partial class Program
+{
+    private static partial class Log
+    {
+        [LoggerMessage(
+            EventId = 1,
+            Level = LogLevel.Warning,
+            Message = "Authentication failed")]
+        public static partial void AuthenticationFailed(
+            ILogger logger,
+            Exception exception);
+    }
+}

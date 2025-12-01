@@ -1,7 +1,10 @@
-using Microsoft.AspNetCore.Components.Authorization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
+
+using Microsoft.AspNetCore.Components.Authorization;
+
+using TrelloClone.Shared;
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Client.Services;
@@ -40,7 +43,9 @@ public class BoardService : IBoardService
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId))
+        {
             return new List<BoardDto>();
+        }
 
         var response = await _httpClient.GetFromJsonAsync<BoardDto[]>($"api/boards?ownerId={userId}");
         return response?.ToList() ?? new List<BoardDto>();
@@ -58,7 +63,9 @@ public class BoardService : IBoardService
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+        {
             throw new UnauthorizedAccessException("User not authenticated");
+        }
 
         // Set the OwnerId if not already set
         request.OwnerId = userGuid;
@@ -79,7 +86,10 @@ public class BoardService : IBoardService
     {
         var response = await _httpClient.DeleteAsync($"api/boards/{id}");
         if (response.StatusCode == HttpStatusCode.NoContent)
+        {
             return true;
+        }
+
         var error = await response.Content.ReadAsStringAsync();
         throw new HttpRequestException($"Delete failed: {error}");
     }
@@ -126,12 +136,14 @@ public class BoardService : IBoardService
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+        {
             throw new UnauthorizedAccessException("User not authenticated");
+        }
 
         request.OwnerId = userGuid;
 
         var response = await _httpClient.PostAsJsonAsync("api/boards/from-template", request);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<BoardDto>() ?? throw new Exception("Failed to create board from template");
+        return await response.Content.ReadFromJsonAsync<BoardDto>() ?? throw new InvalidOperationException("Failed to create board from template");
     }
 }

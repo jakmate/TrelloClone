@@ -1,3 +1,8 @@
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Domain.Interfaces;
+
 public interface IBoardRepository
 {
     Task<bool> ExistsWithNameAsync(string name, Guid userId);

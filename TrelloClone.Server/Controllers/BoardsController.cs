@@ -1,7 +1,12 @@
+using System.Security.Claims;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+
+using TrelloClone.Server.Application.Services;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Controllers;
 
 [ApiController]
 [Route("api/boards")]
@@ -16,9 +21,7 @@ public class BoardsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<BoardDto>> Create([FromBody] CreateBoardRequest req)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
-            return Unauthorized();
+        var userGuid = GetCurrentUserId();
 
         try
         {
@@ -34,9 +37,12 @@ public class BoardsController : ControllerBase
     [HttpPut("{boardId:guid}")]
     public async Task<ActionResult<BoardDto>> Update(Guid boardId, [FromBody] UpdateBoardRequest req)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
-            return Unauthorized();
+        var userGuid = GetCurrentUserId();
+
+        if (string.IsNullOrWhiteSpace(req.Name))
+        {
+            return BadRequest("Board name cannot be empty.");
+        }
 
         try
         {
@@ -116,14 +122,16 @@ public class BoardsController : ControllerBase
     [HttpGet("{boardId:guid}")]
     public async Task<ActionResult<BoardDto>> Get(Guid boardId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
-            return Unauthorized();
+        var userGuid = GetCurrentUserId();
 
         try
         {
             var dto = await _boardService.GetBoardAsync(boardId);
-            if (dto == null) return NotFound();
+            if (dto == null)
+            {
+                return NotFound();
+            }
+
             return Ok(dto);
         }
         catch (Exception ex)
@@ -135,14 +143,16 @@ public class BoardsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<BoardDto[]>> GetBoards()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
-            return Unauthorized();
+        var userGuid = GetCurrentUserId();
 
         try
         {
             var dto = await _boardService.GetAllBoardsAsync(userGuid);
-            if (dto == null) return Ok(new BoardDto[0]); // Return empty array instead of NotFound
+            if (dto == null)
+            {
+                return Ok(Array.Empty<BoardDto>()); // Return empty array instead of NotFound
+            }
+
             return Ok(dto);
         }
         catch (Exception ex)
@@ -162,15 +172,17 @@ public class BoardsController : ControllerBase
     private Guid GetCurrentUserId()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return Guid.Parse(userIdString);
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        {
+            throw new UnauthorizedAccessException("User is not authenticated or invalid ID.");
+        }
+        return userId;
     }
 
     [HttpPost("from-template")]
     public async Task<ActionResult<BoardDto>> CreateBoardFromTemplate([FromBody] CreateBoardFromTemplateRequest request)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
-            return Unauthorized();
+        var userGuid = GetCurrentUserId();
 
         request.OwnerId = userGuid;
 

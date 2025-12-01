@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Infrastructure.Configurations;
+
+namespace TrelloClone.Server.Infrastructure.Persistance;
+
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> opts) : base(opts) { }

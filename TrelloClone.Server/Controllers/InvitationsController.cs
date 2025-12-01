@@ -1,8 +1,10 @@
+using System.Security.Claims;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using TrelloClone.Shared.DTOs;
 
+using TrelloClone.Server.Application.Services;
+using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Server.Controllers;
 
@@ -25,7 +27,14 @@ public class InvitationsController : ControllerBase
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out var userGuid))
+            {
                 return Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Username))
+            {
+                return BadRequest("Username cannot be empty.");
+            }
 
             await _invitationService.SendInvitation(dto.BoardId, userGuid, dto.Username, dto.Permission);
             return Ok();
@@ -43,7 +52,9 @@ public class InvitationsController : ControllerBase
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out var userGuid))
+            {
                 return Unauthorized();
+            }
 
             await _invitationService.AcceptInvitation(invitationId, userGuid);
             return Ok();
@@ -61,7 +72,9 @@ public class InvitationsController : ControllerBase
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out var userGuid))
+            {
                 return Unauthorized();
+            }
 
             await _invitationService.DeclineInvitation(invitationId, userGuid);
             return Ok();

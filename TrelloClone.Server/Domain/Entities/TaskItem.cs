@@ -1,5 +1,7 @@
 using TrelloClone.Shared.DTOs;
 
+namespace TrelloClone.Server.Domain.Entities;
+
 public class TaskItem
 {
     public Guid Id { get; set; }
@@ -7,7 +9,7 @@ public class TaskItem
     public PriorityLevel Priority { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // Who it’s assigned to
+    // Who itâ€™s assigned to
     public ICollection<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
     public ICollection<User> AssignedUsers { get; set; } = new List<User>();
 

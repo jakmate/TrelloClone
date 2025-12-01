@@ -1,7 +1,12 @@
+using System.Security.Claims;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+
+using TrelloClone.Server.Application.Services;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Controllers;
 
 [ApiController]
 [Route("api/boards/{boardId:guid}/columns")]
@@ -19,11 +24,15 @@ public class ColumnsController : ControllerBase
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out var userGuid))
+            {
                 return Unauthorized();
+            }
 
             var list = await _columnService.GetColumnsForBoardAsync(boardId);
             if (list == null)
+            {
                 return NotFound();
+            }
 
             return Ok(list);
         }
@@ -40,9 +49,15 @@ public class ColumnsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
-        if (req.BoardId != boardId) return BadRequest();
+        if (req.BoardId != boardId)
+        {
+            return BadRequest();
+        }
+
         var dto = await _columnService.CreateColumnAsync(req);
         return CreatedAtAction(
             nameof(GetAll),
@@ -59,7 +74,9 @@ public class ColumnsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
         var dto = await _columnService.UpdateColumnAsync(boardId, columnId, req);
         return Ok(dto);
@@ -70,7 +87,9 @@ public class ColumnsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
         await _columnService.DeleteColumnAsync(columnId);
         return NoContent();
@@ -81,7 +100,9 @@ public class ColumnsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userId, out var userGuid))
+        {
             return Unauthorized();
+        }
 
         await _columnService.ReorderColumnsAsync(boardId, request.Columns);
         return Ok();

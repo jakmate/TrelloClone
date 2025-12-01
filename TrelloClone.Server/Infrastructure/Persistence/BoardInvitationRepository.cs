@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Infrastructure.Persistance;
 
 public class BoardInvitationRepository : IBoardInvitationRepository
 {

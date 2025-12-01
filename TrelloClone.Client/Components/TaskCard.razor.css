@@ -1,165 +1,165 @@
 .task-card-sortable {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius);
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
 }
 
 .task-card-sortable:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-    border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  border-color: var(--primary);
 }
 
 .drag-handle {
-    color: var(--text-tertiary);
-    cursor: grab;
-    border-radius: var(--border-radius);
-    transition: var(--transition);
+  color: var(--text-tertiary);
+  cursor: grab;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
 }
 
 .editing-indicator {
-    background-color: #fffbf0;
-    border: 1px solid #fef3c7;
-    border-radius: var(--border-radius);
-    padding: 0.5rem;
-    margin-bottom: 0.75rem;
+  background-color: #fffbf0;
+  border: 1px solid #fef3c7;
+  border-radius: var(--border-radius);
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .task-title {
-    color: var(--text-primary);
-    line-height: 1.4;
+  color: var(--text-primary);
+  line-height: 1.4;
 }
 
 /* Priority Badges */
 .priority-badge {
-    padding: 0.2rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .priority-low {
-    background-color: #f0f9ff;
-    color: #0369a1;
-    border: 1px solid #e0f2fe;
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #e0f2fe;
 }
 
 .priority-medium {
-    background-color: #fffbeb;
-    color: #d97706;
-    border: 1px solid #fef3c7;
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fef3c7;
 }
 
 .priority-high {
-    background-color: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 /* User Avatars */
 .assigned-users {
-    display: flex;
-    gap: 0.25rem;
-    flex-wrap: wrap;
-    padding-top: 0.25rem;
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  padding-top: 0.25rem;
 }
 
 .user-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: var(--primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
-    font-weight: 600;
-    border: 2px solid var(--card-bg);
-    box-shadow: var(--shadow-sm);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 600;
+  border: 2px solid var(--card-bg);
+  box-shadow: var(--shadow-sm);
 }
 
 .user-avatar.more-users {
-    background-color: var(--text-tertiary);
-    font-size: 0.5rem;
+  background-color: var(--text-tertiary);
+  font-size: 0.5rem;
 }
 
 /* User Checkboxes for Editing */
 .user-checkboxes-small {
-    max-height: 130px;
-    overflow-y: auto;
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius);
-    padding: 0.5rem;
-    background-color: var(--secondary);
+  max-height: 130px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  padding: 0.5rem;
+  background-color: var(--secondary);
 }
 
 .user-checkboxes-small::-webkit-scrollbar {
-    width: 3px;
+  width: 3px;
 }
 
 .user-checkboxes-small::-webkit-scrollbar-track {
-    background: var(--secondary);
+  background: var(--secondary);
 }
 
 .user-checkboxes-small::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 2px;
+  background: var(--border);
+  border-radius: 2px;
 }
 
 .form-check-sm .form-check-input {
-    width: 0.9rem;
-    height: 0.9rem;
-    margin-top: 0.15rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.15rem;
 }
 
 .form-check-sm .form-check-label {
-    font-size: 0.8rem;
-    margin-left: 0.25rem;
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
 }
 
 /* Sortable states for tasks */
 .task-sortable-item.sortable-ghost .task-card-sortable {
-    opacity: 0.4;
-    background-color: var(--primary-light);
+  opacity: 0.4;
+  background-color: var(--primary-light);
 }
 
 .task-sortable-item.sortable-chosen .task-card-sortable {
-    box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg);
 }
 
 .task-sortable-item.sortable-drag .task-card-sortable {
-    opacity: 0.5;
+  opacity: 0.5;
 }
 
 /* Editing state */
 .task-card-sortable.editing {
-    background-color: #f8fafc;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(0, 101, 255, 0.1);
+  background-color: #f8fafc;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgb(0 101 255 / 10%);
 }
 
 /* Locked/Being edited state */
 .task-card-sortable.locked {
-    background-color: #fffbeb;
-    border-color: #fef3c7;
+  background-color: #fffbeb;
+  border-color: #fef3c7;
 }
 
 /* Button overrides for small screens */
-@media (max-width: 576px) {
-    .assigned-users {
-        gap: 0.125rem;
-    }
-    
-    .user-avatar {
-        width: 20px;
-        height: 20px;
-        font-size: 0.5rem;
-    }
+@media (width <= 576px) {
+  .assigned-users {
+    gap: 0.125rem;
+  }
+
+  .user-avatar {
+    width: 20px;
+    height: 20px;
+    font-size: 0.5rem;
+  }
 }

@@ -1,3 +1,7 @@
+using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Domain.Entities;
+
 public class BoardUser
 {
     public Guid BoardId { get; set; }

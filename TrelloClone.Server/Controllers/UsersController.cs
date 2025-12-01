@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+
+using TrelloClone.Server.Application.Services;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Controllers;
 
 [ApiController]
 [Route("api/users")]
@@ -19,7 +23,11 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserDto>> Get(Guid id)
     {
         var dto = await _userSvc.GetUserAsync(id);
-        if (dto == null) return NotFound();
+        if (dto == null)
+        {
+            return NotFound();
+        }
+
         return Ok(dto);
     }
 }

@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public class ChangePasswordRequest
 {
     public string CurrentPassword { get; set; } = string.Empty;

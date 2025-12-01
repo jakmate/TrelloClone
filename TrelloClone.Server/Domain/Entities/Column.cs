@@ -1,3 +1,5 @@
+namespace TrelloClone.Server.Domain.Entities;
+
 public class Column
 {
     public Guid Id { get; set; }

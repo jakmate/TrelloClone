@@ -1,4 +1,8 @@
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Application.Services;
 
 public class TaskService
 {
@@ -41,7 +45,7 @@ public class TaskService
                   ?? throw new KeyNotFoundException("Column not found.");
 
         // Validate that assigned users are board members
-        if (req.AssignedUserIds?.Any() == true)
+        if (req.AssignedUserIds != null && req.AssignedUserIds.Count > 0)
         {
             var boardId = col.BoardId;
             await ValidateBoardMembersAsync(boardId, req.AssignedUserIds);
@@ -58,7 +62,7 @@ public class TaskService
         await _uow.SaveChangesAsync();
 
         // Assign users if provided
-        if (req.AssignedUserIds?.Any() == true)
+        if (req.AssignedUserIds != null && req.AssignedUserIds.Count > 0)
         {
             await _tasks.AssignUsersToTaskAsync(task.Id, req.AssignedUserIds);
             await _uow.SaveChangesAsync();
@@ -79,8 +83,15 @@ public class TaskService
         var task = await _tasks.GetByIdAsync(taskId)
                    ?? throw new KeyNotFoundException("Task not found.");
 
-        if (req.Name is { } n) task.Name = n;
-        if (req.Priority is { } p) task.Priority = p;
+        if (req.Name is { } n)
+        {
+            task.Name = n;
+        }
+
+        if (req.Priority is { } p)
+        {
+            task.Priority = p;
+        }
 
         // Update user assignments if provided
         if (req.AssignedUserIds is { } userIds)
@@ -89,7 +100,7 @@ public class TaskService
             var column = await _columns.GetByIdAsync(task.ColumnId)
                         ?? throw new KeyNotFoundException("Column not found.");
 
-            if (userIds.Any())
+            if (userIds.Count != 0)
             {
                 await ValidateBoardMembersAsync(column.BoardId, userIds);
             }
@@ -100,7 +111,7 @@ public class TaskService
         await _uow.SaveChangesAsync();
 
         // Reload task to get updated assignments
-        task = await _tasks.GetByIdAsync(taskId);
+        task = await _tasks.GetByIdAsync(taskId) ?? throw new KeyNotFoundException("Task not found.");
 
         return new TaskDto
         {
@@ -149,7 +160,7 @@ public class TaskService
         var memberIds = board.BoardUsers.Select(bu => bu.User.Id).ToHashSet();
         var invalidUserIds = userIds.Where(id => !memberIds.Contains(id)).ToList();
 
-        if (invalidUserIds.Any())
+        if (invalidUserIds.Count != 0)
         {
             throw new InvalidOperationException(
                 $"Users {string.Join(", ", invalidUserIds)} are not members of this board.");

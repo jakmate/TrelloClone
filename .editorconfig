@@ -1,0 +1,55 @@
+# Top‑most EditorConfig file
+root = true
+
+# ======= Global defaults =========
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# ======= C# files =========
+[*.cs]
+
+# Formatting / indentation
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+# Using / imports
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+dotnet_remove_unnecessary_imports = true
+
+# Var preferences (modern, but balanced)
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Expression-bodied members — prefer explicit braces/blocks (adjust based on team taste)
+csharp_style_expression_bodied_methods = false:suggestion
+csharp_style_expression_bodied_properties = false:suggestion
+
+# Braces for all control structures
+csharp_prefer_braces = true:warning
+
+# Namespace declarations — file-scoped (common in newer .NET style)
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# Naming conventions — example: private fields as _camelCase
+dotnet_naming_rule.private_fields_should_be_camel.severity = warning
+dotnet_naming_rule.private_fields_should_be_camel.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_camel.style = camel_style
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.camel_style.capitalization = camel_case
+dotnet_naming_style.camel_style.required_prefix = _
+
+# ======= Razor / Blazor files =========
+[*.razor]
+indent_style = space
+indent_size = 2
+tab_width = 2
+

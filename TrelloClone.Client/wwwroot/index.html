@@ -1,42 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TrelloClone</title>
     <base href="/" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    />
     <link rel="stylesheet" href="css/app.css" crossorigin="anonymous" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="TrelloClone.Client.styles.css" rel="stylesheet" />
-</head>
+  </head>
 
-<body>
+  <body>
     <div id="app">
-        <div class="launch-screen">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3">Preparing your boards...</p>
+      <div class="launch-screen">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
         </div>
+        <p class="mt-3">Preparing your boards...</p>
+      </div>
     </div>
 
     <div id="blazor-error-ui" class="alert alert-danger d-none">
-        An unhandled error has occurred.
-        <a href="/" class="alert-link">Reload</a>
-        <button type="button" class="btn-close" aria-label="Dismiss"></button>
+      An unhandled error has occurred.
+      <a href="/" class="alert-link">Reload</a>
+      <button type="button" class="btn-close" aria-label="Dismiss"></button>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
     <script>
-        // Error UI dismissal
-        document.querySelector('#blazor-error-ui .btn-close').addEventListener('click', function () {
-            document.getElementById('blazor-error-ui').classList.add('d-none');
+      // Error UI dismissal
+      document
+        .querySelector("#blazor-error-ui .btn-close")
+        .addEventListener("click", function () {
+          document.getElementById("blazor-error-ui").classList.add("d-none");
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="js/boardsSortable.js"></script>
-</body>
-
+  </body>
 </html>

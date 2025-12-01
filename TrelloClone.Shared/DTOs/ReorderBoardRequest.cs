@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public class ReorderBoardsRequest
 {
     public List<BoardPositionDto> Boards { get; set; } = new();

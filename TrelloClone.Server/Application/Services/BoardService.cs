@@ -1,4 +1,8 @@
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Application.Services;
 
 public class BoardService
 {
@@ -16,11 +20,13 @@ public class BoardService
     public async Task<BoardDto> CreateBoardAsync(string name, Guid ownerId)
     {
         if (await _boards.ExistsWithNameAsync(name, ownerId))
+        {
             throw new InvalidOperationException("You already have a board with that name.");
+        }
 
         // Get next position
         var existingBoards = await _boards.GetAllByUserIdAsync(ownerId);
-        var nextPosition = existingBoards.Any() ? existingBoards.Max(b => b.Position) + 1 : 0;
+        var nextPosition = existingBoards.Count != 0 ? existingBoards.Max(b => b.Position) + 1 : 0;
 
         var board = new Board
         {
@@ -49,12 +55,17 @@ public class BoardService
            ?? throw new KeyNotFoundException("Board not found.");
         bool isMember = await _boardUsers.ExistsAsync(boardId, userId);
         if (!isMember)
+        {
             throw new UnauthorizedAccessException("You don't have permission to modify this board.");
+        }
+
         if (board.Name != newName)
         {
             bool nameExists = await _boards.ExistsWithNameAsync(newName, userId);
             if (nameExists)
+            {
                 throw new InvalidOperationException("You already have a board with that name.");
+            }
         }
         board.Name = newName;
         await _uow.SaveChangesAsync();
@@ -73,7 +84,9 @@ public class BoardService
 
         bool isOwner = await _boardUsers.IsOwnerAsync(boardId, userId);
         if (!isOwner)
+        {
             throw new UnauthorizedAccessException("Only board owners can delete boards.");
+        }
 
         _boards.Remove(board);
         await _uow.SaveChangesAsync();
@@ -83,11 +96,15 @@ public class BoardService
     {
         bool isOwner = await _boardUsers.IsOwnerAsync(boardId, userId);
         if (isOwner)
+        {
             throw new InvalidOperationException("Board owners cannot leave their boards. Transfer ownership or delete the board instead.");
+        }
 
         bool isMember = await _boardUsers.ExistsAsync(boardId, userId);
         if (!isMember)
+        {
             throw new InvalidOperationException("You are not a member of this board.");
+        }
 
         await _boardUsers.RemoveUserAsync(boardId, userId);
         await _uow.SaveChangesAsync();
@@ -101,7 +118,11 @@ public class BoardService
     public async Task<BoardDto?> GetBoardAsync(Guid boardId)
     {
         var board = await _boards.GetByIdAsync(boardId);
-        if (board == null) return null;
+        if (board == null)
+        {
+            return null;
+        }
+
         return new BoardDto
         {
             Id = board.Id,
@@ -113,7 +134,10 @@ public class BoardService
     public async Task<BoardDto[]?> GetAllBoardsAsync(Guid ownerId)
     {
         var boards = await _boards.GetAllByUserIdAsync(ownerId);
-        if (boards == null || !boards.Any()) return null;
+        if (boards == null || boards.Count == 0)
+        {
+            return null;
+        }
 
         return boards.Select(board => new BoardDto
         {
@@ -134,7 +158,9 @@ public class BoardService
         {
             bool isMember = await _boardUsers.ExistsAsync(pos.Id, userId);
             if (!isMember)
+            {
                 throw new UnauthorizedAccessException($"No permission for board {pos.Id}");
+            }
         }
 
         await _boards.UpdatePositionsAsync(positions);
@@ -144,7 +170,9 @@ public class BoardService
     public async Task<BoardDto> CreateBoardFromTemplateAsync(CreateBoardFromTemplateRequest request)
     {
         if (await _boards.ExistsWithNameAsync(request.Name, request.OwnerId))
+        {
             throw new InvalidOperationException("You already have a board with that name.");
+        }
 
         var existingBoards = await _boards.GetAllByUserIdAsync(request.OwnerId);
         var nextPosition = 0;
@@ -167,7 +195,7 @@ public class BoardService
             {
                 Title = col.Title,
                 Position = col.Position,
-                Tasks = col.Tasks.Select(task => new TaskItem
+                Tasks = (col.Tasks ?? new List<CreateTaskRequest>()).Select(task => new TaskItem
                 {
                     Name = task.Name,
                     Priority = task.Priority,

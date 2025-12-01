@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Server.Domain.Interfaces;
+
+namespace TrelloClone.Server.Infrastructure.Persistance;
+
 public class UserRepository : IUserRepository
 {
     private readonly AppDbContext _ctx;

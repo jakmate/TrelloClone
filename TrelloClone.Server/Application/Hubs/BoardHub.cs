@@ -1,13 +1,16 @@
+using System.Collections.Concurrent;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using System.Collections.Concurrent;
+
+using TrelloClone.Server.Application.Services;
 using TrelloClone.Shared.DTOs;
 using TrelloClone.Shared.DTOs.SignalR;
 
 namespace TrelloClone.Server.Application.Hubs
 {
     [Authorize]
-    public class BoardHub : Hub
+    public partial class BoardHub : Hub
     {
         private readonly BoardService _boardService;
         private readonly ILogger<BoardHub> _logger;
@@ -15,9 +18,7 @@ namespace TrelloClone.Server.Application.Hubs
         // Track connected users per board
         private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _boardUsers = new();
 
-        public BoardHub(
-            BoardService boardService,
-            ILogger<BoardHub> logger)
+        public BoardHub(BoardService boardService, ILogger<BoardHub> logger)
         {
             _boardService = boardService;
             _logger = logger;
@@ -81,7 +82,7 @@ namespace TrelloClone.Server.Application.Hubs
                     UserName = userName
                 });
 
-            _logger.LogInformation("User {UserId} joined board {BoardId}", userId, boardId);
+            Log.UserJoinedBoard(_logger, userId, boardId);
         }
 
         public async Task LeaveBoard(string boardId)
@@ -112,7 +113,7 @@ namespace TrelloClone.Server.Application.Hubs
                     UserName = userName
                 });
 
-            _logger.LogInformation("User {UserId} left board {BoardId}", userId, boardId);
+            Log.UserLeftBoard(_logger, userId, boardId);
         }
 
         // Task drag and drop events
@@ -247,7 +248,7 @@ namespace TrelloClone.Server.Application.Hubs
                 }
             }
 
-            _logger.LogInformation("User {UserId} disconnected", userId);
+            Log.UserDisconnected(_logger, userId);
             await base.OnDisconnectedAsync(exception);
         }
 
@@ -265,6 +266,27 @@ namespace TrelloClone.Server.Application.Hubs
                     UpdatedByUserId = currentUserId,
                     UpdatedByUserName = userName
                 });
+        }
+
+        private static partial class Log
+        {
+            [LoggerMessage(
+                EventId = 1,
+                Level = LogLevel.Information,
+                Message = "User {UserId} joined board {BoardId}")]
+            public static partial void UserJoinedBoard(ILogger logger, string? userId, string boardId);
+
+            [LoggerMessage(
+                EventId = 2,
+                Level = LogLevel.Information,
+                Message = "User {UserId} left board {BoardId}")]
+            public static partial void UserLeftBoard(ILogger logger, string? userId, string boardId);
+
+            [LoggerMessage(
+                EventId = 3,
+                Level = LogLevel.Information,
+                Message = "User {UserId} disconnected")]
+            public static partial void UserDisconnected(ILogger logger, string? userId);
         }
     }
 }

@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.JSInterop;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 
 namespace TrelloClone.Client.Services
 {
@@ -63,7 +64,7 @@ namespace TrelloClone.Client.Services
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
         }
 
-        private ClaimsPrincipal? GetClaimsFromToken(string token)
+        private static ClaimsPrincipal? GetClaimsFromToken(string token)
         {
             try
             {

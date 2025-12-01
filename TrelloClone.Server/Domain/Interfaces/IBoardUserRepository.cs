@@ -1,3 +1,8 @@
+using TrelloClone.Server.Domain.Entities;
+using TrelloClone.Shared.DTOs;
+
+namespace TrelloClone.Server.Domain.Interfaces;
+
 public interface IBoardUserRepository
 {
     void Add(BoardUser boardUser);

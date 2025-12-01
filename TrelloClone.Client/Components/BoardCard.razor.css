@@ -1,46 +1,46 @@
 .board-card {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border);
-    transition: var(--transition);
-    cursor: pointer;
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: var(--transition);
+  cursor: pointer;
 }
 
 .board-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
 }
 
 .card-title {
-    color: var(--text-primary);
-    margin-bottom: 0;
+  color: var(--text-primary);
+  margin-bottom: 0;
 }
 
 .card-actions {
-    top: 1rem;
-    right: 1rem;
-    transition: opacity 0.2s ease;
+  top: 1rem;
+  right: 1rem;
+  transition: opacity 0.2s ease;
 }
 
 .card-footer {
-    background-color: var(--secondary);
-    border-top: 1px solid var(--border);
+  background-color: var(--secondary);
+  border-top: 1px solid var(--border);
 }
 
 .footer-content {
-    color: var(--text-secondary);
+  color: var(--text-secondary);
 }
 
-.board-card:nth-child(3n+1) {
-    border-top: 4px solid var(--primary);
+.board-card:nth-child(3n + 1) {
+  border-top: 4px solid var(--primary);
 }
 
-.board-card:nth-child(3n+2) {
-    border-top: 4px solid var(--success);
+.board-card:nth-child(3n + 2) {
+  border-top: 4px solid var(--success);
 }
 
-.board-card:nth-child(3n+3) {
-    border-top: 4px solid var(--warning);
+.board-card:nth-child(3n + 3) {
+  border-top: 4px solid var(--warning);
 }

@@ -1,3 +1,5 @@
+namespace TrelloClone.Shared.DTOs;
+
 public class UpdateUserRequest
 {
     public string UserName { get; set; } = string.Empty;
