@@ -1,11 +1,13 @@
 # Trello Clone
 
+[![Lint](https://github.com/jakmate/TrelloClone/workflows/Lint/badge.svg)](https://github.com/jakmate/TrelloClone/actions/workflows/lint.yml)
+[![codecov](https://codecov.io/gh/jakmate/TrelloClone/branch/main/graph/badge.svg)](https://codecov.io/gh/jakmate/TrelloClone)
+
 A full-featured Trello-like task management application built with Blazor WebAssembly and ASP.NET Core.
 
 ## To Do
 
-- Blazor linter
-- Drag and drop in SignalR
+- Async drag and drop visible to other users in real time
 
 ## 📦 Overview
 
@@ -88,3 +90,23 @@ Here are the main technologies and frameworks used in **TrelloClone**:
    ```
 
 3. Then open a browser to the client (e.g. <http://localhost:5069/>) — depending on your setup.
+
+## 📊 Test Coverage
+
+This project uses Coverlet for code coverage analysis. Coverage reports are automatically generated and uploaded to Codecov on every push and pull request.
+
+### Running tests with coverage locally
+
+```bash
+# Run all tests with coverage
+dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+
+# Generate HTML coverage report
+reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:Html
+
+# View it in browser
+start coverage-report/index.html
+
+# Or view coverage in console
+dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=console
+```
