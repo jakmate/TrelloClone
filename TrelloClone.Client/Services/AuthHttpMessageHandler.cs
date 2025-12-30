@@ -1,15 +1,11 @@
-using Microsoft.JSInterop;
-
 namespace TrelloClone.Client.Services
 {
     public class AuthHttpMessageHandler : DelegatingHandler
     {
-        private readonly IJSRuntime _jsRuntime;
         private readonly AuthStateProvider _authStateProvider;
 
-        public AuthHttpMessageHandler(IJSRuntime jsRuntime, AuthStateProvider authStateProvider)
+        public AuthHttpMessageHandler(AuthStateProvider authStateProvider)
         {
-            _jsRuntime = jsRuntime;
             _authStateProvider = authStateProvider;
         }
 

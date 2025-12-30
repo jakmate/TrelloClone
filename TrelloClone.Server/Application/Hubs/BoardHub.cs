@@ -72,13 +72,13 @@ namespace TrelloClone.Server.Application.Hubs
             }
 
             // Add the new user to tracking
-            boardUsers.TryAdd(userId ?? "", userName);
+            boardUsers.TryAdd(userId, userName);
 
             // Notify others that user joined (only send username)
             await Clients.OthersInGroup(boardKey)
                 .SendAsync("UserJoinedBoard", new UserBoardEvent
                 {
-                    UserId = userId ?? "",
+                    UserId = userId,
                     UserName = userName
                 });
 

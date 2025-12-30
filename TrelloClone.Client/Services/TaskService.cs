@@ -50,7 +50,7 @@ public class TaskService
     public async Task<bool> ReorderTasksAsync(List<TaskPositionDto> positions)
     {
         var request = new ReorderTasksRequest { Tasks = positions };
-        var response = await _httpClient.PutAsJsonAsync($"api/columns/{positions.First().ColumnId}/tasks/reorder", request);
+        var response = await _httpClient.PutAsJsonAsync($"api/columns/{positions[0].ColumnId}/tasks/reorder", request);
         return response.IsSuccessStatusCode;
     }
 }

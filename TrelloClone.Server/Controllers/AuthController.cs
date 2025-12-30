@@ -101,6 +101,8 @@ public partial class AuthController : ControllerBase
 
     [HttpPost("validate")]
     [Authorize]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public IActionResult ValidateToken()
     {
         // If we get here, the token is valid (passed through [Authorize])

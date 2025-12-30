@@ -41,7 +41,7 @@ public class InvitationService
         }
 
         var existingMember = await _boardUsers.ExistsAsync(boardId, invitedUser.Id);
-        if (existingMember == true)
+        if (existingMember)
         {
             throw new InvalidOperationException("User is already a member of this board");
         }

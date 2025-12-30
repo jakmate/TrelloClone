@@ -1,4 +1,4 @@
-﻿namespace TrelloClone.Client.Tests;
+namespace TrelloClone.Client.Tests;
 
 public class UnitTest1
 {

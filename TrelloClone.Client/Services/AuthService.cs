@@ -21,15 +21,17 @@ public interface IAuthService
     Task<AvailabilityResponse> CheckEmailAvailabilityAsync(string email);
 }
 
-public class AuthService : IAuthService
+public partial class AuthService : IAuthService
 {
     private readonly HttpClient _httpClient;
     private readonly AuthStateProvider _authStateProvider;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(HttpClient httpClient, AuthenticationStateProvider authStateProvider)
+    public AuthService(HttpClient httpClient, AuthenticationStateProvider authStateProvider, ILogger<AuthService> logger)
     {
         _httpClient = httpClient;
         _authStateProvider = (AuthStateProvider)authStateProvider;
+        _logger = logger;
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -126,7 +128,10 @@ public class AuthService : IAuthService
                     throw new HttpRequestException(message.GetString());
                 }
             }
-            catch (System.Text.Json.JsonException) { }
+            catch (System.Text.Json.JsonException ex)
+            {
+                Log.JsonParseError(_logger, ex);
+            }
 
             throw new HttpRequestException(errorContent);
         }
@@ -150,7 +155,10 @@ public class AuthService : IAuthService
                     throw new HttpRequestException(message.GetString());
                 }
             }
-            catch (System.Text.Json.JsonException) { }
+            catch (System.Text.Json.JsonException ex)
+            {
+                Log.JsonParseError(_logger, ex);
+            }
 
             throw new HttpRequestException(errorContent);
         }
@@ -174,5 +182,11 @@ public class AuthService : IAuthService
         var response = await _httpClient.GetFromJsonAsync<AvailabilityResponse>(
             $"/api/auth/check-email/{Uri.EscapeDataString(email)}");
         return response ?? new AvailabilityResponse { IsAvailable = false };
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Failed to parse error response as JSON")]
+        public static partial void JsonParseError(ILogger logger, Exception exception);
     }
 }

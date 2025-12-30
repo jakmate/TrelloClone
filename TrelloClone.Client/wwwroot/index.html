@@ -18,8 +18,10 @@
   <body>
     <div id="app">
       <div class="launch-screen">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
+        <div class="spinner-border text-primary" aria-hidden="true">
+          <output aria-live="polite" class="visually-hidden">
+            Loading...
+          </output>
         </div>
         <p class="mt-3">Preparing your boards...</p>
       </div>
@@ -39,7 +41,11 @@
           document.getElementById("blazor-error-ui").classList.add("d-none");
         });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"
+      integrity="sha384-HZZ/fukV+9G8gwTNjN7zQDG0Sp7MsZy5DDN6VfY3Be7V9dvQpEpR2jF2HlyFUUjU"
+      crossorigin="anonymous"
+    ></script>
     <script src="js/boardsSortable.js"></script>
   </body>
 </html>

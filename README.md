@@ -2,22 +2,25 @@
 
 [![Lint](https://github.com/jakmate/TrelloClone/workflows/Lint/badge.svg)](https://github.com/jakmate/TrelloClone/actions/workflows/lint.yml)
 [![codecov](https://codecov.io/gh/jakmate/TrelloClone/branch/main/graph/badge.svg)](https://codecov.io/gh/jakmate/TrelloClone)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jakmate_TrelloClone&metric=alert_status)](https://sonarcloud.io/summary/overall?id=jakmate_TrelloClone&branch=main)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=jakmate_TrelloClone&metric=security_rating)](https://sonarcloud.io/summary/overall?id=jakmate_TrelloClone&branch=main)
 
 A full-featured Trello-like task management application built with Blazor WebAssembly and ASP.NET Core.
 
 ## To Do
 
 - Async drag and drop visible to other users in real time
+- Async add board to boards after accepting invitation
 
-## 📦 Overview
+## Overview
 
 - **TrelloClone.Server** — ASP.NET Core backend: domain entities, data persistence (EF Core), API controllers, SignalR hubs, business logic.
-- **TrelloClone.Client** — Blazor WebAssembly (or Blazor + .NET) frontend: UI components, pages, Razor components, services for HTTP and SignalR, CSS, client‑side logic.
+- **TrelloClone.Client** — Blazor frontend: UI components, pages, Razor components, services for HTTP and SignalR, CSS, client‑side logic.
 - **TrelloClone.Shared** — Shared DTOs and types used by both Server and Client (e.g. data transfer objects, enums).
 
 This architecture cleanly separates frontend, backend, and shared models.
 
-## 🧰 Tech Stack
+## Tech Stack
 
 Here are the main technologies and frameworks used in **TrelloClone**:
 
@@ -29,7 +32,7 @@ Here are the main technologies and frameworks used in **TrelloClone**:
 - **Shared DTO / model project** — shared data contracts between server and client to avoid duplication and ensure consistency.
 - **.NET 9** — full‑stack C#/.NET environment, unifying backend and frontend codebase.
 
-## 🚀 Features
+## Features
 
 - **Board Management**: Create, edit, delete, and organize boards
 - **Columns & Tasks**: Drag-and-drop columns and tasks with real-time updates
@@ -43,7 +46,7 @@ Here are the main technologies and frameworks used in **TrelloClone**:
 - **User Profiles**: Manage user information and preferences
 - **Templates**: Pre-built board templates for quick setup
 
-## 📁 Project Structure
+## Project Structure
 
     TrelloClone/
     ├── TrelloClone.Client/ # Blazor WebAssembly frontend
@@ -64,7 +67,7 @@ Here are the main technologies and frameworks used in **TrelloClone**:
     │
     └── TrelloClone.sln # Solution file
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -91,7 +94,7 @@ Here are the main technologies and frameworks used in **TrelloClone**:
 
 3. Then open a browser to the client (e.g. <http://localhost:5069/>) — depending on your setup.
 
-## 📊 Test Coverage
+## Test Coverage
 
 This project uses Coverlet for code coverage analysis. Coverage reports are automatically generated and uploaded to Codecov on every push and pull request.
 
@@ -99,14 +102,11 @@ This project uses Coverlet for code coverage analysis. Coverage reports are auto
 
 ```bash
 # Run all tests with coverage
-dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+dotnet test --settings:coverage.runsettings --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
 # Generate HTML coverage report
 reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:Html
 
 # View it in browser
 start coverage-report/index.html
-
-# Or view coverage in console
-dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=console
 ```

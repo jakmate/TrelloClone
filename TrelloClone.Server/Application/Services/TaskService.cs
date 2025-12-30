@@ -8,7 +8,6 @@ public class TaskService
 {
     private readonly ITaskRepository _tasks;
     private readonly IColumnRepository _columns;
-    private readonly IUserRepository _users;
     private readonly IBoardRepository _boards;
     private readonly IUnitOfWork _uow;
 
@@ -21,7 +20,6 @@ public class TaskService
     {
         _tasks = tasks;
         _columns = columns;
-        _users = users;
         _boards = boards;
         _uow = uow;
     }

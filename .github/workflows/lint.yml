@@ -53,7 +53,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install --save-dev stylelint stylelint-config-standard prettier htmlhint eslint
+          npm install --save-dev --ignore-scripts stylelint stylelint-config-standard prettier htmlhint eslint
 
       - name: Run Stylelint (CSS / .razor.css)
         run: npx stylelint "./**/*.css"

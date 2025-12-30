@@ -7,14 +7,12 @@ namespace TrelloClone.Client.Services
     public class NotificationHubClient
     {
         private readonly HubConnection _hubConnection;
-        private readonly ILogger<NotificationHubClient> _logger;
 
         public event Action<BoardInvitationDto>? OnInvitationReceived;
 
-        public NotificationHubClient(HubConnection hubConnection, ILogger<NotificationHubClient> logger)
+        public NotificationHubClient(HubConnection hubConnection)
         {
             _hubConnection = hubConnection;
-            _logger = logger;
             RegisterHandlers();
         }
 

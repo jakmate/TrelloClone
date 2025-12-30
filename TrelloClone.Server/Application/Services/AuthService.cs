@@ -174,7 +174,8 @@ public partial class AuthService
         }
 
         // Must contain at least one letter and one number
-        return Regex.IsMatch(password, @"^(?=.*[A-Za-z])(?=.*\d).{6,}$");
+        return Regex.IsMatch(password, @"^(?=.*[A-Za-z])(?=.*\d).{6,}$",
+            RegexOptions.None, TimeSpan.FromMilliseconds(100));
     }
 
     public async Task<bool> CheckUsernameExistsAsync(string username)
@@ -196,20 +197,14 @@ public partial class AuthService
         }
 
         // Prevent duplicate username/email
-        if (request.UserName != user.UserName)
+        if (request.UserName != user.UserName && await _users.GetByUsernameAsync(request.UserName) != null)
         {
-            if (await _users.GetByUsernameAsync(request.UserName) != null)
-            {
-                throw new InvalidOperationException("Username already taken");
-            }
+            throw new InvalidOperationException("Username already taken");
         }
 
-        if (request.Email != user.Email)
+        if (request.Email != user.Email && await _users.GetByEmailAsync(request.Email) != null)
         {
-            if (await _users.GetByEmailAsync(request.Email) != null)
-            {
-                throw new InvalidOperationException("Email already registered");
-            }
+            throw new InvalidOperationException("Email already registered");
         }
 
         user.UserName = request.UserName.Trim();

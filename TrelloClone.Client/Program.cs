@@ -69,6 +69,6 @@ builder.Services.AddScoped<SignalRConnectionManager>();
 var app = builder.Build();
 
 var serviceScope = app.Services.CreateScope();
-var signalRManager = serviceScope.ServiceProvider.GetRequiredService<SignalRConnectionManager>();
+serviceScope.ServiceProvider.GetRequiredService<SignalRConnectionManager>();
 
 await app.RunAsync();

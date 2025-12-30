@@ -65,7 +65,7 @@ namespace TrelloClone.Client.Services
             return Guid.TryParse(userId, out var id) ? id : Guid.Empty;
         }
 
-        public async Task SendInvitation(Guid boardId, string invitedUsername, PermissionLevel permission)
+        public async Task SendInvitation(Guid boardId, string invitedUsername, PermissionLevel permission = PermissionLevel.Editor)
         {
             var request = new
             {

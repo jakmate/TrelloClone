@@ -1,7 +1,7 @@
 // Store dotNetRef globally
 let boardDotNetRef = null;
 
-window.initBoardsSortable = function (gridId, dotNetRef) {
+globalThis.initBoardsSortable = function (gridId, dotNetRef) {
   const grid = document.getElementById(gridId);
   if (!grid) return;
 
@@ -16,15 +16,13 @@ window.initBoardsSortable = function (gridId, dotNetRef) {
     dragClass: "sortable-drag",
     onEnd: function (evt) {
       const items = grid.querySelectorAll("[data-id]");
-      const orderedIds = Array.from(items).map((item) =>
-        item.getAttribute("data-id"),
-      );
+      const orderedIds = Array.from(items).map((item) => item.dataset.id);
       dotNetRef.invokeMethodAsync("OnBoardReordered", orderedIds);
     },
   });
 };
 
-window.initColumnsSortable = function (containerId, dotNetRef) {
+globalThis.initColumnsSortable = function (containerId, dotNetRef) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -44,19 +42,15 @@ window.initColumnsSortable = function (containerId, dotNetRef) {
     direction: "horizontal",
     onEnd: function (evt) {
       const items = container.querySelectorAll("[data-column-id]");
-      const orderedIds = Array.from(items).map((item) =>
-        item.getAttribute("data-column-id"),
-      );
+      const orderedIds = Array.from(items).map((item) => item.dataset.columnId);
       dotNetRef.invokeMethodAsync("OnColumnsReordered", orderedIds);
     },
   });
 };
 
-window.initTasksSortable = function (containerId) {
+globalThis.initTasksSortable = function (containerId) {
   const container = document.getElementById(containerId);
   if (!container || !boardDotNetRef) return;
-
-  const columnId = container.getAttribute("data-column-id");
 
   if (container.sortableInstance) {
     container.sortableInstance.destroy();
@@ -73,16 +67,14 @@ window.initTasksSortable = function (containerId) {
       put: true,
     },
     onEnd: function (evt) {
-      const taskId = evt.item.getAttribute("data-task-id");
-      const fromColumnId = evt.from.getAttribute("data-column-id");
-      const toColumnId = evt.to.getAttribute("data-column-id");
+      const taskId = evt.item.dataset.taskId;
+      const fromColumnId = evt.from.dataset.columnId;
+      const toColumnId = evt.to.dataset.columnId;
       const newIndex = evt.newIndex;
 
       if (fromColumnId === toColumnId) {
         const items = evt.to.querySelectorAll("[data-task-id]");
-        const orderedIds = Array.from(items).map((item) =>
-          item.getAttribute("data-task-id"),
-        );
+        const orderedIds = Array.from(items).map((item) => item.dataset.taskId);
         boardDotNetRef.invokeMethodAsync(
           "OnTasksReordered",
           toColumnId,

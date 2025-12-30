@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+    <DataCollectionRunSettings>
+        <DataCollectors>
+            <DataCollector friendlyName="XPlat Code Coverage">
+                <Configuration>
+                    <Format>cobertura</Format>
+                    <Exclude>[TrelloClone.Shared]*</Exclude>
+                    <Exclude>[TrelloClone.Server.Domain.Entities]*</Exclude>
+                    <Exclude>[TrelloClone.Server.Infrastructure.Configurations]*</Exclude>
+                    <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
+                    <ExcludeByFile>**/Program.cs</ExcludeByFile>
+                </Configuration>
+            </DataCollector>
+        </DataCollectors>
+    </DataCollectionRunSettings>
+</RunSettings>
