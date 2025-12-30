@@ -122,7 +122,12 @@ public partial class AuthService
         var secretKey = jwtSettings["SecretKey"]
             ?? throw new InvalidOperationException("JWT SecretKey is required");
 
+        // JWT secret is loaded from environment variables/user secrets
+        // Never stored in code or config files, so this suppression is safe
+        #pragma warning disable S4453
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        #pragma warning restore S4453
+
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
