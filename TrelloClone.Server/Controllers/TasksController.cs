@@ -20,7 +20,7 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<List<TaskDto>>> GetAll(Guid columnId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }
@@ -33,7 +33,7 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<List<UserDto>>> GetAvailableUsers(Guid columnId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }
@@ -48,7 +48,7 @@ public class TasksController : ControllerBase
         [FromBody] CreateTaskRequest req)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }
@@ -73,7 +73,7 @@ public class TasksController : ControllerBase
         [FromBody] UpdateTaskRequest req)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }
@@ -86,7 +86,7 @@ public class TasksController : ControllerBase
     public async Task<IActionResult> Delete(Guid columnId, Guid taskId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }
@@ -99,7 +99,7 @@ public class TasksController : ControllerBase
     public async Task<IActionResult> ReorderTasks([FromBody] ReorderTasksRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }

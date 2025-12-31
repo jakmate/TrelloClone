@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using TrelloClone.Server.Application.Hubs;
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Application.Services;
 using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Server.Infrastructure.Persistance;
@@ -150,7 +151,7 @@ static void RegisterApplicationServices(IServiceCollection services)
 {
     services.AddScoped<AuthService>();
     services.AddScoped<BoardService>();
-    services.AddScoped<UserService>();
+    services.AddScoped<IUserService, UserService>();
     services.AddScoped<ColumnService>();
     services.AddScoped<TaskService>();
     services.AddScoped<InvitationService>();

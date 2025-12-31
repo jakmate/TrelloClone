@@ -4,6 +4,7 @@ namespace TrelloClone.Server.Domain.Interfaces;
 
 public interface IUserRepository
 {
+    Task<bool> ExistsAsync(Guid userId);
     Task<User?> GetByIdAsync(Guid userId);
     Task<User?> GetByIdWithBoardsAsync(Guid userId);
     Task<User?> GetByEmailAsync(string email);

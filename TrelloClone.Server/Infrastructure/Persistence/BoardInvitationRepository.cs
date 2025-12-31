@@ -10,10 +10,7 @@ public class BoardInvitationRepository : IBoardInvitationRepository
 {
     private readonly AppDbContext _ctx;
 
-    public BoardInvitationRepository(AppDbContext ctx)
-    {
-        _ctx = ctx;
-    }
+    public BoardInvitationRepository(AppDbContext ctx) => _ctx = ctx;
 
     public async Task<BoardInvitation?> GetByIdAsync(Guid id) =>
         await _ctx.BoardInvitation.FirstOrDefaultAsync(i => i.Id == id);

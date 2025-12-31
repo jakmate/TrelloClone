@@ -4,6 +4,8 @@
 [![codecov](https://codecov.io/gh/jakmate/TrelloClone/branch/main/graph/badge.svg)](https://codecov.io/gh/jakmate/TrelloClone)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jakmate_TrelloClone&metric=alert_status)](https://sonarcloud.io/summary/overall?id=jakmate_TrelloClone&branch=main)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=jakmate_TrelloClone&metric=security_rating)](https://sonarcloud.io/summary/overall?id=jakmate_TrelloClone&branch=main)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=jakmate_TrelloClone&metric=reliability_rating)](https://sonarcloud.io/summary/overall?id=jakmate_TrelloClone&branch=main)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=jakmate_TrelloClone&metric=sqale_rating)](https://sonarcloud.io/summary/overall?id=jakmate_TrelloClone&branch=main)
 
 A full-featured Trello-like task management application built with Blazor WebAssembly and ASP.NET Core.
 
@@ -102,11 +104,14 @@ This project uses Coverlet for code coverage analysis. Coverage reports are auto
 
 ```bash
 # Run all tests with coverage
-dotnet test --settings:coverage.runsettings --collect:"XPlat Code Coverage" --results-directory ./TestResults
+dotnet test --settings:coverage.runsettings --results-directory ./TestResults
 
 # Generate HTML coverage report
 reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:Html
 
 # View it in browser
 start coverage-report/index.html
+
+# Or if you are lazy just
+./testCoverage.sh
 ```

@@ -4,15 +4,15 @@ namespace TrelloClone.Server.Infrastructure.Persistance;
 
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly AppDbContext _context;
+    private readonly AppDbContext _ctx;
 
-    public UnitOfWork(AppDbContext context)
+    public UnitOfWork(AppDbContext ctx)
     {
-        _context = context;
+        _ctx = ctx;
     }
 
     public async Task SaveChangesAsync()
     {
-        await _context.SaveChangesAsync();
+        await _ctx.SaveChangesAsync();
     }
 }

@@ -11,6 +11,9 @@ public class BoardRepository : IBoardRepository
     private readonly AppDbContext _ctx;
     public BoardRepository(AppDbContext ctx) => _ctx = ctx;
 
+    public async Task<bool> ExistsAsync(Guid boardId) =>
+        await _ctx.Boards.AnyAsync(b => b.Id == boardId);
+
     public async Task<bool> ExistsWithNameAsync(string name, Guid userId) =>
         await _ctx.Boards
             .AnyAsync(b => b.Name == name

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-using TrelloClone.Server.Application.Services;
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Server.Controllers;
@@ -9,8 +9,8 @@ namespace TrelloClone.Server.Controllers;
 [Route("api/users")]
 public class UsersController : ControllerBase
 {
-    private readonly UserService _userSvc;
-    public UsersController(UserService userSvc) => _userSvc = userSvc;
+    private readonly IUserService _userSvc;
+    public UsersController(IUserService userSvc) => _userSvc = userSvc;
 
     [HttpPost("{userId:guid}/boards/{boardId:guid}")]
     public async Task<IActionResult> AddToBoard(Guid userId, Guid boardId)

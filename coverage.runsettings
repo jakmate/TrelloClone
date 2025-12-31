@@ -6,10 +6,7 @@
                 <Configuration>
                     <Format>cobertura</Format>
                     <Exclude>[TrelloClone.Shared]*</Exclude>
-                    <Exclude>[TrelloClone.Server.Domain.Entities]*</Exclude>
-                    <Exclude>[TrelloClone.Server.Infrastructure.Configurations]*</Exclude>
-                    <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
-                    <ExcludeByFile>**/Program.cs</ExcludeByFile>
+                    <ExcludeByFile>**/Migrations/*.cs, **/Program.cs, **/Entities/*.cs, **/Configurations/*.cs, **/obj/**/*</ExcludeByFile>
                 </Configuration>
             </DataCollector>
         </DataCollectors>

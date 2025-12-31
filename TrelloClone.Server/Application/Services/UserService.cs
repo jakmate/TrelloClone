@@ -1,10 +1,11 @@
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Server.Application.Services;
 
-public class UserService
+public class UserService : IUserService
 {
     private readonly IUserRepository _users;
     private readonly IBoardRepository _boards;
@@ -26,10 +27,15 @@ public class UserService
     public async Task AddUserToBoardAsync(Guid boardId, Guid userId)
     {
         // ensure both exist
-        var board = await _boards.GetByIdAsync(boardId)
-                    ?? throw new KeyNotFoundException("Board not found.");
-        var user = await _users.GetByIdWithBoardsAsync(userId)
-                    ?? throw new KeyNotFoundException("User not found.");
+        if (!await _boards.ExistsAsync(boardId))
+        {
+            throw new KeyNotFoundException("Board not found.");
+        }
+
+        if (!await _users.ExistsAsync(userId))
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
 
         if (await _boardUsers.ExistsAsync(boardId, userId))
         {

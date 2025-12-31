@@ -11,6 +11,9 @@ public class UserRepository : IUserRepository
 
     public UserRepository(AppDbContext ctx) => _ctx = ctx;
 
+    public async Task<bool> ExistsAsync(Guid userId) =>
+        await _ctx.Users.AnyAsync(u => u.Id == userId);
+
     public async Task<User?> GetByIdAsync(Guid userId) =>
         await _ctx.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
