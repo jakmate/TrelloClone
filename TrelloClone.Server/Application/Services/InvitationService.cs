@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.SignalR;
 
 using TrelloClone.Server.Application.Hubs;
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs;
 
 namespace TrelloClone.Server.Application.Services;
 
-public class InvitationService
+public class InvitationService : IInvitationService
 {
     private readonly IUserRepository _users;
     private readonly IBoardRepository _boards;

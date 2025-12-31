@@ -23,7 +23,7 @@ public class ColumnsController : ControllerBase
         try
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out var userGuid))
+            if (!Guid.TryParse(userId, out _))
             {
                 return Unauthorized();
             }
@@ -48,7 +48,7 @@ public class ColumnsController : ControllerBase
     [FromBody] CreateColumnRequest req)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }
@@ -73,7 +73,7 @@ public class ColumnsController : ControllerBase
         [FromBody] UpdateColumnRequest req)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }
@@ -86,7 +86,7 @@ public class ColumnsController : ControllerBase
     public async Task<IActionResult> Delete(Guid columnId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }
@@ -99,7 +99,7 @@ public class ColumnsController : ControllerBase
     public async Task<IActionResult> ReorderColumns(Guid boardId, [FromBody] ReorderColumnsRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var userGuid))
+        if (!Guid.TryParse(userId, out _))
         {
             return Unauthorized();
         }

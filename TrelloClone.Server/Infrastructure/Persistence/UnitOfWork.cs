@@ -1,6 +1,6 @@
 using TrelloClone.Server.Domain.Interfaces;
 
-namespace TrelloClone.Server.Infrastructure.Persistance;
+namespace TrelloClone.Server.Infrastructure.Persistence;
 
 public class UnitOfWork : IUnitOfWork
 {

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Infrastructure.Configurations;
 
-namespace TrelloClone.Server.Infrastructure.Persistance;
+namespace TrelloClone.Server.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {

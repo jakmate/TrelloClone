@@ -44,8 +44,10 @@ public class ColumnService
 
     public async Task<ColumnDto> CreateColumnAsync(CreateColumnRequest req)
     {
-        var board = await _boards.GetByIdAsync(req.BoardId)
-                    ?? throw new KeyNotFoundException("Board not found.");
+        if (!await _boards.ExistsAsync(req.BoardId))
+        {
+            throw new KeyNotFoundException("Board not found.");
+        }
         if (await _columns.ExistsWithTitleAsync(req.BoardId, req.Title))
         {
             throw new InvalidOperationException("Column title already in use.");

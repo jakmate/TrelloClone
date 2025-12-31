@@ -2,11 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.InMemory;
 
 using TrelloClone.Server.Domain.Entities;
-using TrelloClone.Server.Infrastructure.Persistance;
+using TrelloClone.Server.Infrastructure.Persistence;
 
 using Xunit;
 
-namespace TrelloClone.Server.Tests.Infrastructure.Persistance;
+namespace TrelloClone.Server.Tests.Infrastructure.Persistence;
 
 public sealed class UserRepositoryTests : IDisposable
 {

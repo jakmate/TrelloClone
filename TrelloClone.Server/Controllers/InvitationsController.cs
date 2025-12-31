@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Application.Services;
 using TrelloClone.Shared.DTOs;
 
@@ -13,12 +14,9 @@ namespace TrelloClone.Server.Controllers;
 [Authorize]
 public class InvitationsController : ControllerBase
 {
-    private readonly InvitationService _invitationService;
+    private readonly IInvitationService _invitationSvc;
 
-    public InvitationsController(InvitationService invitationService)
-    {
-        _invitationService = invitationService;
-    }
+    public InvitationsController(IInvitationService invitationSvc) => _invitationSvc = invitationSvc;
 
     [HttpPost]
     public async Task<IActionResult> SendInvitation(SendInvitationDto dto)
@@ -36,7 +34,7 @@ public class InvitationsController : ControllerBase
                 return BadRequest("Username cannot be empty.");
             }
 
-            await _invitationService.SendInvitation(dto.BoardId, userGuid, dto.Username, dto.Permission);
+            await _invitationSvc.SendInvitation(dto.BoardId, userGuid, dto.Username, dto.Permission);
             return Ok();
         }
         catch (Exception ex)
@@ -56,7 +54,7 @@ public class InvitationsController : ControllerBase
                 return Unauthorized();
             }
 
-            await _invitationService.AcceptInvitation(invitationId, userGuid);
+            await _invitationSvc.AcceptInvitation(invitationId, userGuid);
             return Ok();
         }
         catch (Exception ex)
@@ -76,7 +74,7 @@ public class InvitationsController : ControllerBase
                 return Unauthorized();
             }
 
-            await _invitationService.DeclineInvitation(invitationId, userGuid);
+            await _invitationSvc.DeclineInvitation(invitationId, userGuid);
             return Ok();
         }
         catch (Exception ex)
@@ -88,7 +86,7 @@ public class InvitationsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<BoardInvitationDto>>> GetPendingInvitations([FromQuery] Guid userId)
     {
-        var invitations = await _invitationService.GetPendingInvitations(userId);
+        var invitations = await _invitationSvc.GetPendingInvitations(userId);
         return Ok(invitations);
     }
 }

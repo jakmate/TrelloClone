@@ -8,7 +8,7 @@ using TrelloClone.Server.Application.Hubs;
 using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Application.Services;
 using TrelloClone.Server.Domain.Interfaces;
-using TrelloClone.Server.Infrastructure.Persistance;
+using TrelloClone.Server.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -154,7 +154,7 @@ static void RegisterApplicationServices(IServiceCollection services)
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<ColumnService>();
     services.AddScoped<TaskService>();
-    services.AddScoped<InvitationService>();
+    services.AddScoped<IInvitationService, InvitationService>();
 }
 
 static void ConfigureKestrel(WebApplicationBuilder builder)

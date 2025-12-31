@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-using TrelloClone.Server.Infrastructure.Persistance;
+using TrelloClone.Server.Infrastructure.Persistence;
 
 #nullable disable
 
