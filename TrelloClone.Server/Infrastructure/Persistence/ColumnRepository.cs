@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Column;
 
 namespace TrelloClone.Server.Infrastructure.Persistence;
 

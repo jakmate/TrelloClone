@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using TrelloClone.Server.Application.Services;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Auth;
+using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Server.Controllers;
 
@@ -70,6 +71,41 @@ public partial class AuthController : ControllerBase
         {
             Log.RegistrationError(_logger, ex, req.Email);
             return StatusCode(500, new { message = "An error occurred during registration" });
+        }
+    }
+
+    [HttpPost("refresh")]
+    public async Task<ActionResult<AuthResponse>> Refresh([FromBody] RefreshTokenRequest request)
+    {
+        try
+        {
+            var response = await _authService.RefreshTokenAsync(request);
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            Log.RefreshTokenError(_logger, ex);
+            return StatusCode(500, new { message = "An error occurred during token refresh" });
+        }
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request)
+    {
+        try
+        {
+            await _authService.LogoutAsync(request.RefreshToken);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            Log.LogoutError(_logger, ex);
+            return StatusCode(500, new { message = "An error occurred during logout" });
         }
     }
 
@@ -228,5 +264,11 @@ public partial class AuthController : ControllerBase
 
         [LoggerMessage(EventId = 10, Level = LogLevel.Error, Message = "Error deleting account for user {UserId}")]
         public static partial void DeleteAccountError(ILogger logger, Exception exception, Guid userId);
+
+        [LoggerMessage(EventId = 11, Level = LogLevel.Error, Message = "Error refreshing token")]
+        public static partial void RefreshTokenError(ILogger logger, Exception exception);
+
+        [LoggerMessage(EventId = 12, Level = LogLevel.Error, Message = "Error during logout")]
+        public static partial void LogoutError(ILogger logger, Exception exception);
     }
 }

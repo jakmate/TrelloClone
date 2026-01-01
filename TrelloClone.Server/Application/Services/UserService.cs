@@ -1,7 +1,8 @@
 using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Board;
+using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Server.Application.Services;
 

@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using TrelloClone.Server.Application.Services;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Task;
+using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Server.Controllers;
 

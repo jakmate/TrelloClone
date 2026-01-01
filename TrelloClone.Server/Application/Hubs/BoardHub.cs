@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 using TrelloClone.Server.Application.Services;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Column;
 using TrelloClone.Shared.DTOs.SignalR;
+using TrelloClone.Shared.DTOs.Task;
+using TrelloClone.Shared.Enums;
 
 namespace TrelloClone.Server.Application.Hubs
 {

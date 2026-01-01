@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Column;
 
 namespace TrelloClone.Client.Services;
 

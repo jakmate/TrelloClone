@@ -1,6 +1,7 @@
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Column;
+using TrelloClone.Shared.DTOs.Task;
 
 namespace TrelloClone.Server.Application.Services;
 

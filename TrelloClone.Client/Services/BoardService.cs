@@ -4,7 +4,8 @@ using System.Security.Claims;
 
 using Microsoft.AspNetCore.Components.Authorization;
 
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Board;
+using TrelloClone.Shared.Enums;
 
 namespace TrelloClone.Client.Services;
 

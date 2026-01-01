@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR.Client;
 
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Invitation;
 
 namespace TrelloClone.Client.Services
 {

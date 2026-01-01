@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using TrelloClone.Server.Application.Interfaces;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Server.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/users")]
 public class UsersController : ControllerBase

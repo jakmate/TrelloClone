@@ -8,7 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Auth;
+using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Server.Application.Services;
 
@@ -18,17 +19,20 @@ public partial class AuthService
     private readonly IUnitOfWork _uow;
     private readonly IConfiguration _config;
     private readonly ILogger<AuthService> _logger;
+    private readonly RefreshTokenService _refreshTokenService;
 
     public AuthService(
         IUserRepository users,
         IUnitOfWork uow,
         IConfiguration config,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        RefreshTokenService refreshTokenService)
     {
         _users = users;
         _uow = uow;
         _config = config;
         _logger = logger;
+        _refreshTokenService = refreshTokenService;
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest req)
@@ -41,10 +45,20 @@ public partial class AuthService
             throw new UnauthorizedAccessException("Invalid credentials");
         }
 
-        var token = GenerateJwtToken(user);
+        // Invalidate all existing refresh tokens for this user
+        await _refreshTokenService.RevokeAllUserTokensAsync(user.Id);
+
+        // Generate a new session ID
+        var sessionId = Guid.NewGuid().ToString();
+        await _refreshTokenService.SetActiveSessionAsync(user.Id, sessionId);
+
+        var token = GenerateJwtToken(user, sessionId);
+        var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id, sessionId);
+
         return new AuthResponse
         {
             Token = token,
+            RefreshToken = refreshToken,
             User = new UserDto
             {
                 Id = user.Id,
@@ -84,10 +98,17 @@ public partial class AuthService
         _users.Add(user);
         await _uow.SaveChangesAsync();
 
-        var token = GenerateJwtToken(user);
+        // Generate a new session ID
+        var sessionId = Guid.NewGuid().ToString();
+        await _refreshTokenService.SetActiveSessionAsync(user.Id, sessionId);
+
+        var token = GenerateJwtToken(user, sessionId);
+        var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id, sessionId);
+
         return new AuthResponse
         {
             Token = token,
+            RefreshToken = refreshToken,
             User = new UserDto
             {
                 Id = user.Id,
@@ -95,6 +116,59 @@ public partial class AuthService
                 Email = user.Email
             }
         };
+    }
+
+    public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest req)
+    {
+        var tokenInfo = await _refreshTokenService.ValidateRefreshTokenAsync(req.RefreshToken);
+        if (tokenInfo == null)
+        {
+            throw new UnauthorizedAccessException("Invalid refresh token");
+        }
+
+        var user = await _users.GetByIdAsync(tokenInfo.UserId);
+        if (user == null)
+        {
+            await _refreshTokenService.RevokeRefreshTokenAsync(req.RefreshToken);
+            throw new UnauthorizedAccessException("User not found");
+        }
+
+        // Check if the session is still active
+        var activeSession = await _refreshTokenService.GetActiveSessionAsync(user.Id);
+        if (activeSession != tokenInfo.SessionId)
+        {
+            await _refreshTokenService.RevokeRefreshTokenAsync(req.RefreshToken);
+            throw new UnauthorizedAccessException("Session expired");
+        }
+
+        // Generate new tokens
+        var newToken = GenerateJwtToken(user, tokenInfo.SessionId);
+        var newRefreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(
+            user.Id, tokenInfo.SessionId);
+
+        // Revoke the old refresh token
+        await _refreshTokenService.RevokeRefreshTokenAsync(req.RefreshToken);
+
+        return new AuthResponse
+        {
+            Token = newToken,
+            RefreshToken = newRefreshToken,
+            User = new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email
+            }
+        };
+    }
+
+    // Update logout to revoke refresh token
+    public async Task LogoutAsync(string refreshToken)
+    {
+        if (!string.IsNullOrEmpty(refreshToken))
+        {
+            await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
+        }
     }
 
     public async Task<CurrentUserResponse> GetCurrentUserAsync(Guid userId)
@@ -116,7 +190,7 @@ public partial class AuthService
         };
     }
 
-    private string GenerateJwtToken(User user)
+    private string GenerateJwtToken(User user, string sessionId)
     {
         var jwtSettings = _config.GetSection("JwtSettings");
         var secretKey = jwtSettings["SecretKey"]
@@ -136,6 +210,7 @@ public partial class AuthService
             new Claim(ClaimTypes.Name, user.UserName),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim("session_id", sessionId),
             new Claim(
                 JwtRegisteredClaimNames.Iat,
                 new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
@@ -146,7 +221,7 @@ public partial class AuthService
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(7),
+            expires: DateTime.UtcNow.AddMinutes(15),
             signingCredentials: creds
         );
 

@@ -6,7 +6,8 @@ using TrelloClone.Server.Application.Hubs;
 using TrelloClone.Server.Application.Services;
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Invitation;
+using TrelloClone.Shared.Enums;
 
 using Xunit;
 

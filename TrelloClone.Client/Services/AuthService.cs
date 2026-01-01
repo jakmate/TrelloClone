@@ -1,8 +1,10 @@
 using System.Net.Http.Json;
 
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Auth;
+using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Client.Services;
 
@@ -10,6 +12,7 @@ public interface IAuthService
 {
     Task<AuthResponse> LoginAsync(LoginRequest request);
     Task<AuthResponse> RegisterAsync(RegisterRequest request);
+    Task<AuthResponse> RefreshTokenAsync();
     Task LogoutAsync();
     Task<bool> IsAuthenticatedAsync();
     Task<UserDto?> GetCurrentUserAsync();
@@ -26,12 +29,14 @@ public partial class AuthService : IAuthService
     private readonly HttpClient _httpClient;
     private readonly AuthStateProvider _authStateProvider;
     private readonly ILogger<AuthService> _logger;
+    private readonly IJSRuntime _jsRuntime;
 
-    public AuthService(HttpClient httpClient, AuthenticationStateProvider authStateProvider, ILogger<AuthService> logger)
+    public AuthService(HttpClient httpClient, AuthenticationStateProvider authStateProvider, ILogger<AuthService> logger, IJSRuntime jsRuntime)
     {
         _httpClient = httpClient;
         _authStateProvider = (AuthStateProvider)authStateProvider;
         _logger = logger;
+        _jsRuntime = jsRuntime;
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -43,7 +48,7 @@ public partial class AuthService : IAuthService
             var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
             if (authResponse?.Token != null)
             {
-                await _authStateProvider.SetTokenAsync(authResponse.Token);
+                await StoreTokensAsync(authResponse.Token, authResponse.RefreshToken);
                 return authResponse;
             }
         }
@@ -70,9 +75,66 @@ public partial class AuthService : IAuthService
         throw new InvalidOperationException($"Registration failed: {response.StatusCode} - {errorContent}");
     }
 
-    public async Task LogoutAsync()
+    public async Task<AuthResponse> RefreshTokenAsync()
+    {
+        var refreshToken = await GetStoredRefreshTokenAsync();
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            throw new UnauthorizedAccessException("No refresh token available");
+        }
+
+        var request = new RefreshTokenRequest { RefreshToken = refreshToken };
+        var response = await _httpClient.PostAsJsonAsync("/api/auth/refresh", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
+            if (authResponse?.Token != null)
+            {
+                await _authStateProvider.SetTokenAsync(authResponse.Token);
+                await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "refreshToken", authResponse.RefreshToken);
+                return authResponse;
+            }
+        }
+
+        // If refresh fails, clear tokens and return unauthorized
+        await ClearTokensAsync();
+        throw new UnauthorizedAccessException("Token refresh failed");
+    }
+
+    private async Task StoreTokensAsync(string accessToken, string refreshToken)
+    {
+        await _authStateProvider.SetTokenAsync(accessToken);
+        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "refreshToken", refreshToken);
+    }
+
+    private async Task<string?> GetStoredRefreshTokenAsync()
+    {
+        return await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "refreshToken");
+    }
+
+    private async Task ClearTokensAsync()
     {
         await _authStateProvider.RemoveTokenAsync();
+        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "refreshToken");
+    }
+
+    public async Task LogoutAsync()
+    {
+        var refreshToken = await GetStoredRefreshTokenAsync();
+        if (!string.IsNullOrEmpty(refreshToken))
+        {
+            try
+            {
+                var request = new RefreshTokenRequest { RefreshToken = refreshToken };
+                await _httpClient.PostAsJsonAsync("/api/auth/logout", request);
+            }
+            catch
+            {
+                // Continue with logout even if server logout fails
+            }
+        }
+        await ClearTokensAsync();
     }
 
     public async Task<bool> IsAuthenticatedAsync()

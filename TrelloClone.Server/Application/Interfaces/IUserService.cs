@@ -1,4 +1,4 @@
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Server.Application.Interfaces;
 

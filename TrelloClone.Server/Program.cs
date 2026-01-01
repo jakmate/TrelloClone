@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -66,6 +67,9 @@ static void ConfigureServices(WebApplicationBuilder builder, IConfiguration conf
 
     builder.Services.AddSignalR();
     builder.Services.AddControllers();
+
+    builder.Services.AddDistributedMemoryCache();
+    builder.Services.AddScoped<RefreshTokenService>();
 
     ConfigureKestrel(builder);
     ConfigureCors(builder, configuration);
@@ -205,6 +209,7 @@ static void ConfigurePipeline(WebApplication app)
 
     app.UseCors("AllowClient");
     app.UseAuthentication();
+    UseSessionValidation(app);
     app.UseAuthorization();
 
     app.MapControllers();
@@ -227,6 +232,30 @@ static void AddSecurityHeaders(WebApplication app)
             context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; connect-src 'self' wss:; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests";
         }
 
+        await next();
+    });
+}
+
+static void UseSessionValidation(WebApplication app)
+{
+    app.Use(async (context, next) =>
+    {
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            var sessionId = context.User.FindFirst("session_id")?.Value;
+            var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (sessionId != null && userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                var refreshTokenService = context.RequestServices.GetRequiredService<RefreshTokenService>();
+                var activeSession = await refreshTokenService.GetActiveSessionAsync(userId);
+                if (activeSession != sessionId)
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await context.Response.WriteAsync("Session expired");
+                    return;
+                }
+            }
+        }
         await next();
     });
 }

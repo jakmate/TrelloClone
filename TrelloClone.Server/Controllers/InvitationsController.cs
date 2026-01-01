@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Application.Services;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Invitation;
 
 namespace TrelloClone.Server.Controllers;
 
@@ -84,9 +84,14 @@ public class InvitationsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<BoardInvitationDto>>> GetPendingInvitations([FromQuery] Guid userId)
+    public async Task<ActionResult<List<BoardInvitationDto>>> GetPendingInvitations()
     {
-        var invitations = await _invitationSvc.GetPendingInvitations(userId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+        {
+            return Unauthorized();
+        }
+        var invitations = await _invitationSvc.GetPendingInvitations(userGuid);
         return Ok(invitations);
     }
 }

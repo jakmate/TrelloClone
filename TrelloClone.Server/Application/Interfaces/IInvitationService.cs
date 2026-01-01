@@ -1,4 +1,5 @@
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Invitation;
+using TrelloClone.Shared.Enums;
 
 namespace TrelloClone.Server.Application.Interfaces;
 

@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using TrelloClone.Server.Application.Services;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Board;
+using TrelloClone.Shared.Enums;
 
 namespace TrelloClone.Server.Controllers;
 
@@ -122,8 +123,6 @@ public class BoardsController : ControllerBase
     [HttpGet("{boardId:guid}")]
     public async Task<ActionResult<BoardDto>> Get(Guid boardId)
     {
-        var userGuid = GetCurrentUserId();
-
         try
         {
             var dto = await _boardService.GetBoardAsync(boardId);

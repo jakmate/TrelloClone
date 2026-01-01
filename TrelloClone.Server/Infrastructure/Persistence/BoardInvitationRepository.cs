@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Invitation;
 
 namespace TrelloClone.Server.Infrastructure.Persistence;
 
@@ -22,8 +22,6 @@ public class BoardInvitationRepository : IBoardInvitationRepository
     {
         return await _ctx.BoardInvitation
             .Where(i => i.InvitedUserId == userId && i.Status == InvitationStatus.Pending)
-            .Include(i => i.Board)
-            .Include(i => i.InviterUser)
             .Select(i => new BoardInvitationDto
             {
                 Id = i.Id,

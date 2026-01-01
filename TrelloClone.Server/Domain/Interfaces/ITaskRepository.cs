@@ -1,5 +1,5 @@
 using TrelloClone.Server.Domain.Entities;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Task;
 
 namespace TrelloClone.Server.Domain.Interfaces;
 

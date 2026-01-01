@@ -1,6 +1,8 @@
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Board;
+using TrelloClone.Shared.DTOs.Task;
+using TrelloClone.Shared.Enums;
 
 namespace TrelloClone.Server.Application.Services;
 

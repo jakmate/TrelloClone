@@ -4,7 +4,7 @@ using Moq;
 
 using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Controllers;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Server.Tests.Controllers;
 

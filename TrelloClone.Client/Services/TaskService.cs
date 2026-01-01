@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Task;
+using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Client.Services;
 

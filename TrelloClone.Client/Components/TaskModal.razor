@@ -1,4 +1,7 @@
-@using TrelloClone.Shared.DTOs
+@using TrelloClone.Shared.DTOs.Task
+@using TrelloClone.Shared.DTOs.User
+@using TrelloClone.Shared.Enums
+
 <FormModal Show="@Show" Title="Create New Task" Model="@TaskModel" OnCancel="@OnCancel" OnSubmit="@OnSubmit"
     IsSubmitting="@IsSubmitting" SubmitText="Create Task">
     <div class="mb-3">

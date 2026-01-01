@@ -8,7 +8,8 @@ using Moq;
 using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Application.Services;
 using TrelloClone.Server.Controllers;
-using TrelloClone.Shared.DTOs;
+using TrelloClone.Shared.DTOs.Invitation;
+using TrelloClone.Shared.Enums;
 
 using Xunit;
 
@@ -203,14 +204,44 @@ public class InvitationsControllerTests
         {
             new BoardInvitationDto { Id = Guid.NewGuid(), BoardName = "Board 1" }
         };
+
+        // Mock the User.FindFirstValue to return the userId
+        var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
+
         _mockService.Setup(x => x.GetPendingInvitations(userId)).ReturnsAsync(invitations);
 
         // Act
-        var result = await _controller.GetPendingInvitations(userId);
+        var result = await _controller.GetPendingInvitations();
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var returnedInvitations = Assert.IsType<List<BoardInvitationDto>>(okResult.Value);
         Assert.Single(returnedInvitations);
+    }
+
+    [Fact]
+    public async Task GetPendingInvitations_InvalidUserId_ReturnsUnauthorized()
+    {
+        // Arrange
+        var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, "invalid-guid") };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
+
+        // Act
+        var result = await _controller.GetPendingInvitations();
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result.Result);
+        _mockService.Verify(x => x.GetPendingInvitations(It.IsAny<Guid>()), Times.Never);
     }
 }
