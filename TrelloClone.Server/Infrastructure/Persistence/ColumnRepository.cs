@@ -11,7 +11,7 @@ public class ColumnRepository : IColumnRepository
     private readonly AppDbContext _ctx;
     public ColumnRepository(AppDbContext ctx) => _ctx = ctx;
 
-    public async Task<bool> ExistsWithTitleAsync(Guid boardId, string title) =>
+    public async Task<bool> TitleExistsAsync(Guid boardId, string title) =>
         await _ctx.Columns.AnyAsync(c => c.BoardId == boardId && c.Title == title);
 
     public async Task<Column?> GetByIdAsync(Guid columnId) =>

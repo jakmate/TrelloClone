@@ -49,7 +49,7 @@ public class ColumnService
         {
             throw new KeyNotFoundException("Board not found.");
         }
-        if (await _columns.ExistsWithTitleAsync(req.BoardId, req.Title))
+        if (await _columns.TitleExistsAsync(req.BoardId, req.Title))
         {
             throw new InvalidOperationException("Column title already in use.");
         }
@@ -91,7 +91,7 @@ public class ColumnService
 
         if (column.Title != req.Title)
         {
-            bool nameExists = await _columns.ExistsWithTitleAsync(boardId, req.Title);
+            bool nameExists = await _columns.TitleExistsAsync(boardId, req.Title);
             if (nameExists)
             {
                 throw new InvalidOperationException("You already have a column with that name.");

@@ -14,7 +14,7 @@ public class BoardRepository : IBoardRepository
     public async Task<bool> ExistsAsync(Guid boardId) =>
         await _ctx.Boards.AnyAsync(b => b.Id == boardId);
 
-    public async Task<bool> ExistsWithNameAsync(string name, Guid userId) =>
+    public async Task<bool> NameExistsAsync(string name, Guid userId) =>
         await _ctx.Boards
             .AnyAsync(b => b.Name == name
                         && b.BoardUsers.Any(bu => bu.UserId == userId));

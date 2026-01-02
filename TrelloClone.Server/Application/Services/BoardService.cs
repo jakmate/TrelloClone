@@ -21,7 +21,7 @@ public class BoardService
 
     public async Task<BoardDto> CreateBoardAsync(string name, Guid ownerId)
     {
-        if (await _boards.ExistsWithNameAsync(name, ownerId))
+        if (await _boards.NameExistsAsync(name, ownerId))
         {
             throw new InvalidOperationException("You already have a board with that name.");
         }
@@ -63,7 +63,7 @@ public class BoardService
 
         if (board.Name != newName)
         {
-            bool nameExists = await _boards.ExistsWithNameAsync(newName, userId);
+            bool nameExists = await _boards.NameExistsAsync(newName, userId);
             if (nameExists)
             {
                 throw new InvalidOperationException("You already have a board with that name.");
@@ -171,7 +171,7 @@ public class BoardService
 
     public async Task<BoardDto> CreateBoardFromTemplateAsync(CreateBoardFromTemplateRequest request)
     {
-        if (await _boards.ExistsWithNameAsync(request.Name, request.OwnerId))
+        if (await _boards.NameExistsAsync(request.Name, request.OwnerId))
         {
             throw new InvalidOperationException("You already have a board with that name.");
         }

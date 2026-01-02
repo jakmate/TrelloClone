@@ -6,7 +6,7 @@ namespace TrelloClone.Server.Domain.Interfaces;
 public interface IBoardRepository
 {
     Task<bool> ExistsAsync(Guid boardId);
-    Task<bool> ExistsWithNameAsync(string name, Guid userId);
+    Task<bool> NameExistsAsync(string name, Guid userId);
     Task<Board?> GetByIdAsync(Guid boardId);
     Task<List<Board>> GetAllByUserIdAsync(Guid userId);
     Task UpdatePositionsAsync(List<BoardPositionDto> positions);
