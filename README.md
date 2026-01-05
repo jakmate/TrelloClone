@@ -11,6 +11,7 @@ A full-featured Trello-like task management application built with Blazor WebAss
 
 ## To Do
 
+- Update username in MainLayout after username changed in profile
 - Async drag and drop visible to other users in real time
 - Async add board to boards after accepting invitation
 

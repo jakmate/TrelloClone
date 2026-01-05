@@ -1,0 +1,21 @@
+.danger-zone {
+  border: 2px solid var(--danger);
+}
+
+.danger-zone .section-header h2 {
+  color: var(--danger);
+}
+
+.danger-text {
+  color: #5e6c84;
+  margin-bottom: 1rem;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #a13030;
+}

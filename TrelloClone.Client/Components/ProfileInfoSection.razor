@@ -1,0 +1,302 @@
+@using TrelloClone.Shared.DTOs.User
+@inject IAuthService AuthService
+@inject IJSRuntime JSRuntime
+
+<div class="profile-section p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fs-5 m-0">Account Information</h2>
+        <div class="user-avatar-large">
+            <i class="bi bi-person-circle"></i>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Username</label>
+        <div class="input-group">
+            <input type="text" class="form-control @GetValidationClass(usernameValidationMessage)" 
+                    value="@updateUserRequest.UserName"
+                    @oninput="OnUsernameChanged" 
+                    placeholder="Enter username" 
+                    disabled="@isUpdatingUser" />
+        </div>
+        @if (!string.IsNullOrEmpty(usernameValidationMessage))
+        {
+            <small class="text-danger"><i class="bi bi-exclamation-circle"></i> @usernameValidationMessage</small>
+        }
+        else if (isValidatingUsername)
+        {
+            <small class="text-muted">Checking availability...</small>
+        }
+    </div>
+
+    <div class="form-group">
+        <label>Email</label>
+        <div class="input-group">
+            <input type="email" class="form-control @GetValidationClass(emailValidationMessage)" 
+                    value="@updateUserRequest.Email"
+                    @oninput="OnEmailChanged" 
+                    placeholder="Enter email" 
+                    disabled="@isUpdatingUser" />
+        </div>
+        @if (!string.IsNullOrEmpty(emailValidationMessage))
+        {
+            <small class="text-danger"><i class="bi bi-exclamation-circle"></i> @emailValidationMessage</small>
+        }
+        else if (isValidatingEmail)
+        {
+            <small class="text-muted">Checking availability...</small>
+        }
+    </div>
+
+    <div class="form-actions">
+        <button class="btn btn-primary" @onclick="ShowPasswordVerification" 
+                disabled="@(!CanSaveChanges)">
+            Save Changes
+        </button>
+        <button class="btn btn-secondary" @onclick="ResetUserInfo" 
+                disabled="@(isUpdatingUser || !HasUserInfoChanged)">
+            Cancel
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(updateMessage))
+    {
+        <div class="alert @(isSuccess ? "alert-success" : "alert-danger")">
+            @updateMessage
+        </div>
+    }
+</div>
+
+<PasswordVerificationModal 
+    @ref="passwordModal"
+    Show="@showPasswordModal"
+    Title="Verify Your Password"
+    Message="Please enter your password to confirm these changes."
+    ConfirmText="Update Profile"
+    OnCancel="@(() => { showPasswordModal = false; passwordError = string.Empty; })"
+    OnSubmit="HandlePasswordSubmit"
+    IsSubmitting="@isUpdatingUser"
+    ErrorMessage="@passwordError" />
+
+@code {
+    [Parameter]
+    public UserDto? CurrentUser { get; set; }
+
+    [Parameter]
+    public EventCallback<UserDto> OnUserUpdated { get; set; }
+
+    private UpdateUserRequest updateUserRequest = new();
+    private bool isUpdatingUser = false;
+    private string updateMessage = string.Empty;
+    private bool isSuccess = false;
+    private bool showPasswordModal = false;
+    private string passwordError = string.Empty;
+    private PasswordVerificationModal? passwordModal;
+
+    // Validation states
+    private string usernameValidationMessage = string.Empty;
+    private string emailValidationMessage = string.Empty;
+    private bool isValidatingUsername = false;
+    private bool isValidatingEmail = false;
+    private CancellationTokenSource? _usernameValidationCts;
+    private CancellationTokenSource? _emailValidationCts;
+
+    public bool HasUserInfoChanged => 
+        CurrentUser != null && 
+        (updateUserRequest.UserName != CurrentUser.UserName || 
+         updateUserRequest.Email != CurrentUser.Email);
+
+    public bool CanSaveChanges => 
+        !isUpdatingUser && 
+        !isValidatingUsername && 
+        !isValidatingEmail &&
+        HasUserInfoChanged && 
+        string.IsNullOrEmpty(usernameValidationMessage) && 
+        string.IsNullOrEmpty(emailValidationMessage);
+
+    protected override void OnInitialized()
+    {
+        if (CurrentUser != null)
+        {
+            updateUserRequest = new UpdateUserRequest
+            {
+                UserName = CurrentUser.UserName,
+                Email = CurrentUser.Email
+            };
+        }
+    }
+    
+    private async void OnUsernameChanged(ChangeEventArgs e)
+    {
+        updateUserRequest.UserName = e.Value?.ToString() ?? string.Empty;
+        
+        _usernameValidationCts?.Cancel();
+        _usernameValidationCts = new CancellationTokenSource();
+        
+        if (updateUserRequest.UserName == CurrentUser?.UserName)
+        {
+            usernameValidationMessage = string.Empty;
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(updateUserRequest.UserName))
+        {
+            usernameValidationMessage = "Username is required";
+            StateHasChanged();
+            return;
+        }
+
+        if (updateUserRequest.UserName.Length < 3)
+        {
+            usernameValidationMessage = "Username must be at least 3 characters";
+            StateHasChanged();
+            return;
+        }
+
+        isValidatingUsername = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(500, _usernameValidationCts.Token);
+            var response = await AuthService.CheckUsernameAvailabilityAsync(updateUserRequest.UserName);
+            usernameValidationMessage = response.IsAvailable ? string.Empty : "Username already taken";
+        }
+        catch (TaskCanceledException) { }
+        catch { }
+        finally
+        {
+            isValidatingUsername = false;
+            StateHasChanged();
+        }
+    }
+
+    private async void OnEmailChanged(ChangeEventArgs e)
+    {
+        updateUserRequest.Email = e.Value?.ToString() ?? string.Empty;
+        
+        _emailValidationCts?.Cancel();
+        _emailValidationCts = new CancellationTokenSource();
+        
+        if (updateUserRequest.Email == CurrentUser?.Email)
+        {
+            emailValidationMessage = string.Empty;
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(updateUserRequest.Email))
+        {
+            emailValidationMessage = "Email is required";
+            StateHasChanged();
+            return;
+        }
+
+        isValidatingEmail = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(500, _emailValidationCts.Token);
+            var response = await AuthService.CheckEmailAvailabilityAsync(updateUserRequest.Email);
+            emailValidationMessage = response.IsAvailable ? string.Empty : "Email already in use";
+        }
+        catch (TaskCanceledException) { }
+        catch { }
+        finally
+        {
+            isValidatingEmail = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetValidationClass(string validationMessage)
+    {
+        if (string.IsNullOrEmpty(validationMessage)) return string.Empty;
+        return "is-invalid";
+    }
+
+    private void ShowPasswordVerification()
+    {
+        if (!CanSaveChanges) return;
+        passwordError = string.Empty;
+        showPasswordModal = true;
+    }
+
+    private async Task HandlePasswordSubmit(EditContext editContext)
+    {
+        if (!editContext.Validate() || passwordModal == null) return;
+
+        isUpdatingUser = true;
+        updateMessage = string.Empty;
+        passwordError = string.Empty;
+
+        try
+        {
+            updateUserRequest.CurrentPassword = passwordModal.PasswordModel.Password;
+            var updatedUser = await AuthService.UpdateUserAsync(updateUserRequest);
+
+            await OnUserUpdated.InvokeAsync(updatedUser);
+
+            updateMessage = "Profile updated successfully!";
+            isSuccess = true;
+            StateHasChanged();
+
+            usernameValidationMessage = string.Empty;
+            emailValidationMessage = string.Empty;
+            showPasswordModal = false;
+        }
+        catch (HttpRequestException ex)
+        {
+            if (ex.Message.Contains("Current password is incorrect") || 
+                ex.Message.Contains("password") || 
+                ex.Message.Contains("Invalid credentials"))
+            {
+                passwordError = "Incorrect password. Please try again.";
+            }
+            else
+            {
+                updateMessage = ex.Message.Contains("Username already taken") 
+                    ? "Username is already taken" 
+                    : ex.Message.Contains("Email already registered")
+                    ? "Email is already in use"
+                    : $"Error updating profile: {ex.Message}";
+                isSuccess = false;
+                showPasswordModal = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            updateMessage = $"Error updating profile: {ex.Message}";
+            isSuccess = false;
+            showPasswordModal = false;
+        }
+        finally
+        {
+            isUpdatingUser = false;
+            updateUserRequest.CurrentPassword = string.Empty;
+        }
+    }
+
+    private void ResetUserInfo()
+    {
+        if (CurrentUser != null)
+        {
+            updateUserRequest = new UpdateUserRequest
+            {
+                UserName = CurrentUser.UserName,
+                Email = CurrentUser.Email
+            };
+        }
+        updateMessage = string.Empty;
+        usernameValidationMessage = string.Empty;
+        emailValidationMessage = string.Empty;
+    }
+
+    public void Dispose()
+    {
+        _usernameValidationCts?.Cancel();
+        _emailValidationCts?.Cancel();
+    }
+}

@@ -19,7 +19,7 @@ public interface IAuthService
     Task<bool> ValidateTokenAsync();
     Task<UserDto> UpdateUserAsync(UpdateUserRequest request);
     Task ChangePasswordAsync(ChangePasswordRequest request);
-    Task DeleteAccountAsync();
+    Task DeleteAccountAsync(DeleteAccountRequest request);
     Task<AvailabilityResponse> CheckUsernameAvailabilityAsync(string username);
     Task<AvailabilityResponse> CheckEmailAvailabilityAsync(string email);
 }
@@ -226,10 +226,28 @@ public partial class AuthService : IAuthService
         }
     }
 
-    public async Task DeleteAccountAsync()
+    public async Task DeleteAccountAsync(DeleteAccountRequest request)
     {
-        var response = await _httpClient.DeleteAsync("api/auth/delete-account");
-        response.EnsureSuccessStatusCode();
+        var response = await _httpClient.PostAsJsonAsync("api/auth/delete-account", request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var errorObj = System.Text.Json.JsonDocument.Parse(errorContent);
+                if (errorObj.RootElement.TryGetProperty("message", out var message))
+                {
+                    throw new HttpRequestException(message.GetString());
+                }
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                Log.JsonParseError(_logger, ex);
+            }
+
+            throw new HttpRequestException(errorContent);
+        }
     }
 
     public async Task<AvailabilityResponse> CheckUsernameAvailabilityAsync(string username)

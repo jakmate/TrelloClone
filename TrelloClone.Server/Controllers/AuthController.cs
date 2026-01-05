@@ -147,13 +147,17 @@ public partial class AuthController : ControllerBase
 
     [HttpPut("update-user")]
     [Authorize]
-    public async Task<ActionResult<UserDto>> UpdateUser([FromBody] UpdateUserRequest request)
+    public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
     {
         var userId = GetUserIdFromClaims();
         try
         {
             var updatedUser = await _authService.UpdateUserAsync(userId, request);
             return Ok(updatedUser);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
@@ -162,7 +166,7 @@ public partial class AuthController : ControllerBase
         catch (Exception ex)
         {
             Log.UpdateUserError(_logger, ex, userId);
-            return StatusCode(500, new { message = "Failed to update profile" });
+            return StatusCode(500, new { message = "Failed to update user" });
         }
     }
 
@@ -191,15 +195,19 @@ public partial class AuthController : ControllerBase
         }
     }
 
-    [HttpDelete("delete-account")]
+    [HttpPost("delete-account")]
     [Authorize]
-    public async Task<IActionResult> DeleteAccount()
+    public async Task<IActionResult> DeleteAccount([FromBody] DeleteAccountRequest request)
     {
         var userId = GetUserIdFromClaims();
         try
         {
-            await _authService.DeleteAccountAsync(userId);
+            await _authService.DeleteAccountAsync(userId, request);
             return Ok();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {

@@ -276,19 +276,31 @@ public partial class AuthService
             throw new KeyNotFoundException("User not found");
         }
 
+        if (!VerifyPassword(request.CurrentPassword, user.PasswordHash))
+        {
+            throw new UnauthorizedAccessException("Current password is incorrect");
+        }
+
         // Prevent duplicate username/email
-        if (request.UserName != user.UserName && await _users.GetByUsernameAsync(request.UserName) != null)
+        if (request.UserName != user.UserName)
         {
-            throw new InvalidOperationException("Username already taken");
+            var existingUserByUsername = await _users.GetByUsernameAsync(request.UserName);
+            if (existingUserByUsername != null)
+            {
+                throw new InvalidOperationException("Username already taken");
+            }
+            user.UserName = request.UserName.Trim();
         }
 
-        if (request.Email != user.Email && await _users.GetByEmailAsync(request.Email) != null)
+        if (request.Email != user.Email)
         {
-            throw new InvalidOperationException("Email already registered");
+            var existingUserByEmail = await _users.GetByEmailAsync(request.Email);
+            if (existingUserByEmail != null)
+            {
+                throw new InvalidOperationException("Email already registered");
+            }
+            user.Email = request.Email.ToLowerInvariant();
         }
-
-        user.UserName = request.UserName.Trim();
-        user.Email = request.Email.ToLowerInvariant();
 
         await _uow.SaveChangesAsync();
 
@@ -322,12 +334,17 @@ public partial class AuthService
         await _uow.SaveChangesAsync();
     }
 
-    public async Task DeleteAccountAsync(Guid userId)
+    public async Task DeleteAccountAsync(Guid userId, DeleteAccountRequest request)
     {
         var user = await _users.GetByIdAsync(userId);
         if (user == null)
         {
             throw new KeyNotFoundException("User not found");
+        }
+
+        if (!VerifyPassword(request.CurrentPassword, user.PasswordHash))
+        {
+            throw new UnauthorizedAccessException("Current password is incorrect");
         }
 
         _users.Remove(user);

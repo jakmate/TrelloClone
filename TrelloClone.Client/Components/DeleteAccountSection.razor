@@ -1,0 +1,108 @@
+@using TrelloClone.Shared.DTOs.User
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<div class="profile-section p-4 danger-zone">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fs-5 m-0">Danger Zone</h2>
+    </div>
+    <p class="danger-text">Once you delete your account, there is no going back. Please be certain.</p>
+    <button class="btn btn-danger" @onclick="ConfirmDeleteAccount" disabled="@isDeleting">
+        @if (isDeleting)
+        {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+        }
+        Delete Account
+    </button>
+
+    @if (!string.IsNullOrEmpty(deleteMessage))
+    {
+        <div class="alert @(isSuccess ? "alert-success" : "alert-danger") mt-3">
+            @deleteMessage
+        </div>
+    }
+</div>
+
+<PasswordVerificationModal 
+    @ref="passwordModal"
+    Show="@showPasswordModal"
+    Title="Delete Your Account"
+    Message="This action cannot be undone. All your boards and data will be permanently deleted. Please enter your password to confirm."
+    ConfirmText="Delete Account"
+    OnCancel="@(() => { showPasswordModal = false; passwordError = string.Empty; })"
+    OnSubmit="HandlePasswordSubmit"
+    IsSubmitting="@isDeleting"
+    ErrorMessage="@passwordError" />
+
+@code {
+    private DeleteAccountRequest deleteAccountRequest = new();
+    private bool isDeleting;
+    private string deleteMessage = string.Empty;
+    private bool isSuccess;
+    private bool showPasswordModal = false;
+    private string passwordError = string.Empty;
+    private PasswordVerificationModal? passwordModal;
+
+    [Parameter]
+    public EventCallback OnAccountDeleted { get; set; }
+
+    private async Task ConfirmDeleteAccount()
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "Are you sure you want to delete your account? This action cannot be undone and all your boards will be deleted.");
+        
+        if (!confirm) return;
+
+        passwordError = string.Empty;
+        showPasswordModal = true;
+    }
+
+    private async Task HandlePasswordSubmit(EditContext editContext)
+    {
+        if (!editContext.Validate() || passwordModal == null) return;
+
+        isDeleting = true;
+        deleteMessage = string.Empty;
+        passwordError = string.Empty;
+
+        try
+        {
+            await AuthService.DeleteAccountAsync(new DeleteAccountRequest { CurrentPassword = passwordModal.PasswordModel.Password });
+            await AuthService.LogoutAsync();
+            
+            isSuccess = true;
+            deleteMessage = "Account deleted successfully!";
+            StateHasChanged();
+
+            await OnAccountDeleted.InvokeAsync();
+            
+            showPasswordModal = false;
+        }
+        catch (HttpRequestException ex)
+        {
+            if (ex.Message.Contains("Current password is incorrect") || 
+                ex.Message.Contains("password") || 
+                ex.Message.Contains("Invalid credentials"))
+            {
+                passwordError = "Incorrect password. Please try again.";
+            }
+            else
+            {
+                deleteMessage = $"Error deleting account: {ex.Message}";
+                isSuccess = false;
+                showPasswordModal = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            deleteMessage = $"Error deleting account: {ex.Message}";
+            isSuccess = false;
+            showPasswordModal = false;
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+}

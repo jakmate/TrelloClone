@@ -44,7 +44,7 @@
   padding: 2rem;
 }
 
-.empty-content i {
+.empty-content .empty-icon {
   font-size: 48px;
   color: var(--text-secondary);
   margin-bottom: 1rem;

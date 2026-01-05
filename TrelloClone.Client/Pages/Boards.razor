@@ -57,10 +57,10 @@
             {
                 <div class="empty-state">
                     <div class="empty-content">
-                        <i class="bi bi-kanban"></i>
+                        <i class="bi bi-kanban empty-icon"></i>
                         <h3>No boards found</h3>
                         <p>Create your first board to get started!</p>
-                        <button class="btn-primary" @onclick="ShowCreateModal">
+                        <button class="btn btn-primary" @onclick="ShowCreateModal">
                             <i class="bi bi-plus-lg"></i> Create Board
                         </button>
                     </div>
@@ -85,7 +85,7 @@
                 <i class="bi bi-shield-lock"></i>
                 <h3>Access Denied</h3>
                 <p>You need to be logged in to view boards.</p>
-                <a href="/login" class="btn-primary">Login</a>
+                <a href="/login" class="btn btn-primary">Login</a>
             </div>
         </div>
     </NotAuthorized>

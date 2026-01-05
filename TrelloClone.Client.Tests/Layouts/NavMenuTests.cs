@@ -205,7 +205,7 @@ public class NavMenuTests : BunitContext
         // Act
         var cut = Render<NavMenu>();
 
-        // Assert - verify boards appear in order
+        // Assert
         var markup = cut.Markup;
         var indexA = markup.IndexOf("Board A");
         var indexB = markup.IndexOf("Board B");
@@ -239,7 +239,7 @@ public class NavMenuTests : BunitContext
         var cut = Render<NavMenu>();
 
         // Act - trigger the OnBoardsChanged event using the real service
-        boardStateService.NotifyBoardsChanged(); // Assuming this method exists
+        boardStateService.NotifyBoardsChanged();
         await Task.Delay(100);
         cut.WaitForState(() => cut.Markup.Contains("Board 2"), timeout: TimeSpan.FromSeconds(2));
 
@@ -304,7 +304,7 @@ public class NavMenuTests : BunitContext
         await Task.Delay(100);
         cut.WaitForState(() => cut.Markup.Contains("Board B"), timeout: TimeSpan.FromSeconds(2));
 
-        // Assert - verify order
+        // Assert
         var markup = cut.Markup;
         var indexB = markup.IndexOf("Board B");
         var indexA = markup.IndexOf("Board A");
