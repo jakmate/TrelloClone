@@ -157,7 +157,7 @@ static void RegisterApplicationServices(IServiceCollection services)
     services.AddScoped<BoardService>();
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<ColumnService>();
-    services.AddScoped<TaskService>();
+    services.AddScoped<ITaskService, TaskService>();
     services.AddScoped<IInvitationService, InvitationService>();
 }
 

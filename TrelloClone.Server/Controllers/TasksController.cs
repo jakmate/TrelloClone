@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using TrelloClone.Server.Application.Services;
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Shared.DTOs.Task;
 using TrelloClone.Shared.DTOs.User;
 
@@ -14,8 +14,8 @@ namespace TrelloClone.Server.Controllers;
 [Authorize]
 public class TasksController : ControllerBase
 {
-    private readonly TaskService _svc;
-    public TasksController(TaskService svc) => _svc = svc;
+    private readonly ITaskService _tasksSvc;
+    public TasksController(ITaskService tasksSvc) => _tasksSvc = tasksSvc;
 
     [HttpGet]
     public async Task<ActionResult<List<TaskDto>>> GetAll(Guid columnId)
@@ -26,7 +26,7 @@ public class TasksController : ControllerBase
             return Unauthorized();
         }
 
-        var list = await _svc.GetTasksForColumnAsync(columnId);
+        var list = await _tasksSvc.GetTasksForColumnAsync(columnId);
         return Ok(list);
     }
 
@@ -39,7 +39,7 @@ public class TasksController : ControllerBase
             return Unauthorized();
         }
 
-        var users = await _svc.GetAvailableUsersForTaskAsync(columnId);
+        var users = await _tasksSvc.GetAvailableUsersForTaskAsync(columnId);
         return Ok(users);
     }
 
@@ -59,7 +59,7 @@ public class TasksController : ControllerBase
             return BadRequest();
         }
 
-        var dto = await _svc.CreateTaskAsync(req);
+        var dto = await _tasksSvc.CreateTaskAsync(req);
         return CreatedAtAction(
             nameof(GetAll),
             new { columnId },
@@ -79,7 +79,7 @@ public class TasksController : ControllerBase
             return Unauthorized();
         }
 
-        var dto = await _svc.UpdateTaskAsync(taskId, req);
+        var dto = await _tasksSvc.UpdateTaskAsync(taskId, req);
         return Ok(dto);
     }
 
@@ -92,7 +92,7 @@ public class TasksController : ControllerBase
             return Unauthorized();
         }
 
-        await _svc.DeleteTaskAsync(taskId);
+        await _tasksSvc.DeleteTaskAsync(taskId);
         return NoContent();
     }
 
@@ -105,7 +105,7 @@ public class TasksController : ControllerBase
             return Unauthorized();
         }
 
-        await _svc.ReorderTasksAsync(request.Tasks);
+        await _tasksSvc.ReorderTasksAsync(request.Tasks);
         return Ok();
     }
 }

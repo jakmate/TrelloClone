@@ -8,7 +8,7 @@
         <h2 class="fs-5 m-0">Danger Zone</h2>
     </div>
     <p class="danger-text">Once you delete your account, there is no going back. Please be certain.</p>
-    <button class="btn btn-danger" @onclick="ConfirmDeleteAccount" disabled="@isDeleting">
+    <button class="btn btn-danger profile-btn" @onclick="ConfirmDeleteAccount" disabled="@isDeleting">
         @if (isDeleting)
         {
             <span class="spinner-border spinner-border-sm me-2"></span>

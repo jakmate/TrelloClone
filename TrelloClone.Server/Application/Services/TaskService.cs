@@ -1,3 +1,4 @@
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs.Task;
@@ -5,7 +6,7 @@ using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Server.Application.Services;
 
-public class TaskService
+public class TaskService : ITaskService
 {
     private readonly ITaskRepository _tasks;
     private readonly IColumnRepository _columns;
@@ -15,7 +16,6 @@ public class TaskService
     public TaskService(
         ITaskRepository tasks,
         IColumnRepository columns,
-        IUserRepository users,
         IBoardRepository boards,
         IUnitOfWork uow)
     {
@@ -58,14 +58,14 @@ public class TaskService
         };
 
         _tasks.Add(task);
-        await _uow.SaveChangesAsync();
 
         // Assign users if provided
         if (req.AssignedUserIds != null && req.AssignedUserIds.Count > 0)
         {
             await _tasks.AssignUsersToTaskAsync(task.Id, req.AssignedUserIds);
-            await _uow.SaveChangesAsync();
         }
+
+        await _uow.SaveChangesAsync();
 
         return new TaskDto
         {

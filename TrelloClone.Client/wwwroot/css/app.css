@@ -64,13 +64,6 @@ a:hover {
   text-decoration: none;
 }
 
-.btn {
-  padding: 0.625rem 1.25rem;
-  border: none;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -394,6 +387,13 @@ a:hover {
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+}
+
+.profile-btn {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  font-size: 0.875rem;
+  transition: all 0.2s;
 }
 
 .user-avatar-large {

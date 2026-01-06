@@ -49,11 +49,11 @@
     </div>
 
     <div class="form-actions">
-        <button class="btn btn-primary" @onclick="ShowPasswordVerification" 
+        <button class="btn btn-primary profile-btn" @onclick="ShowPasswordVerification" 
                 disabled="@(!CanSaveChanges)">
             Save Changes
         </button>
-        <button class="btn btn-secondary" @onclick="ResetUserInfo" 
+        <button class="btn btn-secondary profile-btn" @onclick="ResetUserInfo" 
                 disabled="@(isUpdatingUser || !HasUserInfoChanged)">
             Cancel
         </button>
