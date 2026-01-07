@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using TrelloClone.Server.Application.Services;
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Shared.DTOs.Column;
 
 namespace TrelloClone.Server.Controllers;
@@ -13,8 +13,8 @@ namespace TrelloClone.Server.Controllers;
 [Authorize]
 public class ColumnsController : ControllerBase
 {
-    private readonly ColumnService _columnService;
-    public ColumnsController(ColumnService columnService)
+    private readonly IColumnService _columnService;
+    public ColumnsController(IColumnService columnService)
         => _columnService = columnService;
 
     [HttpGet]

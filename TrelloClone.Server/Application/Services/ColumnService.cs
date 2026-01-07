@@ -1,3 +1,4 @@
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs.Column;
@@ -5,7 +6,7 @@ using TrelloClone.Shared.DTOs.Task;
 
 namespace TrelloClone.Server.Application.Services;
 
-public class ColumnService
+public class ColumnService : IColumnService
 {
     private readonly IColumnRepository _columns;
     private readonly IBoardRepository _boards;
