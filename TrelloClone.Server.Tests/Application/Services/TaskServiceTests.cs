@@ -8,7 +8,7 @@ using TrelloClone.Shared.Enums;
 
 using Xunit;
 
-namespace TrelloClone.Server.Tests.Application;
+namespace TrelloClone.Server.Tests.Application.Services;
 
 public class TaskServiceTests
 {

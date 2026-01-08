@@ -1,3 +1,4 @@
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs.Board;
@@ -6,7 +7,7 @@ using TrelloClone.Shared.Enums;
 
 namespace TrelloClone.Server.Application.Services;
 
-public class BoardService
+public class BoardService : IBoardService
 {
     private readonly IBoardRepository _boards;
     private readonly IBoardUserRepository _boardUsers;
@@ -156,12 +157,16 @@ public class BoardService
 
     public async Task ReorderBoardsAsync(List<BoardPositionDto> positions, Guid userId)
     {
-        foreach (var pos in positions)
+        // Check all permissions in parallel for efficiency
+        var unauthorizedBoards = await Task.WhenAll(
+            positions.Select(pos => _boardUsers.ExistsAsync(pos.Id, userId))
+        );
+
+        for (int i = 0; i < unauthorizedBoards.Length; i++)
         {
-            bool isMember = await _boardUsers.ExistsAsync(pos.Id, userId);
-            if (!isMember)
+            if (!unauthorizedBoards[i])
             {
-                throw new UnauthorizedAccessException($"No permission for board {pos.Id}");
+                throw new UnauthorizedAccessException($"No permission for board {positions[i].Id}");
             }
         }
 

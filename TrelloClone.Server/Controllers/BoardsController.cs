@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using TrelloClone.Server.Application.Services;
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Shared.DTOs.Board;
 using TrelloClone.Shared.Enums;
 
@@ -14,9 +14,9 @@ namespace TrelloClone.Server.Controllers;
 [Authorize]
 public class BoardsController : ControllerBase
 {
-    private readonly BoardService _boardService;
+    private readonly IBoardService _boardService;
 
-    public BoardsController(BoardService boardService)
+    public BoardsController(IBoardService boardService)
         => _boardService = boardService;
 
     [HttpPost]

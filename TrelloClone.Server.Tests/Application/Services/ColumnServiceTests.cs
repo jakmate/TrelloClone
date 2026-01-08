@@ -7,7 +7,7 @@ using TrelloClone.Shared.DTOs.Column;
 
 using Xunit;
 
-namespace TrelloClone.Server.Tests.Application;
+namespace TrelloClone.Server.Tests.Application.Services;
 
 public class ColumnServiceTests
 {
@@ -66,6 +66,8 @@ public class ColumnServiceTests
         var result = await _service.GetColumnsForBoardAsync(Guid.NewGuid());
 
         // Assert
+        Assert.NotNull(result[0]);
+        Assert.NotNull(result[0].Tasks);
         Assert.True(result[0].Tasks[0].Position < result[0].Tasks[1].Position);
     }
 
