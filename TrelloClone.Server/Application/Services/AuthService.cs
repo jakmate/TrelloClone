@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 
 using Microsoft.IdentityModel.Tokens;
 
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Server.Domain.Entities;
 using TrelloClone.Server.Domain.Interfaces;
 using TrelloClone.Shared.DTOs.Auth;
@@ -13,7 +14,7 @@ using TrelloClone.Shared.DTOs.User;
 
 namespace TrelloClone.Server.Application.Services;
 
-public partial class AuthService
+public partial class AuthService : IAuthService
 {
     private readonly IUserRepository _users;
     private readonly IUnitOfWork _uow;

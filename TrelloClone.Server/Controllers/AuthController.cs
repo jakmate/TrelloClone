@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using TrelloClone.Server.Application.Services;
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Shared.DTOs.Auth;
 using TrelloClone.Shared.DTOs.User;
 
@@ -13,10 +13,10 @@ namespace TrelloClone.Server.Controllers;
 [Route("api/auth")]
 public partial class AuthController : ControllerBase
 {
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(AuthService authService, ILogger<AuthController> logger)
+    public AuthController(IAuthService authService, ILogger<AuthController> logger)
     {
         _authService = authService;
         _logger = logger;

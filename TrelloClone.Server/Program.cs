@@ -153,10 +153,10 @@ static void RegisterRepositories(IServiceCollection services)
 
 static void RegisterApplicationServices(IServiceCollection services)
 {
-    services.AddScoped<AuthService>();
+    services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<IBoardService, BoardService>();
     services.AddScoped<IUserService, UserService>();
-    services.AddScoped<ColumnService>();
+    services.AddScoped<IColumnService, ColumnService>();
     services.AddScoped<ITaskService, TaskService>();
     services.AddScoped<IInvitationService, InvitationService>();
 }
