@@ -20,14 +20,14 @@ public partial class AuthService : IAuthService
     private readonly IUnitOfWork _uow;
     private readonly IConfiguration _config;
     private readonly ILogger<AuthService> _logger;
-    private readonly RefreshTokenService _refreshTokenService;
+    private readonly IRefreshTokenService _refreshTokenService;
 
     public AuthService(
         IUserRepository users,
         IUnitOfWork uow,
         IConfiguration config,
         ILogger<AuthService> logger,
-        RefreshTokenService refreshTokenService)
+        IRefreshTokenService refreshTokenService)
     {
         _users = users;
         _uow = uow;

@@ -2,9 +2,11 @@ using System.Security.Cryptography;
 
 using Microsoft.Extensions.Caching.Distributed;
 
+using TrelloClone.Server.Application.Interfaces;
+
 namespace TrelloClone.Server.Application.Services;
 
-public class RefreshTokenService
+public class RefreshTokenService : IRefreshTokenService
 {
     private readonly IDistributedCache _cache;
 
@@ -144,13 +146,4 @@ public class RefreshTokenService
         var key = $"active_session:{userId}";
         return await _cache.GetStringAsync(key);
     }
-}
-
-public class RefreshTokenInfo
-{
-    public Guid UserId { get; set; }
-    public string SessionId { get; set; } = Guid.NewGuid().ToString();
-    public string DeviceId { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
-    public DateTime ExpiresAt { get; set; }
 }
