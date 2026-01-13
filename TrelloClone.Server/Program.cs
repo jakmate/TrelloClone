@@ -69,7 +69,7 @@ static void ConfigureServices(WebApplicationBuilder builder, IConfiguration conf
     builder.Services.AddControllers();
 
     builder.Services.AddDistributedMemoryCache();
-    builder.Services.AddScoped<RefreshTokenService>();
+    builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
     ConfigureKestrel(builder);
     ConfigureCors(builder, configuration);
@@ -246,7 +246,7 @@ static void UseSessionValidation(WebApplication app)
             var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
             if (sessionId != null && userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
             {
-                var refreshTokenService = context.RequestServices.GetRequiredService<RefreshTokenService>();
+                var refreshTokenService = context.RequestServices.GetRequiredService<IRefreshTokenService>();
                 var activeSession = await refreshTokenService.GetActiveSessionAsync(userId);
                 if (activeSession != sessionId)
                 {

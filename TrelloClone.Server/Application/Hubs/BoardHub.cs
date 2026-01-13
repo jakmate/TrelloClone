@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-using TrelloClone.Server.Application.Services;
+using TrelloClone.Server.Application.Interfaces;
 using TrelloClone.Shared.DTOs.Column;
 using TrelloClone.Shared.DTOs.SignalR;
 using TrelloClone.Shared.DTOs.Task;
@@ -14,13 +14,13 @@ namespace TrelloClone.Server.Application.Hubs
     [Authorize]
     public partial class BoardHub : Hub
     {
-        private readonly BoardService _boardService;
+        private readonly IBoardService _boardService;
         private readonly ILogger<BoardHub> _logger;
 
         // Track connected users per board
         private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _boardUsers = new();
 
-        public BoardHub(BoardService boardService, ILogger<BoardHub> logger)
+        public BoardHub(IBoardService boardService, ILogger<BoardHub> logger)
         {
             _boardService = boardService;
             _logger = logger;

@@ -4,7 +4,12 @@ using TrelloClone.Shared.DTOs.Invitation;
 
 namespace TrelloClone.Client.Services
 {
-    public class NotificationHubClient
+    public interface INotificationHubClient
+    {
+        event Action<BoardInvitationDto> OnInvitationReceived;
+    }
+
+    public class NotificationHubClient : INotificationHubClient
     {
         private readonly HubConnection _hubConnection;
 

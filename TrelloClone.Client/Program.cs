@@ -62,7 +62,7 @@ builder.Services.AddScoped(provider =>
         .Build();
 });
 
-builder.Services.AddScoped<NotificationHubClient>();
+builder.Services.AddScoped<INotificationHubClient, NotificationHubClient>();
 builder.Services.AddScoped<BoardHubClient>();
 builder.Services.AddScoped<SignalRConnectionManager>();
 

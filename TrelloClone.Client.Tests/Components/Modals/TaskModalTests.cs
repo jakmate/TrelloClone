@@ -4,14 +4,14 @@ using Bunit.TestDoubles;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 
-using TrelloClone.Client.Components;
+using TrelloClone.Client.Components.Modals;
 using TrelloClone.Shared.DTOs.Task;
 using TrelloClone.Shared.DTOs.User;
 using TrelloClone.Shared.Enums;
 
 using Xunit;
 
-namespace TrelloClone.Client.Tests.Components;
+namespace TrelloClone.Client.Tests.Components.Modals;
 
 public class TaskModalTests : BunitContext
 {
