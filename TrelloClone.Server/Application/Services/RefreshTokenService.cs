@@ -8,7 +8,15 @@ namespace TrelloClone.Server.Application.Services;
 
 public class RefreshTokenService : IRefreshTokenService
 {
+    private static class CacheKeys
+    {
+        public const string RefreshToken = "refresh_token:{0}";
+        public const string UserRefreshTokens = "user_refresh_tokens:{0}";
+        public const string ActiveSession = "active_session:{0}";
+    }
+
     private readonly IDistributedCache _cache;
+    private readonly ILogger<RefreshTokenService> _logger;
 
     public RefreshTokenService(IDistributedCache cache)
     {
@@ -18,8 +26,8 @@ public class RefreshTokenService : IRefreshTokenService
     public async Task<string> GenerateRefreshTokenAsync(Guid userId, string deviceId = "")
     {
         var refreshToken = GenerateSecureToken();
-        var tokenKey = $"refresh_token:{refreshToken}";
-        var userTokensKey = $"user_refresh_tokens:{userId}";
+        var tokenKey = string.Format(CacheKeys.RefreshToken, refreshToken);
+        var userTokensKey = string.Format(CacheKeys.UserRefreshTokens, userId);
 
         var refreshTokenInfo = new RefreshTokenInfo
         {
