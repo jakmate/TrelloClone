@@ -16,7 +16,6 @@ public class RefreshTokenService : IRefreshTokenService
     }
 
     private readonly IDistributedCache _cache;
-    private readonly ILogger<RefreshTokenService> _logger;
 
     public RefreshTokenService(IDistributedCache cache)
     {
@@ -26,8 +25,8 @@ public class RefreshTokenService : IRefreshTokenService
     public async Task<string> GenerateRefreshTokenAsync(Guid userId, string deviceId = "")
     {
         var refreshToken = GenerateSecureToken();
-        var tokenKey = string.Format(CacheKeys.RefreshToken, refreshToken);
-        var userTokensKey = string.Format(CacheKeys.UserRefreshTokens, userId);
+        var tokenKey = $"refresh_token:{refreshToken}";
+        var userTokensKey = $"user_refresh_tokens:{userId}";
 
         var refreshTokenInfo = new RefreshTokenInfo
         {
