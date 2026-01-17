@@ -24,7 +24,7 @@ public class TaskServiceTests
         _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_mockHttpMessageHandler.Object)
         {
-            BaseAddress = new Uri("https://localhost") // Fixed: Set base address
+            BaseAddress = new Uri("https://localhost")
         };
         _service = new TaskService(_httpClient);
     }
