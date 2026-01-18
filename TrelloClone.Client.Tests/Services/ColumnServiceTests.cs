@@ -1,9 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
+
 using Moq;
 using Moq.Protected;
+
 using TrelloClone.Client.Services;
 using TrelloClone.Shared.DTOs.Column;
+
 using Xunit;
 
 namespace TrelloClone.Client.Tests.Services;
@@ -75,7 +78,7 @@ public class ColumnServiceTests
     {
         SetupHttpResponse(HttpStatusCode.OK, null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
             _service.CreateColumnAsync(new CreateColumnRequest { BoardId = Guid.NewGuid() }));
     }
 
@@ -95,7 +98,7 @@ public class ColumnServiceTests
     {
         SetupHttpResponse(HttpStatusCode.BadRequest);
 
-        await Assert.ThrowsAsync<HttpRequestException>(() => 
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
             _service.UpdateColumnAsync(Guid.NewGuid(), Guid.NewGuid(), new UpdateColumnRequest()));
     }
 
