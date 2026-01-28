@@ -12,7 +12,7 @@ public interface IAuthService
     Task<CurrentUserResponse> GetCurrentUserAsync(Guid userId);
     Task<bool> CheckUsernameExistsAsync(string username);
     Task<bool> CheckEmailExistsAsync(string email);
-    Task<UserDto> UpdateUserAsync(Guid userId, UpdateUserRequest request);
+    Task<AuthResponse> UpdateUserAsync(Guid userId, UpdateUserRequest request);
     Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
     Task DeleteAccountAsync(Guid userId, DeleteAccountRequest request);
 }

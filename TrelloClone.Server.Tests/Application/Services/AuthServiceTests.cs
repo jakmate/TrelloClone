@@ -265,6 +265,7 @@ public class AuthServiceTests
     {
         // Arrange
         var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid().ToString();
         var user = new User
         {
             Id = userId,
@@ -274,6 +275,7 @@ public class AuthServiceTests
         };
         _mockUsers.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
         _mockUsers.Setup(x => x.GetByUsernameAsync("newname")).ReturnsAsync((User?)null);
+        _mockRefreshToken.Setup(x => x.GetActiveSessionAsync(userId)).ReturnsAsync(sessionId);
 
         // Act
         var result = await _service.UpdateUserAsync(userId, new UpdateUserRequest
@@ -284,8 +286,10 @@ public class AuthServiceTests
         });
 
         // Assert
-        Assert.Equal("newname", result.UserName);
-        Assert.Equal(user.Email, result.Email);
+        Assert.NotNull(result.Token);
+        Assert.NotNull(result.User);
+        Assert.Equal("newname", result.User.UserName);
+        Assert.Equal(user.Email, result.User.Email);
         _mockUow.Verify(x => x.SaveChangesAsync(), Times.Once);
     }
 
@@ -294,6 +298,7 @@ public class AuthServiceTests
     {
         // Arrange
         var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid().ToString();
         var user = new User
         {
             Id = userId,
@@ -303,6 +308,7 @@ public class AuthServiceTests
         };
         _mockUsers.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
         _mockUsers.Setup(x => x.GetByEmailAsync("new@test.com")).ReturnsAsync((User?)null);
+        _mockRefreshToken.Setup(x => x.GetActiveSessionAsync(userId)).ReturnsAsync(sessionId);
 
         // Act
         var result = await _service.UpdateUserAsync(userId, new UpdateUserRequest
@@ -313,8 +319,10 @@ public class AuthServiceTests
         });
 
         // Assert
-        Assert.Equal(user.UserName, result.UserName);
-        Assert.Equal("new@test.com", result.Email);
+        Assert.NotNull(result.Token);
+        Assert.NotNull(result.User);
+        Assert.Equal(user.UserName, result.User.UserName);
+        Assert.Equal("new@test.com", result.User.Email);
         _mockUow.Verify(x => x.SaveChangesAsync(), Times.Once);
     }
 

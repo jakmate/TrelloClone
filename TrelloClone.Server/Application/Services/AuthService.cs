@@ -269,7 +269,7 @@ public partial class AuthService : IAuthService
         return await _users.GetByEmailAsync(email) != null;
     }
 
-    public async Task<UserDto> UpdateUserAsync(Guid userId, UpdateUserRequest request)
+    public async Task<AuthResponse> UpdateUserAsync(Guid userId, UpdateUserRequest request)
     {
         var user = await _users.GetByIdAsync(userId);
         if (user == null)
@@ -305,11 +305,19 @@ public partial class AuthService : IAuthService
 
         await _uow.SaveChangesAsync();
 
-        return new UserDto
+        // Get active session and generate new token with updated claims
+        var activeSession = await _refreshTokenService.GetActiveSessionAsync(user.Id);
+        var newToken = GenerateJwtToken(user, activeSession ?? Guid.NewGuid().ToString());
+
+        return new AuthResponse
         {
-            Id = user.Id,
-            UserName = user.UserName,
-            Email = user.Email
+            Token = newToken,
+            User = new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email
+            }
         };
     }
 

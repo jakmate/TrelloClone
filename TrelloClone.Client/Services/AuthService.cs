@@ -198,8 +198,15 @@ public partial class AuthService : IAuthService
             throw new HttpRequestException(errorContent);
         }
 
-        var updatedUser = await response.Content.ReadFromJsonAsync<UserDto>();
-        return updatedUser ?? throw new InvalidOperationException("Failed to update user");
+        var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
+
+        // Store new token with updated username claim
+        if (!string.IsNullOrEmpty(authResponse?.Token))
+        {
+            await _authStateProvider.SetTokenAsync(authResponse.Token);
+        }
+
+        return authResponse?.User ?? throw new InvalidOperationException("Failed to update user");
     }
 
     public async Task ChangePasswordAsync(ChangePasswordRequest request)

@@ -230,16 +230,20 @@ public class AuthControllerTests
     {
         // Arrange
         SetupUser(Guid.NewGuid().ToString());
-        var user = new UserDto { Id = Guid.NewGuid() };
+        var authResponse = new AuthResponse
+        {
+            Token = "token",
+            User = new UserDto { Id = Guid.NewGuid() }
+        };
         _mockService.Setup(x => x.UpdateUserAsync(It.IsAny<Guid>(), It.IsAny<UpdateUserRequest>()))
-            .ReturnsAsync(user);
+            .ReturnsAsync(authResponse);
 
         // Act
         var result = await _controller.UpdateUser(new UpdateUserRequest());
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal(user, okResult.Value);
+        Assert.Equal(authResponse, okResult.Value);
     }
 
     [Fact]
