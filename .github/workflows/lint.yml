@@ -53,22 +53,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install --save-dev --ignore-scripts stylelint stylelint-config-standard prettier htmlhint eslint
+          npm install --save-dev --ignore-scripts @biomejs/biome
 
-      - name: Run Stylelint (CSS / .razor.css)
-        run: npx stylelint "./**/*.css"
-
-      - name: Format/Check CSS with Prettier
-        run: npx prettier --check "./**/*.css"
-
-      - name: Run HTMLHint (HTML / .razor files if needed)
-        run: npx htmlhint "./**/*.html"
-
-      - name: Format/Check HTML with Prettier
-        run: npx prettier --check "./**/*.html"
-
-      - name: Run ESLint (JS)
-        run: npx eslint "./**/*.js"
-
-      - name: Format/Check JS with Prettier
-        run: npx prettier --check "./**/*.js"
+      - name: Format
+        run: npx @biomejs/biome ci

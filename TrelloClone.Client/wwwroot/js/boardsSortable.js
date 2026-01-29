@@ -1,7 +1,7 @@
 // Store dotNetRef globally
 let boardDotNetRef = null;
 
-globalThis.initBoardsSortable = function (gridId, dotNetRef) {
+globalThis.initBoardsSortable = (gridId, dotNetRef) => {
   const grid = document.getElementById(gridId);
   if (!grid) return;
 
@@ -14,7 +14,7 @@ globalThis.initBoardsSortable = function (gridId, dotNetRef) {
     ghostClass: "sortable-ghost",
     chosenClass: "sortable-chosen",
     dragClass: "sortable-drag",
-    onEnd: function (evt) {
+    onEnd: (_evt) => {
       const items = grid.querySelectorAll("[data-id]");
       const orderedIds = Array.from(items).map((item) => item.dataset.id);
       dotNetRef.invokeMethodAsync("OnBoardReordered", orderedIds);
@@ -22,7 +22,7 @@ globalThis.initBoardsSortable = function (gridId, dotNetRef) {
   });
 };
 
-globalThis.initColumnsSortable = function (containerId, dotNetRef) {
+globalThis.initColumnsSortable = (containerId, dotNetRef) => {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -40,7 +40,7 @@ globalThis.initColumnsSortable = function (containerId, dotNetRef) {
     dragClass: "sortable-drag",
     handle: ".drag-handle",
     direction: "horizontal",
-    onEnd: function (evt) {
+    onEnd: (_evt) => {
       const items = container.querySelectorAll("[data-column-id]");
       const orderedIds = Array.from(items).map((item) => item.dataset.columnId);
       dotNetRef.invokeMethodAsync("OnColumnsReordered", orderedIds);
@@ -48,7 +48,7 @@ globalThis.initColumnsSortable = function (containerId, dotNetRef) {
   });
 };
 
-globalThis.initTasksSortable = function (containerId) {
+globalThis.initTasksSortable = (containerId) => {
   const container = document.getElementById(containerId);
   if (!container || !boardDotNetRef) return;
 
@@ -66,7 +66,7 @@ globalThis.initTasksSortable = function (containerId) {
       name: "tasks",
       put: true,
     },
-    onEnd: function (evt) {
+    onEnd: (evt) => {
       const taskId = evt.item.dataset.taskId;
       const fromColumnId = evt.from.dataset.columnId;
       const toColumnId = evt.to.dataset.columnId;

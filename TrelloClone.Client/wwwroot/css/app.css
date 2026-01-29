@@ -108,12 +108,12 @@ a:hover {
 }
 
 .btn-link.text-primary:hover {
-  color: var(--bs-blue) !important;
+  color: var(--bs-blue);
   background-color: rgb(13 110 253 / 10%);
 }
 
 .btn-link.text-danger:hover {
-  color: var(--bs-red) !important;
+  color: var(--bs-red);
   background-color: rgb(220 53 69 / 10%);
 }
 
@@ -175,7 +175,7 @@ a:hover {
 }
 
 .text-muted {
-  color: var(--text-secondary) !important;
+  color: var(--text-secondary);
 }
 
 .card {

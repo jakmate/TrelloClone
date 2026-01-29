@@ -86,7 +86,7 @@
 
 .app-sidebar.collapsed .nav-item {
   justify-content: center;
-  padding: 10px !important;
+  padding: 10px;
   width: 44px;
   min-width: 44px;
 }
@@ -149,7 +149,7 @@
 
 .app-sidebar.collapsed .team-item {
   justify-content: center;
-  padding: 10px !important;
+  padding: 10px;
   width: 44px;
   min-width: 44px;
 }
@@ -166,7 +166,7 @@
 }
 
 .app-sidebar.collapsed .nav-footer {
-  padding: 12px !important;
+  padding: 12px;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -185,11 +185,11 @@
 /* Responsive adjustments */
 @media (width <= 768px) {
   .nav-item {
-    padding: 12px 10px !important;
+    padding: 12px 10px;
   }
 
   .workspace-header {
-    padding: 12px 8px 6px !important;
+    padding: 12px 8px 6px;
   }
 
   .app-sidebar:not(.collapsed) {
