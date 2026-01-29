@@ -12,7 +12,6 @@ A full-featured Trello-like task management application built with Blazor WebAss
 ## To Do
 
 - Async drag and drop visible to other users in real time
-- Async add board to boards after accepting invitation
 
 ## Overview
 

@@ -213,7 +213,18 @@ public class InvitationServiceTests
             Status = InvitationStatus.Pending,
             PermissionLevel = PermissionLevel.Editor
         };
+
+        var board = new Board { Id = boardId, Position = 5 };
+        var existingBoards = new List<Board>
+        {
+            new Board { Id = Guid.NewGuid(), Position = 0 },
+            new Board { Id = Guid.NewGuid(), Position = 1 },
+            new Board { Id = Guid.NewGuid(), Position = 2 }
+        };
+
         _mockInvitations.Setup(x => x.GetByIdAsync(invitation.Id)).ReturnsAsync(invitation);
+        _mockBoards.Setup(x => x.GetAllByUserIdAsync(userId)).ReturnsAsync(existingBoards);
+        _mockBoards.Setup(x => x.GetByIdAsync(boardId)).ReturnsAsync(board);
 
         // Act
         await _service.AcceptInvitation(invitation.Id, userId);
@@ -223,7 +234,11 @@ public class InvitationServiceTests
             bu.BoardId == boardId &&
             bu.UserId == userId &&
             bu.PermissionLevel == PermissionLevel.Editor)), Times.Once);
+
         Assert.Equal(InvitationStatus.Accepted, invitation.Status);
+        Assert.Equal(0, board.Position);
+        Assert.All(existingBoards, b => Assert.True(b.Position >= 1));
+
         _mockUow.Verify(x => x.SaveChangesAsync(), Times.Once);
         _mockClientProxy.Verify(x => x.SendCoreAsync(
             "UserJoinedBoard",

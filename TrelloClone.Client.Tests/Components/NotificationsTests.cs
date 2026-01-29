@@ -16,14 +16,17 @@ public class NotificationsTests : BunitContext
 {
     private readonly Mock<IInvitationService> _mockService;
     private readonly Mock<INotificationHubClient> _mockHub;
+    private readonly Mock<IBoardStateService> _mockBoardState;
 
     public NotificationsTests()
     {
         _mockService = new Mock<IInvitationService>();
         _mockHub = new Mock<INotificationHubClient>();
+        _mockBoardState = new Mock<IBoardStateService>();
 
         Services.AddSingleton(_mockService.Object);
         Services.AddSingleton(_mockHub.Object);
+        Services.AddSingleton(_mockBoardState.Object);
     }
 
     [Fact]
@@ -81,6 +84,7 @@ public class NotificationsTests : BunitContext
         await acceptBtn.ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
 
         _mockService.Verify(x => x.AcceptInvitation(invitationId), Times.Once);
+        _mockBoardState.Verify(x => x.NotifyBoardsChanged(), Times.Once);
     }
 
     [Fact]
@@ -100,6 +104,7 @@ public class NotificationsTests : BunitContext
         await declineBtn.ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
 
         _mockService.Verify(x => x.DeclineInvitation(invitationId), Times.Once);
+        _mockBoardState.Verify(x => x.NotifyBoardsChanged(), Times.Never);
     }
 
     [Fact]
@@ -111,6 +116,9 @@ public class NotificationsTests : BunitContext
         cut.Instance.Dispose();
 
         // Verify unsubscribe by checking no exception when event is raised
-        _mockHub.Raise(x => x.OnInvitationReceived += null, new BoardInvitationDto());
+        var exception = Record.Exception(() =>
+            _mockHub.Raise(x => x.OnInvitationReceived += null, new BoardInvitationDto())
+        );
+        Assert.Null(exception);
     }
 }

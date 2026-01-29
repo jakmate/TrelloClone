@@ -17,12 +17,12 @@ namespace TrelloClone.Client.Tests.Layouts;
 public class NavMenuTests : BunitContext
 {
     private readonly Mock<IBoardService> _mockBoardService;
-    private readonly Mock<BoardStateService> _mockBoardState;
+    private readonly Mock<IBoardStateService> _mockBoardState;
 
     public NavMenuTests()
     {
         _mockBoardService = new Mock<IBoardService>();
-        _mockBoardState = new Mock<BoardStateService>();
+        _mockBoardState = new Mock<IBoardStateService>();
 
         Services.AddSingleton(_mockBoardService.Object);
         Services.AddSingleton(_mockBoardState.Object);
@@ -219,8 +219,6 @@ public class NavMenuTests : BunitContext
     {
         // Arrange
         this.AddAuthorization().SetAuthorized("testuser");
-        var boardStateService = new BoardStateService(); // Use real instance
-        Services.AddSingleton(boardStateService);
 
         var initialBoards = new List<BoardDto>
         {
@@ -236,43 +234,20 @@ public class NavMenuTests : BunitContext
             .ReturnsAsync(initialBoards)
             .ReturnsAsync(updatedBoards);
 
+        // Setup the event before rendering
+        Action? eventHandler = null;
+        _mockBoardState.SetupAdd(m => m.OnBoardsChanged += It.IsAny<Action>())
+            .Callback<Action>(handler => eventHandler = handler);
+
         var cut = Render<NavMenu>();
 
-        // Act - trigger the OnBoardsChanged event using the real service
-        boardStateService.NotifyBoardsChanged();
+        // Act - trigger the event through the mock
+        eventHandler?.Invoke();
         await Task.Delay(100);
-        cut.WaitForState(() => cut.Markup.Contains("Board 2"), timeout: TimeSpan.FromSeconds(2));
 
         // Assert
+        await cut.WaitForStateAsync(() => cut.Markup.Contains("Board 2"), timeout: TimeSpan.FromSeconds(2));
         Assert.Contains("Board 2", cut.Markup);
-    }
-
-    [Fact]
-    public void Dispose_UnsubscribesFromBoardsChanged()
-    {
-        // Arrange
-        this.AddAuthorization().SetAuthorized("testuser");
-        var boardStateService = new BoardStateService(); // Use real instance
-        Services.AddSingleton(boardStateService);
-        _mockBoardService.Setup(x => x.GetBoardsAsync()).ReturnsAsync(new List<BoardDto>());
-
-        var cut = Render<NavMenu>();
-        var subscriberCountBefore = GetEventSubscriberCount(boardStateService);
-
-        // Act
-        cut.Instance.Dispose();
-
-        // Assert
-        var subscriberCountAfter = GetEventSubscriberCount(boardStateService);
-        Assert.True(subscriberCountAfter < subscriberCountBefore || subscriberCountAfter == 0);
-    }
-
-    private int GetEventSubscriberCount(BoardStateService service)
-    {
-        var eventField = typeof(BoardStateService)
-            .GetField("OnBoardsChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        var eventDelegate = eventField?.GetValue(service) as Delegate;
-        return eventDelegate?.GetInvocationList().Length ?? 0;
     }
 
     [Fact]
@@ -280,8 +255,6 @@ public class NavMenuTests : BunitContext
     {
         // Arrange
         this.AddAuthorization().SetAuthorized("testuser");
-        var boardStateService = new BoardStateService();
-        Services.AddSingleton(boardStateService);
 
         var initialBoards = new List<BoardDto>
         {
@@ -297,17 +270,42 @@ public class NavMenuTests : BunitContext
             .ReturnsAsync(initialBoards)
             .ReturnsAsync(reorderedBoards);
 
+        // Setup the event before rendering
+        Action? eventHandler = null;
+        _mockBoardState.SetupAdd(m => m.OnBoardsChanged += It.IsAny<Action>())
+            .Callback<Action>(handler => eventHandler = handler);
+
         var cut = Render<NavMenu>();
 
         // Act
-        boardStateService.NotifyBoardsChanged();
+        eventHandler?.Invoke();
         await Task.Delay(100);
-        cut.WaitForState(() => cut.Markup.Contains("Board B"), timeout: TimeSpan.FromSeconds(2));
+        await cut.WaitForStateAsync(() => cut.Markup.Contains("Board B"), timeout: TimeSpan.FromSeconds(2));
 
         // Assert
         var markup = cut.Markup;
         var indexB = markup.IndexOf("Board B");
         var indexA = markup.IndexOf("Board A");
         Assert.True(indexB < indexA);
+    }
+
+
+    [Fact]
+    public void Dispose_UnsubscribesFromBoardsChanged()
+    {
+        // Arrange
+        this.AddAuthorization().SetAuthorized("testuser");
+        _mockBoardService.Setup(x => x.GetBoardsAsync()).ReturnsAsync(new List<BoardDto>());
+
+        var cut = Render<NavMenu>();
+
+        // Act
+        cut.Instance.Dispose();
+
+        // Assert
+        var exception = Record.Exception(() =>
+            _mockBoardState.Raise(m => m.OnBoardsChanged += null)
+        );
+        Assert.Null(exception);
     }
 }

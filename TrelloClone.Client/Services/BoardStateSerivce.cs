@@ -1,6 +1,12 @@
 namespace TrelloClone.Client.Services;
 
-public class BoardStateService
+public interface IBoardStateService
+{
+    event Action? OnBoardsChanged;
+    void NotifyBoardsChanged();
+}
+
+public class BoardStateService : IBoardStateService
 {
     public event Action? OnBoardsChanged;
 

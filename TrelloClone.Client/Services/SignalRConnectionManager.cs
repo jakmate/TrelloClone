@@ -20,6 +20,9 @@ namespace TrelloClone.Client.Services
 
             // Subscribe to authentication state changes
             _authStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+
+            // Initialize connection if already authenticated
+            _ = InitializeConnectionAsync();
         }
 
         private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
@@ -34,6 +37,22 @@ namespace TrelloClone.Client.Services
                 else
                 {
                     await StopConnectionAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.AuthStateError(_logger, ex);
+            }
+        }
+
+        private async Task InitializeConnectionAsync()
+        {
+            try
+            {
+                var state = await _authStateProvider.GetAuthenticationStateAsync();
+                if (state.User.Identity?.IsAuthenticated == true)
+                {
+                    await StartConnectionAsync();
                 }
             }
             catch (Exception ex)

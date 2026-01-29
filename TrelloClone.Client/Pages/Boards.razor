@@ -8,7 +8,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IBoardService BoardService
 @inject IAuthService AuthService
-@inject BoardStateService BoardState
+@inject IBoardStateService BoardState
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @attribute [Authorize]
@@ -117,6 +117,7 @@
             if (currentUser != null)
             {
                 await LoadBoards();
+                BoardState.OnBoardsChanged += OnBoardsChanged;
             }
             else
             {
@@ -338,6 +339,7 @@
             boards.RemoveAll(b => b.Id == board.Id);
             boardPermissions.Remove(board.Id);
             boardOwnership.Remove(board.Id);
+            BoardState.NotifyBoardsChanged();
         }
         catch (Exception ex)
         {
@@ -345,8 +347,15 @@
         }
     }
 
+    private async void OnBoardsChanged()
+    {
+        await LoadBoards();
+        await InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
+        BoardState.OnBoardsChanged -= OnBoardsChanged;
         dotNetRef?.Dispose();
     }
 }

@@ -100,6 +100,20 @@ public class InvitationService : IInvitationService
             throw new InvalidOperationException("Invitation is no longer pending");
         }
 
+        // Get all user's boards and increment their positions
+        var userBoards = await _boards.GetAllByUserIdAsync(userId);
+        foreach (var userBoard in userBoards)
+        {
+            userBoard.Position++;
+        }
+
+        // Set the new board to position 0
+        var board = await _boards.GetByIdAsync(invitation.BoardId);
+        if (board != null)
+        {
+            board.Position = 0;
+        }
+
         var boardUser = new BoardUser
         {
             BoardId = invitation.BoardId,

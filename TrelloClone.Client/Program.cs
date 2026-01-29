@@ -30,7 +30,7 @@ builder.Services.AddScoped<IBoardService>(provider =>
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<ColumnService>();
 builder.Services.AddScoped<TaskService>();
-builder.Services.AddScoped<BoardStateService>();
+builder.Services.AddScoped<IBoardStateService, BoardStateService>();
 
 builder.Services.AddScoped<AuthHttpMessageHandler>();
 builder.Services.AddScoped<HttpClient>(sp =>

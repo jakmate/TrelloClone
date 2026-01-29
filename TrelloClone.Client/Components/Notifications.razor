@@ -1,6 +1,7 @@
 @using TrelloClone.Shared.DTOs.Invitation
 @inject IInvitationService InvitationService
 @inject INotificationHubClient NotificationHub
+@inject IBoardStateService BoardState
 @implements IDisposable
 
 <div class="position-relative">
@@ -95,6 +96,7 @@
     {
         await InvitationService.AcceptInvitation(invitationId);
         RemoveInvitation(invitationId);
+        BoardState.NotifyBoardsChanged();
     }
 
     private async Task Decline(Guid invitationId)
